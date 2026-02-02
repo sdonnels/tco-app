@@ -624,25 +624,27 @@ export default function TcoBaseline() {
             data-testid="tabs-root"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <TabsList className="rounded-2xl" data-testid="tabs-list">
-                <TabsTrigger value="home" data-testid="tab-home">
-                  Home
-                </TabsTrigger>
-                <TabsTrigger value="inputs" data-testid="tab-inputs">
-                  Inputs
-                </TabsTrigger>
-                <TabsTrigger value="assumptions" data-testid="tab-assumptions">
-                  Assumptions
-                </TabsTrigger>
-                <TabsTrigger value="observations" data-testid="tab-observations">
-                  Observations & Analysis
-                </TabsTrigger>
-                <TabsTrigger value="summary" data-testid="tab-summary">
-                  Summary
-                </TabsTrigger>
-              </TabsList>
+              {activeTab === "home" ? null : (
+                <TabsList className="rounded-2xl" data-testid="tabs-list">
+                  <TabsTrigger value="home" data-testid="tab-home">
+                    Home
+                  </TabsTrigger>
+                  <TabsTrigger value="inputs" data-testid="tab-inputs">
+                    Inputs
+                  </TabsTrigger>
+                  <TabsTrigger value="assumptions" data-testid="tab-assumptions">
+                    Assumptions
+                  </TabsTrigger>
+                  <TabsTrigger value="observations" data-testid="tab-observations">
+                    Observations & Analysis
+                  </TabsTrigger>
+                  <TabsTrigger value="summary" data-testid="tab-summary">
+                    Summary
+                  </TabsTrigger>
+                </TabsList>
+              )}
 
-              <div
+              {activeTab === "home" ? null : <div
                 className="glass hairline rounded-2xl px-4 py-3"
                 data-testid="readiness-panel"
               >
@@ -674,7 +676,7 @@ export default function TcoBaseline() {
                 >
                   Endpoints present + some spend captured.
                 </div>
-              </div>
+              </div>}
             </div>
 
             <TabsContent value="home" className="mt-5" data-testid="panel-home">
