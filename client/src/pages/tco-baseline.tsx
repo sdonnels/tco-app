@@ -235,7 +235,7 @@ function InlineInfo(props: {
 export default function TcoBaseline() {
   const [dark, setDark] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    "home" | "inputs" | "assumptions" | "trace" | "summary"
+    "home" | "inputs" | "assumptions" | "observations" | "summary"
   >("home");
 
   const [inputs, setInputs] = useState<Inputs>({
@@ -303,8 +303,8 @@ export default function TcoBaseline() {
         value: (tier1Fte ?? derivedTier1) * tier1Salary,
         basis:
           tier1Fte !== undefined
-            ? `${tier1Fte} FTE \u00d7 ${fmtMoney(tier1Salary)} (input salary)`
-            : `${derivedTier1.toFixed(2)} FTE (assumed ratio) \u00d7 ${fmtMoney(tier1Salary)} (assumed tier1 salary)`,
+            ? `${tier1Fte} FTE × ${fmtMoney(tier1Salary)} (input salary)`
+            : `${derivedTier1.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier1Salary)} (assumed tier1 salary)`,
         isAssumed: tier1Fte === undefined,
       },
       {
@@ -313,8 +313,8 @@ export default function TcoBaseline() {
         value: (tier2Fte ?? derivedTier2) * tier2Salary,
         basis:
           tier2Fte !== undefined
-            ? `${tier2Fte} FTE \u00d7 ${fmtMoney(tier2Salary)} (assumed salary)`
-            : `${derivedTier2.toFixed(2)} FTE (assumed ratio) \u00d7 ${fmtMoney(tier2Salary)} (assumed salary)`,
+            ? `${tier2Fte} FTE × ${fmtMoney(tier2Salary)} (assumed salary)`
+            : `${derivedTier2.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier2Salary)} (assumed salary)`,
         isAssumed: tier2Fte === undefined,
       },
       {
@@ -323,8 +323,8 @@ export default function TcoBaseline() {
         value: (tier3Fte ?? derivedTier3) * tier3Salary,
         basis:
           tier3Fte !== undefined
-            ? `${tier3Fte} FTE \u00d7 ${fmtMoney(tier3Salary)} (assumed salary)`
-            : `${derivedTier3.toFixed(2)} FTE (assumed ratio) \u00d7 ${fmtMoney(tier3Salary)} (assumed salary)`,
+            ? `${tier3Fte} FTE × ${fmtMoney(tier3Salary)} (assumed salary)`
+            : `${derivedTier3.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier3Salary)} (assumed salary)`,
         isAssumed: tier3Fte === undefined,
       },
     ];
@@ -359,7 +359,7 @@ export default function TcoBaseline() {
         basis:
           inputs.licensing.securityToolingAnnual !== undefined
             ? `${fmtMoney(inputs.licensing.securityToolingAnnual)} (input)`
-            : `${fmtNumber(endpoints)} endpoints \u00d7 ${fmtMoney(assumptions.licensingBenchmarks.securityPerEndpoint)} per endpoint (assumption)`,
+            : `${fmtNumber(endpoints)} endpoints × ${fmtMoney(assumptions.licensingBenchmarks.securityPerEndpoint)} per endpoint (assumption)`,
         isAssumed: inputs.licensing.securityToolingAnnual === undefined,
       },
       {
@@ -371,7 +371,7 @@ export default function TcoBaseline() {
         basis:
           inputs.licensing.managementToolingAnnual !== undefined
             ? `${fmtMoney(inputs.licensing.managementToolingAnnual)} (input)`
-            : `${fmtNumber(endpoints)} endpoints \u00d7 ${fmtMoney(assumptions.licensingBenchmarks.uemPerEndpoint)} per endpoint (assumption)`,
+            : `${fmtNumber(endpoints)} endpoints × ${fmtMoney(assumptions.licensingBenchmarks.uemPerEndpoint)} per endpoint (assumption)`,
         isAssumed: inputs.licensing.managementToolingAnnual === undefined,
       },
     ];
@@ -514,21 +514,21 @@ export default function TcoBaseline() {
                   >
                     Neutral / Unbiased Baseline
                   </Badge>
-                  <span className="hidden sm:inline"></span>
+                  <span className="hidden sm:inline">•</span>
                   <span className="hidden sm:inline">Mirror reality. No ROI.</span>
                 </div>
                 <h1
                   className="mt-2 font-serif text-3xl tracking-tight sm:text-4xl"
                   data-testid="text-title"
                 >
-                  TCO Baseline Micro-Assessment
+                  TCO Baseline Assessment
                 </h1>
                 <p
                   className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground"
                   data-testid="text-subtitle"
                 >
                   Define your current state with transparent inputs, explicit assumptions,
-                  and defensible math. This produces a baseline onlyno future-state
+                  and defensible math. This produces a baseline only—no future-state
                   scenarios, no savings narratives.
                 </p>
               </div>
@@ -594,21 +594,21 @@ export default function TcoBaseline() {
               <MiniKpi
                 label="Cost per endpoint"
                 value={derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"}
-                hint="Baseline  endpoints"
+                hint="Baseline ÷ endpoints"
                 testId="kpi-cost-per-endpoint"
               />
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <InlineInfo
-                title="Governed inputs  traceable output"
+                title="Governed inputs → traceable output"
                 body="Every total is explainable. When an input is missing, the tool uses an explicit assumption and labels it."
                 icon={<Lock className="h-4 w-4" />}
                 testId="info-governance"
               />
               <InlineInfo
                 title="Baseline only (no ROI)"
-                body="This tool wont model future state, savings, or vendor comparisons. Its designed to earn trust first."
+                body="This tool won't model future state, savings, or vendor comparisons. It's designed to earn trust first."
                 icon={<Shield className="h-4 w-4" />}
                 testId="info-baseline-only"
               />
@@ -634,8 +634,8 @@ export default function TcoBaseline() {
                 <TabsTrigger value="assumptions" data-testid="tab-assumptions">
                   Assumptions
                 </TabsTrigger>
-                <TabsTrigger value="trace" data-testid="tab-trace">
-                  Trace
+                <TabsTrigger value="observations" data-testid="tab-observations">
+                  Observations & Analysis
                 </TabsTrigger>
                 <TabsTrigger value="summary" data-testid="tab-summary">
                   Summary
@@ -678,11 +678,7 @@ export default function TcoBaseline() {
             </div>
 
             <TabsContent value="home" className="mt-5" data-testid="panel-home">
-              <TcoHome
-                onStart={() => setActiveTab("inputs")}
-                onOpenAssumptions={() => setActiveTab("assumptions")}
-                onOpenTrace={() => setActiveTab("trace")}
-              />
+              <TcoHome onStartBaseline={() => setActiveTab("inputs")} />
             </TabsContent>
 
             <TabsContent value="inputs" className="mt-5" data-testid="panel-inputs">
@@ -692,7 +688,7 @@ export default function TcoBaseline() {
                     icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
                     title="Environment facts"
-                    description="Enter what you know. Leave unknowns blankassumptions will be explicit and challengeable."
+                    description="Enter what you know. Leave unknowns blank—assumptions will be explicit and challengeable."
                     testId="header-inputs"
                   />
 
@@ -1072,7 +1068,7 @@ export default function TcoBaseline() {
                       </div>
                       <InlineInfo
                         title="Why this matters"
-                        body="These are baseline context flags, not maturity scoring. They dont change totals unless you enter actual spend."
+                        body="These are baseline context flags, not maturity scoring. They don't change totals unless you enter actual spend."
                         icon={<BookOpen className="h-4 w-4" />}
                         testId="info-presence"
                       />
@@ -1141,57 +1137,6 @@ export default function TcoBaseline() {
                           />
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="glass hairline rounded-3xl p-6">
-                  <SectionHeader
-                    icon={<Sparkles className="h-5 w-5 text-primary" />}
-                    eyebrow="Inputs"
-                    title="Observations (human commentary)"
-                    description="Capture caveats, scope notes, and anything a client should hearwithout editorializing."
-                    testId="header-observations"
-                  />
-
-                  <div className="mt-6 grid gap-4 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                      <Label htmlFor="notes" data-testid="label-notes">
-                        Notes
-                      </Label>
-                      <Textarea
-                        id="notes"
-                        placeholder="Example: Ticket counts are estimated. Licensing invoices pending. Some endpoints are shared in call centers."
-                        className="mt-2 min-h-28"
-                        value={inputs.observations.notes ?? ""}
-                        onChange={(e) =>
-                          setInputs((s) => ({
-                            ...s,
-                            observations: {
-                              ...s.observations,
-                              notes: e.target.value,
-                            },
-                          }))
-                        }
-                        data-testid="textarea-notes"
-                      />
-                      <div className="mt-2 text-xs text-muted-foreground" data-testid="text-notes-hint">
-                        This section does not affect calculations.
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <InlineInfo
-                        title="Mirror, not microscope"
-                        body="The tool reflects the current state back to the customer. No optimization hints, no scoring."
-                        icon={<ChevronRight className="h-4 w-4" />}
-                        testId="info-mirror"
-                      />
-                      <InlineInfo
-                        title="Transparency over precision theater"
-                        body="When something is unknown, we say soand we show the assumption used (if any)."
-                        icon={<Info className="h-4 w-4" />}
-                        testId="info-transparency"
-                      />
                     </div>
                   </div>
                 </Card>
@@ -1326,7 +1271,7 @@ export default function TcoBaseline() {
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-salary-hint">
-                      These are used only when an input salary isnt provided.
+                      These are used only when an input salary isn't provided.
                     </div>
                   </div>
 
@@ -1383,7 +1328,7 @@ export default function TcoBaseline() {
                 <div className="grid gap-4 lg:grid-cols-2">
                   <InlineInfo
                     title="Assumption application logic"
-                    body="Input present  use input. Input missing  use assumption. Input always overrides assumption."
+                    body="Input present → use input. Input missing → use assumption. Input always overrides assumption."
                     icon={<CheckCircle2 className="h-4 w-4" />}
                     testId="info-logic"
                   />
@@ -1397,83 +1342,119 @@ export default function TcoBaseline() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="trace" className="mt-5" data-testid="panel-trace">
+            <TabsContent value="observations" className="mt-5" data-testid="panel-observations">
               <Card className="glass hairline rounded-3xl p-6">
                 <SectionHeader
-                  icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
-                  eyebrow="Trace"
-                  title="Every number explainable"
-                  description="This is the defensibility layer: the math and the basis for each line item."
-                  testId="header-trace"
+                  icon={<Sparkles className="h-5 w-5 text-primary" />}
+                  eyebrow="Observations & Analysis"
+                  title="Human commentary and trace"
+                  description="This is the defensibility layer: capture caveats and show the math behind each line item."
+                  testId="header-observations"
                 />
 
                 <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                  <div className="lg:col-span-2 space-y-4" data-testid="trace-lines">
-                    {[
-                      { title: "Labor", lines: derived.laborLines },
-                      { title: "Licensing", lines: derived.licensingLines },
-                      { title: "Overhead", lines: derived.overheadLines },
-                    ].map((block) => (
-                      <div
-                        key={block.title}
-                        className="rounded-2xl border bg-card/60"
-                        data-testid={`trace-block-${block.title.toLowerCase()}`}
-                      >
-                        <div className="flex items-center justify-between px-4 py-3">
-                          <div className="text-sm font-semibold" data-testid={`text-trace-title-${block.title.toLowerCase()}`}>
-                            {block.title}
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className="rounded-full"
-                            data-testid={`badge-trace-${block.title.toLowerCase()}`}
-                          >
-                            {block.lines.filter((l) => l.isAssumed).length} assumed
-                          </Badge>
-                        </div>
-                        <Separator />
-                        <div className="divide-y">
-                          {block.lines.map((l) => (
-                            <div
-                              key={l.key}
-                              className="px-4 py-3"
-                              data-testid={`trace-line-${l.key}`}
+                  <div className="lg:col-span-2 space-y-6">
+                    <div>
+                      <Label htmlFor="notes" data-testid="label-notes">
+                        Notes & caveats
+                      </Label>
+                      <Textarea
+                        id="notes"
+                        placeholder="Example: Ticket counts are estimated. Licensing invoices pending. Some endpoints are shared in call centers."
+                        className="mt-2 min-h-28"
+                        value={inputs.observations.notes ?? ""}
+                        onChange={(e) =>
+                          setInputs((s) => ({
+                            ...s,
+                            observations: {
+                              ...s.observations,
+                              notes: e.target.value,
+                            },
+                          }))
+                        }
+                        data-testid="textarea-notes"
+                      />
+                      <div className="mt-2 text-xs text-muted-foreground" data-testid="text-notes-hint">
+                        This section does not affect calculations.
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4" data-testid="trace-section">
+                      <div className="text-sm font-semibold">Calculation trace</div>
+                      {[
+                        { title: "Labor", lines: derived.laborLines },
+                        { title: "Licensing", lines: derived.licensingLines },
+                        { title: "Overhead", lines: derived.overheadLines },
+                      ].map((block) => (
+                        <div
+                          key={block.title}
+                          className="rounded-2xl border bg-card/60"
+                          data-testid={`trace-block-${block.title.toLowerCase()}`}
+                        >
+                          <div className="flex items-center justify-between px-4 py-3">
+                            <div className="text-sm font-semibold" data-testid={`text-trace-title-${block.title.toLowerCase()}`}>
+                              {block.title}
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="rounded-full"
+                              data-testid={`badge-trace-${block.title.toLowerCase()}`}
                             >
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <div className="text-sm font-semibold" data-testid={`text-line-label-${l.key}`}>
-                                      {l.label}
+                              {block.lines.filter((l) => l.isAssumed).length} assumed
+                            </Badge>
+                          </div>
+                          <Separator />
+                          <div className="divide-y">
+                            {block.lines.map((l) => (
+                              <div
+                                key={l.key}
+                                className="px-4 py-3"
+                                data-testid={`trace-line-${l.key}`}
+                              >
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-sm font-semibold" data-testid={`text-line-label-${l.key}`}>
+                                        {l.label}
+                                      </div>
+                                      {l.isAssumed ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="rounded-full"
+                                          data-testid={`badge-assumed-${l.key}`}
+                                        >
+                                          Assumed
+                                        </Badge>
+                                      ) : null}
                                     </div>
-                                    {l.isAssumed ? (
-                                      <Badge
-                                        variant="outline"
-                                        className="rounded-full"
-                                        data-testid={`badge-assumed-${l.key}`}
-                                      >
-                                        Assumed
-                                      </Badge>
-                                    ) : null}
+                                    <div className="mt-1 text-xs text-muted-foreground" data-testid={`text-line-basis-${l.key}`}>
+                                      {l.basis}
+                                    </div>
                                   </div>
-                                  <div className="mt-1 text-xs text-muted-foreground" data-testid={`text-line-basis-${l.key}`}>
-                                    {l.basis}
+                                  <div className="text-sm font-semibold" data-testid={`text-line-value-${l.key}`}>
+                                    {fmtMoney(l.value)}
                                   </div>
-                                </div>
-                                <div className="text-sm font-semibold" data-testid={`text-line-value-${l.key}`}>
-                                  {fmtMoney(l.value)}
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="space-y-4" data-testid="trace-side">
+                  <div className="space-y-4">
+                    <InlineInfo
+                      title="Mirror, not microscope"
+                      body="The tool reflects the current state back to the customer. No optimization hints, no scoring."
+                      icon={<ChevronRight className="h-4 w-4" />}
+                      testId="info-mirror"
+                    />
                     <InlineInfo
                       title="No hidden logic"
-                      body="If a line is assumed, its labeled. If its input, its labeled. Nothing silently defaults."
+                      body="If a line is assumed, it's labeled. If it's input, it's labeled. Nothing silently defaults."
                       icon={<Shield className="h-4 w-4" />}
                       testId="info-no-hidden"
                     />
@@ -1505,14 +1486,6 @@ export default function TcoBaseline() {
                         )}
                       </div>
                     </div>
-                    <Button
-                      variant="secondary"
-                      className="w-full gap-2"
-                      onClick={exportJson}
-                      data-testid="button-export-trace"
-                    >
-                      <FileDown className="h-4 w-4" /> Export JSON (inputs + trace)
-                    </Button>
                   </div>
                 </div>
               </Card>
@@ -1540,7 +1513,7 @@ export default function TcoBaseline() {
                       <MiniKpi
                         label="Cost per endpoint"
                         value={derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"}
-                        hint="Baseline  endpoints"
+                        hint="Baseline ÷ endpoints"
                         testId="kpi-sum-cpe"
                       />
                     </div>
@@ -1607,7 +1580,7 @@ export default function TcoBaseline() {
                   <div className="space-y-4">
                     <InlineInfo
                       title="Client-safe view"
-                      body="This summary intentionally hides numeric assumptions. Use Trace for defensibility when needed."
+                      body="This summary intentionally hides numeric assumptions. Use Observations & Analysis for defensibility when needed."
                       icon={<Shield className="h-4 w-4" />}
                       testId="info-client-safe"
                     />
