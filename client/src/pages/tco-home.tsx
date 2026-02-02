@@ -16,41 +16,6 @@ import { Separator } from "@/components/ui/separator";
 export default function TcoHome(props: { onStartBaseline: () => void }) {
   return (
     <div className="grid gap-6" data-testid="home-root">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: "easeOut" }}
-      >
-        <Card className="glass hairline rounded-3xl p-6">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="secondary"
-                className="rounded-full"
-                data-testid="badge-home-title"
-              >
-                EUC Total Cost of Ownership
-              </Badge>
-            </div>
-
-            <h1
-              className="mt-3 font-serif text-3xl tracking-tight sm:text-4xl"
-              data-testid="text-home-title"
-            >
-              TCO Micro-Assessment Platform
-            </h1>
-            <p
-              className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground"
-              data-testid="text-home-subtitle"
-            >
-              Two distinct assessment paths to help you understand your current EUC
-              environment. Each has a specific mandate and guardrails to keep it true to
-              its intended purpose.
-            </p>
-          </div>
-        </Card>
-      </motion.div>
-
       <div className="grid gap-6 lg:grid-cols-2" data-testid="home-assessment-options">
         <motion.div
           initial={{ opacity: 0, x: -10 }}

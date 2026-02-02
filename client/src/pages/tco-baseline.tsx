@@ -512,24 +512,22 @@ export default function TcoBaseline() {
                     className="rounded-full"
                     data-testid="badge-neutral"
                   >
-                    Neutral / Unbiased Baseline
+                    EUC Total Cost of Ownership
                   </Badge>
-                  <span className="hidden sm:inline">•</span>
-                  <span className="hidden sm:inline">Mirror reality. No ROI.</span>
                 </div>
                 <h1
                   className="mt-2 font-serif text-3xl tracking-tight sm:text-4xl"
                   data-testid="text-title"
                 >
-                  TCO Baseline Assessment
+                  TCO Micro-Assessment Platform
                 </h1>
                 <p
                   className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground"
                   data-testid="text-subtitle"
                 >
-                  Define your current state with transparent inputs, explicit assumptions,
-                  and defensible math. This produces a baseline only—no future-state
-                  scenarios, no savings narratives.
+                  {activeTab === "home"
+                    ? "Two distinct assessment paths to help you understand your current EUC environment. Each has a specific mandate and guardrails to keep it true to its intended purpose."
+                    : "Define your current state with transparent inputs, explicit assumptions, and defensible math. This produces a baseline only—no future-state scenarios, no savings narratives."}
                 </p>
               </div>
 
@@ -578,41 +576,45 @@ export default function TcoBaseline() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <MiniKpi
-                label="Total endpoints"
-                value={fmtNumber(derived.endpoints)}
-                hint="Derived from device counts"
-                testId="kpi-endpoints"
-              />
-              <MiniKpi
-                label="Annual baseline TCO"
-                value={fmtMoney(derived.totalAnnualTco)}
-                hint="Labor + licensing + overhead"
-                testId="kpi-total-tco"
-              />
-              <MiniKpi
-                label="Cost per endpoint"
-                value={derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"}
-                hint="Baseline ÷ endpoints"
-                testId="kpi-cost-per-endpoint"
-              />
-            </div>
+            {activeTab !== "home" && (
+              <>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <MiniKpi
+                    label="Total endpoints"
+                    value={fmtNumber(derived.endpoints)}
+                    hint="Derived from device counts"
+                    testId="kpi-endpoints"
+                  />
+                  <MiniKpi
+                    label="Annual baseline TCO"
+                    value={fmtMoney(derived.totalAnnualTco)}
+                    hint="Labor + licensing + overhead"
+                    testId="kpi-total-tco"
+                  />
+                  <MiniKpi
+                    label="Cost per endpoint"
+                    value={derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"}
+                    hint="Baseline ÷ endpoints"
+                    testId="kpi-cost-per-endpoint"
+                  />
+                </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <InlineInfo
-                title="Governed inputs → traceable output"
-                body="Every total is explainable. When an input is missing, the tool uses an explicit assumption and labels it."
-                icon={<Lock className="h-4 w-4" />}
-                testId="info-governance"
-              />
-              <InlineInfo
-                title="Baseline only (no ROI)"
-                body="This tool won't model future state, savings, or vendor comparisons. It's designed to earn trust first."
-                icon={<Shield className="h-4 w-4" />}
-                testId="info-baseline-only"
-              />
-            </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <InlineInfo
+                    title="Governed inputs → traceable output"
+                    body="Every total is explainable. When an input is missing, the tool uses an explicit assumption and labels it."
+                    icon={<Lock className="h-4 w-4" />}
+                    testId="info-governance"
+                  />
+                  <InlineInfo
+                    title="Baseline only (no ROI)"
+                    body="This tool won't model future state, savings, or vendor comparisons. It's designed to earn trust first."
+                    icon={<Shield className="h-4 w-4" />}
+                    testId="info-baseline-only"
+                  />
+                </div>
+              </>
+            )}
           </motion.div>
         </header>
 
