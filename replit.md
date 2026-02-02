@@ -114,3 +114,12 @@ Preferred communication style: Simple, everyday language.
 - `react-hook-form` / `@hookform/resolvers` - Form handling
 - `date-fns` - Date utilities
 - `xlsx` - Excel file handling (for potential export features)
+
+## Documentation
+
+Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` which includes:
+- Full feature description and tool overview
+- All 15 assumptions with industry-sourced justifications
+- Calculation formulas and derived metrics
+- Export format specifications (JSON, Audit Trail, Justifications)
+- Onboarding tour and readiness tracker details
