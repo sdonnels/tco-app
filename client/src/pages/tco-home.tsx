@@ -82,14 +82,14 @@ export default function TcoHome(props: {
                 className="mt-3 font-serif text-2xl tracking-tight sm:text-3xl"
                 data-testid="text-home-title"
               >
-                What this tool is (and isnt)
+                What this tool is (and isn't)
               </h2>
               <p
                 className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground"
                 data-testid="text-home-subtitle"
               >
                 This produces a credible, defensible current-state TCO baseline for
-                desktops and applicationsin an enterprise EUC environment. Its designed
+                desktops and applications in an enterprise EUC environment. It's designed
                 to support a micro-assessment conversation without turning into a sales
                 artifact.
               </p>
@@ -107,7 +107,7 @@ export default function TcoHome(props: {
                 className="text-xs text-muted-foreground"
                 data-testid="text-home-start-hint"
               >
-                Takes ~10 minutes if data is handy.
+                Takes ~10–13 minutes if data is handy.
               </div>
             </div>
           </div>
@@ -159,8 +159,8 @@ export default function TcoHome(props: {
                 data-testid="text-home-mandate-body"
               >
                 The purpose is to establish a single source of truth for what the
-                environment actually costs today with transparency over precision
-                theater. No what-if scenarios, no future-state modeling, and no
+                environment actually costs today — with transparency over precision
+                theater. No “what-if” scenarios, no future-state modeling, and no
                 savings narrative until the baseline is solid, explainable, and trusted.
               </p>
             </div>
@@ -285,7 +285,7 @@ export default function TcoHome(props: {
               },
               {
                 t: "Review assumptions",
-                d: "Validate or override only whats needed.",
+                d: "Validate or override only what's needed.",
                 action: (
                   <Button
                     variant="secondary"
@@ -315,7 +315,10 @@ export default function TcoHome(props: {
                 t: "Deliver baseline artifact",
                 d: "Use Summary for client-safe view; export JSON for defensibility.",
                 action: (
-                  <div className="text-xs text-muted-foreground" data-testid="text-step-export">
+                  <div
+                    className="text-xs text-muted-foreground"
+                    data-testid="text-step-export"
+                  >
                     Export lives in the header
                   </div>
                 ),
@@ -328,7 +331,10 @@ export default function TcoHome(props: {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold" data-testid={`text-step-title-${idx}`}>
+                    <div
+                      className="text-sm font-semibold"
+                      data-testid={`text-step-title-${idx}`}
+                    >
                       {idx + 1}. {s.t}
                     </div>
                     <div
@@ -355,7 +361,7 @@ export default function TcoHome(props: {
               className="mt-1 text-sm leading-relaxed text-muted-foreground"
               data-testid="text-end-result-body"
             >
-              A single, current-state baseline you can stand behind live with a
+              A single, current-state baseline you can stand behind live — with a
               client-safe summary and a traceable export that shows assumptions and
               input coverage.
             </div>
