@@ -806,53 +806,91 @@ export default function TcoBaseline() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setInputs({
-                        project: {},
-                        environment: {},
-                        categoryRollups: {},
-                        vdiDaas: {
-                          vdiPresent: "unknown",
-                          citrixPresent: "unknown",
-                          avdPresent: "unknown",
-                          w365Present: "unknown",
-                          horizonPresent: "unknown",
-                          parallelsPresent: "unknown",
-                        },
-                        toolPresence: {
-                          intunePresent: "unknown",
-                          sccmPresent: "unknown",
-                          workspaceOnePresent: "unknown",
-                          jamfPresent: "unknown",
-                          controlUpPresent: "unknown",
-                          nerdioPresent: "unknown",
-                        },
-                        managedServices: {
-                          outsourcedEndpointMgmt: false,
-                          outsourcedSecurity: false,
-                          outsourcedPatching: false,
-                          outsourcedHelpdesk: false,
-                          outsourcedTier2Plus: false,
-                          outsourcedOther: false,
-                        },
-                        observations: {},
-                      });
-                    }}
-                    data-testid="button-reset"
+                {activeTab !== "home" && (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        setInputs({
+                          project: {},
+                          environment: {},
+                          categoryRollups: {},
+                          vdiDaas: {
+                            vdiPresent: "unknown",
+                            citrixPresent: "unknown",
+                            avdPresent: "unknown",
+                            w365Present: "unknown",
+                            horizonPresent: "unknown",
+                            parallelsPresent: "unknown",
+                          },
+                          toolPresence: {
+                            intunePresent: "unknown",
+                            sccmPresent: "unknown",
+                            workspaceOnePresent: "unknown",
+                            jamfPresent: "unknown",
+                            controlUpPresent: "unknown",
+                            nerdioPresent: "unknown",
+                          },
+                          managedServices: {
+                            outsourcedEndpointMgmt: false,
+                            outsourcedSecurity: false,
+                            outsourcedPatching: false,
+                            outsourcedHelpdesk: false,
+                            outsourcedTier2Plus: false,
+                            outsourcedOther: false,
+                          },
+                          observations: {},
+                        });
+                      }}
+                      data-testid="button-reset"
+                    >
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={exportJson}
+                      className="gap-2"
+                      data-testid="button-export"
+                    >
+                      <FileDown className="h-4 w-4" /> Export baseline
+                    </Button>
+                  </div>
+                )}
+
+                {activeTab !== "home" && (
+                  <div
+                    className="mt-3 rounded-2xl border border-border/50 bg-muted/30 px-4 py-3"
+                    data-testid="readiness-panel"
                   >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={exportJson}
-                    className="gap-2"
-                    data-testid="button-export"
-                  >
-                    <FileDown className="h-4 w-4" /> Export baseline
-                  </Button>
-                </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-medium text-muted-foreground">
+                          Readiness
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-sm font-semibold" data-testid="text-readiness">
+                            {derived.readinessScore >= 100
+                              ? "Ready"
+                              : derived.readinessScore >= 50
+                                ? "In progress"
+                                : "Not ready"}
+                          </span>
+                          <span className="kbd" data-testid="kbd-score">
+                            {derived.readinessScore}/100
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-36">
+                        <Progress value={derived.readinessScore} data-testid="progress-readiness" />
+                      </div>
+                    </div>
+                    <div
+                      className="mt-2 text-xs text-muted-foreground"
+                      data-testid="text-readiness-hint"
+                    >
+                      Endpoints present + some spend captured.
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -879,20 +917,6 @@ export default function TcoBaseline() {
                   />
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <InlineInfo
-                    title="Governed inputs → traceable output"
-                    body="Every total is explainable. When an input is missing, the tool uses an explicit assumption and labels it."
-                    icon={<Lock className="h-4 w-4" />}
-                    testId="info-governance"
-                  />
-                  <InlineInfo
-                    title="Baseline only (no ROI)"
-                    body="This tool won't model future state, savings, or vendor comparisons. It's designed to earn trust first."
-                    icon={<Shield className="h-4 w-4" />}
-                    testId="info-baseline-only"
-                  />
-                </div>
               </>
             )}
           </motion.div>
@@ -926,39 +950,6 @@ export default function TcoBaseline() {
                 </TabsList>
               )}
 
-              {activeTab === "home" ? null : <div
-                className="glass hairline rounded-2xl px-4 py-3"
-                data-testid="readiness-panel"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground">
-                      Readiness
-                    </div>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="text-sm font-semibold" data-testid="text-readiness">
-                        {derived.readinessScore >= 100
-                          ? "Ready"
-                          : derived.readinessScore >= 50
-                            ? "In progress"
-                            : "Not ready"}
-                      </span>
-                      <span className="kbd" data-testid="kbd-score">
-                        {derived.readinessScore}/100
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-36">
-                    <Progress value={derived.readinessScore} data-testid="progress-readiness" />
-                  </div>
-                </div>
-                <div
-                  className="mt-2 text-xs text-muted-foreground"
-                  data-testid="text-readiness-hint"
-                >
-                  Endpoints present + some spend captured.
-                </div>
-              </div>}
             </div>
 
             <TabsContent value="home" className="mt-5" data-testid="panel-home">
