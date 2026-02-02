@@ -21,7 +21,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 - **Tool Presence**: Intune, SCCM, Workspace ONE, Jamf, ControlUp, Nerdio
 - **Category Roll-ups**: Optional overrides for total spend per category
 
-### Assumptions (17 values matching Excel)
+### Assumptions (15 values matching Excel)
 - Device Refresh Years: Laptop=3, Desktop=3, Thin Client=5
 - Device Unit Costs: Laptop=$1200, Desktop=$1100, Thin Client=$600
 - Support Ops: Ticket Time=0.5hrs, Deploy Time=1.5hrs, Labor Rate=$50/hr, Tickets/Endpoint=2

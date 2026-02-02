@@ -552,6 +552,211 @@ export default function TcoBaseline() {
     URL.revokeObjectURL(url);
   };
 
+  const exportAuditTrail = () => {
+    const lines: string[] = [];
+    const hr = "═".repeat(70);
+    const hr2 = "─".repeat(70);
+
+    lines.push(hr);
+    lines.push("TCO BASELINE MICRO-ASSESSMENT — AUDIT TRAIL REPORT");
+    lines.push(hr);
+    lines.push(`Generated: ${new Date().toLocaleString()}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ PROJECT INFORMATION" + " ".repeat(48) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  Client Name:        ${inputs.project.clientName ?? "(not provided)"}`);
+    lines.push(`  Assessment Date:    ${inputs.project.assessmentDate ? new Date(inputs.project.assessmentDate).toLocaleDateString() : "(not provided)"}`);
+    lines.push(`  Customer Champion:  ${inputs.project.customerChampion ?? "(not provided)"}`);
+    lines.push(`  XenTegra Engineer:  ${inputs.project.engineerName ?? "(not provided)"}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ ENVIRONMENT INPUTS" + " ".repeat(49) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  User Count:         ${inputs.environment.userCount ?? "(not provided)"}`);
+    lines.push(`  Laptop Count:       ${inputs.environment.laptopCount ?? "(not provided)"}`);
+    lines.push(`  Desktop Count:      ${inputs.environment.desktopCount ?? "(not provided)"}`);
+    lines.push(`  Thin Client Count:  ${inputs.environment.thinClientCount ?? "(not provided)"}`);
+    lines.push(`  ─────────────────────────────────────────────`);
+    lines.push(`  Total Endpoints:    ${derived.endpoints} (derived)`);
+    lines.push(`  VDI Present:        ${inputs.vdiDaas.vdiPresent}`);
+    lines.push(`  VDI % of Users:     ${inputs.vdiDaas.vdiPctOfUsers ?? 0}%`);
+    lines.push(`  ─────────────────────────────────────────────`);
+    lines.push(`  VDI Active:         ${derived.vdiPresent ? "Yes (VDI Present=yes OR VDI%>0)" : "No"}`);
+    lines.push(`  VDI User Count:     ${derived.vdiUserCount} (derived)`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ CATEGORY ROLLUP OVERRIDES" + " ".repeat(42) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    const overrides = [
+      { label: "End-User Devices", value: inputs.categoryRollups.endUserDevicesAnnual, derived: derived.endUserDevicesValue },
+      { label: "Support & Ops", value: inputs.categoryRollups.supportOpsAnnual, derived: derived.supportOpsValue },
+      { label: "Licensing", value: inputs.categoryRollups.licensingAnnual, derived: derived.licensingValue },
+      { label: "Mgmt & Security", value: inputs.categoryRollups.mgmtSecurityAnnual, derived: derived.mgmtSecurityValue },
+      { label: "VDI/DaaS", value: inputs.categoryRollups.vdiDaasAnnual, derived: derived.vdiDaasValue },
+      { label: "Overhead", value: inputs.categoryRollups.overheadAnnual, derived: derived.overheadValue },
+    ];
+    overrides.forEach(o => {
+      const status = o.value !== undefined ? `OVERRIDE: ${fmtMoney(o.value)}` : `DERIVED: ${fmtMoney(o.derived)}`;
+      lines.push(`  ${o.label.padEnd(20)} ${status}`);
+    });
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ VDI / DaaS PLATFORM PRESENCE" + " ".repeat(39) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  Citrix:             ${inputs.vdiDaas.citrixPresent}`);
+    lines.push(`  Azure Virtual Desktop: ${inputs.vdiDaas.avdPresent}`);
+    lines.push(`  Windows 365:        ${inputs.vdiDaas.w365Present}`);
+    lines.push(`  VMware Horizon:     ${inputs.vdiDaas.horizonPresent}`);
+    lines.push(`  Parallels RAS:      ${inputs.vdiDaas.parallelsPresent}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ ENDPOINT & MANAGEMENT TOOL PRESENCE" + " ".repeat(31) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  Intune:             ${inputs.toolPresence.intunePresent}`);
+    lines.push(`  SCCM:               ${inputs.toolPresence.sccmPresent}`);
+    lines.push(`  Workspace ONE:      ${inputs.toolPresence.workspaceOnePresent}`);
+    lines.push(`  Jamf:               ${inputs.toolPresence.jamfPresent}`);
+    lines.push(`  ControlUp:          ${inputs.toolPresence.controlUpPresent}`);
+    lines.push(`  Nerdio:             ${inputs.toolPresence.nerdioPresent}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ MANAGED SERVICES" + " ".repeat(51) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  Total Annual Spend: ${inputs.managedServices.totalAnnualSpend !== undefined ? fmtMoney(inputs.managedServices.totalAnnualSpend) : "(not provided)"}`);
+    lines.push("  Outsourced Functions:");
+    lines.push(`    Endpoint Mgmt:    ${inputs.managedServices.outsourcedEndpointMgmt ? "Yes" : "No"}`);
+    lines.push(`    Security/EDR:     ${inputs.managedServices.outsourcedSecurity ? "Yes" : "No"}`);
+    lines.push(`    Patching:         ${inputs.managedServices.outsourcedPatching ? "Yes" : "No"}`);
+    lines.push(`    Helpdesk/Tier 1:  ${inputs.managedServices.outsourcedHelpdesk ? "Yes" : "No"}`);
+    lines.push(`    Tier 2+ Support:  ${inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"}`);
+    lines.push(`    Other:            ${inputs.managedServices.outsourcedOther ? "Yes" : "No"}`);
+    lines.push(`    Other Description: ${inputs.managedServices.otherDescription ?? "(none)"}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ ASSUMPTIONS REFERENCE TABLE (15 VALUES)" + " ".repeat(27) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push("  DEVICE REFRESH CYCLES:");
+    lines.push(`    Laptop:           ${assumptions.deviceRefreshYears.laptop} years`);
+    lines.push(`    Desktop:          ${assumptions.deviceRefreshYears.desktop} years`);
+    lines.push(`    Thin Client:      ${assumptions.deviceRefreshYears.thinClient} years`);
+    lines.push("");
+    lines.push("  DEVICE UNIT COSTS:");
+    lines.push(`    Laptop:           $${assumptions.deviceUnitCost.laptop}`);
+    lines.push(`    Desktop:          $${assumptions.deviceUnitCost.desktop}`);
+    lines.push(`    Thin Client:      $${assumptions.deviceUnitCost.thinClient}`);
+    lines.push("");
+    lines.push("  SUPPORT OPERATIONS:");
+    lines.push(`    Tickets/Endpoint: ${assumptions.supportOps.ticketsPerEndpointPerYear} per year`);
+    lines.push(`    Ticket Time:      ${assumptions.supportOps.avgTicketHandlingHours} hours`);
+    lines.push(`    Deploy Time:      ${assumptions.supportOps.deploymentHoursPerDevice} hours/device`);
+    lines.push(`    Labor Rate:       $${assumptions.supportOps.blendedLaborRateHourly}/hour`);
+    lines.push("");
+    lines.push("  LICENSING:");
+    lines.push(`    Cost/User/Year:   $${assumptions.licensing.avgCostPerUserPerYear}`);
+    lines.push(`    Coverage:         ${(assumptions.licensing.coveragePct * 100).toFixed(0)}%`);
+    lines.push("");
+    lines.push("  MANAGEMENT & SECURITY:");
+    lines.push(`    Cost/Endpoint:    $${assumptions.mgmtSecurity.costPerEndpointPerYear}/year`);
+    lines.push("");
+    lines.push("  VDI/DaaS:");
+    lines.push(`    Cost/VDI User:    $${assumptions.vdi.platformCostPerVdiUserPerYear}/year`);
+    lines.push("");
+    lines.push("  OVERHEAD:");
+    lines.push(`    % of Subtotal:    ${(assumptions.overhead.pctOfTotal * 100).toFixed(0)}%`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ CALCULATION WIRING — STEP-BY-STEP DERIVATIONS" + " ".repeat(21) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push("");
+
+    derived.categoryLines.forEach((line, idx) => {
+      lines.push(`  [${idx + 1}] ${line.label.toUpperCase()}`);
+      lines.push(`      Source: ${line.isAssumed ? "DERIVED (using assumptions)" : "INPUT (customer-provided)"}`);
+      lines.push(`      Value:  ${fmtMoney(line.value)}`);
+      lines.push(`      Basis:  ${line.basis}`);
+      lines.push("");
+    });
+
+    derived.managedServicesLines.forEach((line, idx) => {
+      lines.push(`  [${derived.categoryLines.length + idx + 1}] ${line.label.toUpperCase()}`);
+      lines.push(`      Source: ${line.isAssumed ? "DERIVED (using assumptions)" : "INPUT (customer-provided)"}`);
+      lines.push(`      Value:  ${fmtMoney(line.value)}`);
+      lines.push(`      Basis:  ${line.basis}`);
+      lines.push("");
+    });
+
+    lines.push(hr2);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ SUMMARY TOTALS" + " ".repeat(53) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  End-User Devices:       ${fmtMoney(derived.endUserDevicesValue)}`);
+    lines.push(`  Support & Operations:   ${fmtMoney(derived.supportOpsValue)}`);
+    lines.push(`  Licensing:              ${fmtMoney(derived.licensingValue)}`);
+    lines.push(`  Management & Security:  ${fmtMoney(derived.mgmtSecurityValue)}`);
+    lines.push(`  VDI/DaaS:               ${fmtMoney(derived.vdiDaasValue)}`);
+    lines.push(`  Overhead:               ${fmtMoney(derived.overheadValue)}`);
+    lines.push(`  Managed Services:       ${fmtMoney(derived.mspSpend)}`);
+    lines.push(`  ─────────────────────────────────────────────`);
+    lines.push(`  TOTAL ANNUAL BASELINE:  ${fmtMoney(derived.totalAnnualTco)}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ PER-UNIT METRICS" + " ".repeat(51) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    lines.push(`  Cost per Endpoint:      ${derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "N/A"}`);
+    lines.push(`  Cost per User:          ${derived.userCount > 0 ? fmtMoney(derived.costPerUser) : "N/A"}`);
+    lines.push(`  VDI Cost per VDI User:  ${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "N/A"}`);
+    lines.push(`  Non-VDI Cost per User:  ${derived.userCount > 0 ? fmtMoney(derived.nonVdiCostPerUser) : "N/A"}`);
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ ASSUMPTIONS USED IN THIS ASSESSMENT" + " ".repeat(31) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    if (derived.assumedLines.length === 0) {
+      lines.push("  None. All values were provided as inputs.");
+    } else {
+      derived.assumedLines.forEach((line) => {
+        lines.push(`  • ${line.label}: ${line.basis}`);
+      });
+    }
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ OBSERVATIONS & NOTES" + " ".repeat(47) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    if (inputs.observations.notes?.trim()) {
+      lines.push(`  ${inputs.observations.notes}`);
+    } else {
+      lines.push("  (No observations recorded)");
+    }
+    lines.push("");
+
+    lines.push(hr);
+    lines.push("END OF AUDIT TRAIL REPORT");
+    lines.push(hr);
+
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const clientSlug = inputs.project.clientName?.replace(/\s+/g, "_").toLowerCase() ?? "baseline";
+    a.download = `tco-audit-trail-${clientSlug}-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="app-shell grain min-h-screen">
       <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
@@ -1717,7 +1922,18 @@ export default function TcoBaseline() {
                     <Separator />
 
                     <div className="space-y-4" data-testid="trace-section">
-                      <div className="text-sm font-semibold">Calculation trace</div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold">Calculation trace</div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          onClick={exportAuditTrail}
+                          data-testid="button-export-audit"
+                        >
+                          <FileDown className="h-4 w-4" /> Export audit trail
+                        </Button>
+                      </div>
                       {[
                         { title: "Cost Categories", lines: derived.categoryLines },
                         { title: "Managed Services", lines: derived.managedServicesLines },
