@@ -922,41 +922,6 @@ export default function TcoBaseline() {
                   </div>
                 )}
 
-                {activeTab !== "home" && (
-                  <div
-                    className="mt-3 rounded-2xl border border-border/50 bg-muted/30 px-4 py-3"
-                    data-testid="readiness-panel"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-medium text-muted-foreground">
-                          Readiness
-                        </div>
-                        <div className="mt-1 flex items-center gap-2">
-                          <span className="text-sm font-semibold" data-testid="text-readiness">
-                            {derived.readinessScore >= 100
-                              ? "Ready"
-                              : derived.readinessScore >= 50
-                                ? "In progress"
-                                : "Not ready"}
-                          </span>
-                          <span className="kbd" data-testid="kbd-score">
-                            {derived.readinessScore}/100
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-36">
-                        <Progress value={derived.readinessScore} data-testid="progress-readiness" />
-                      </div>
-                    </div>
-                    <div
-                      className="mt-2 text-xs text-muted-foreground"
-                      data-testid="text-readiness-hint"
-                    >
-                      Endpoints present + some spend captured.
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -1017,6 +982,40 @@ export default function TcoBaseline() {
               )}
 
             </div>
+
+            {activeTab !== "home" && (
+              <div
+                className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-border/50 bg-muted/20 px-4 py-2"
+                data-testid="readiness-panel"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium text-muted-foreground">Readiness</span>
+                  <span
+                    className={cn(
+                      "text-sm font-semibold",
+                      derived.readinessScore >= 100
+                        ? "text-green-600 dark:text-green-400"
+                        : derived.readinessScore >= 50
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-red-600 dark:text-red-400"
+                    )}
+                    data-testid="text-readiness"
+                  >
+                    {derived.readinessScore >= 100
+                      ? "Ready"
+                      : derived.readinessScore >= 50
+                        ? "In progress"
+                        : "Not ready"}
+                  </span>
+                  <span className="kbd text-xs" data-testid="kbd-score">
+                    {derived.readinessScore}/100
+                  </span>
+                </div>
+                <div className="flex flex-1 max-w-xs items-center gap-2">
+                  <Progress value={derived.readinessScore} data-testid="progress-readiness" />
+                </div>
+              </div>
+            )}
 
             <TabsContent value="home" className="mt-5" data-testid="panel-home">
               <TcoHome onStartBaseline={() => setActiveTab("inputs")} onStartTour={handleStartTour} />
