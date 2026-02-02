@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import TcoHome from "@/pages/tco-home";
+import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
 
 type YesNo = "yes" | "no" | "unknown";
 
@@ -322,6 +323,71 @@ export default function TcoBaseline() {
       pctOfTotal: 0.07,
     },
   });
+
+  const { isTourOpen, startTour, closeTour, completeTour, hasCompletedTour } = useTourState();
+
+  useEffect(() => {
+    if (!hasCompletedTour && activeTab === "home") {
+      const timer = setTimeout(() => {
+        startTour();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const tourSteps: TourStep[] = useMemo(() => [
+    {
+      target: "[data-testid='home-assessment-options']",
+      title: "Choose Your Assessment Path",
+      content: "Start with the Free Baseline Assessment to establish your current-state TCO. The Pro Assessment (coming soon) adds detailed optimization analysis.",
+      placement: "bottom" as const,
+    },
+    {
+      target: "[data-testid='tab-inputs']",
+      title: "Input Your Environment",
+      content: "Enter your user counts, device counts, and any known spending. The tool will derive costs from what you provide.",
+      placement: "bottom" as const,
+      action: () => setActiveTab("inputs"),
+    },
+    {
+      target: "[data-testid='readiness-panel']",
+      title: "Track Your Readiness",
+      content: "This panel shows how complete your assessment is. Hit 100% when you have endpoints and some spending captured.",
+      placement: "bottom" as const,
+    },
+    {
+      target: "[data-testid='tab-assumptions']",
+      title: "Review Assumptions",
+      content: "Every derived value is backed by an explicit assumption. You can adjust these if your environment differs from industry benchmarks.",
+      placement: "bottom" as const,
+      action: () => setActiveTab("assumptions"),
+    },
+    {
+      target: "[data-testid='tab-observations']",
+      title: "Observations & Analysis",
+      content: "See the full calculation trace showing how each number was derived. Add your own notes for documentation.",
+      placement: "bottom" as const,
+      action: () => setActiveTab("observations"),
+    },
+    {
+      target: "[data-testid='tab-summary']",
+      title: "Executive Summary",
+      content: "Get a complete breakdown of your TCO baseline with per-endpoint and per-user metrics.",
+      placement: "bottom" as const,
+      action: () => setActiveTab("summary"),
+    },
+    {
+      target: "[data-testid='button-export']",
+      title: "Export Your Baseline",
+      content: "Download a complete JSON artifact with all inputs, assumptions, calculations, and derived values for full traceability.",
+      placement: "bottom" as const,
+    },
+  ], []);
+
+  const handleStartTour = useCallback(() => {
+    setActiveTab("home");
+    setTimeout(() => startTour(), 100);
+  }, [startTour]);
 
   const derived = useMemo(() => {
     const laptops = nonNeg(inputs.environment.laptopCount) ?? 0;
@@ -953,7 +1019,7 @@ export default function TcoBaseline() {
             </div>
 
             <TabsContent value="home" className="mt-5" data-testid="panel-home">
-              <TcoHome onStartBaseline={() => setActiveTab("inputs")} />
+              <TcoHome onStartBaseline={() => setActiveTab("inputs")} onStartTour={handleStartTour} />
             </TabsContent>
 
             <TabsContent value="inputs" className="mt-5" data-testid="panel-inputs">
@@ -2242,6 +2308,13 @@ export default function TcoBaseline() {
           </div>
         </footer>
       </div>
+
+      <OnboardingTour
+        steps={tourSteps}
+        isOpen={isTourOpen}
+        onClose={closeTour}
+        onComplete={completeTour}
+      />
     </div>
   );
 }

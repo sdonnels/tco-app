@@ -13,7 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-export default function TcoHome(props: { onStartBaseline: () => void }) {
+interface TcoHomeProps {
+  onStartBaseline: () => void;
+  onStartTour?: () => void;
+}
+
+export default function TcoHome({ onStartBaseline, onStartTour }: TcoHomeProps) {
   return (
     <div className="grid gap-6" data-testid="home-root">
       <div className="grid gap-6 lg:grid-cols-2" data-testid="home-assessment-options">
@@ -95,15 +100,28 @@ export default function TcoHome(props: { onStartBaseline: () => void }) {
                 </div>
               </div>
 
-              <Button
-                onClick={props.onStartBaseline}
-                className="mt-6 w-full gap-2"
-                size="lg"
-                data-testid="button-start-baseline"
-              >
-                Start Baseline Assessment
-                <ArrowRight className="h-4 w-4" />
-              </Button>
+              <div className="mt-6 flex flex-col gap-2">
+                <Button
+                  onClick={onStartBaseline}
+                  className="w-full gap-2"
+                  size="lg"
+                  data-testid="button-start-baseline"
+                >
+                  Start Baseline Assessment
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                {onStartTour && (
+                  <Button
+                    variant="outline"
+                    onClick={onStartTour}
+                    className="w-full gap-2"
+                    size="sm"
+                    data-testid="button-take-tour"
+                  >
+                    Take a Quick Tour
+                  </Button>
+                )}
+              </div>
             </div>
           </Card>
         </motion.div>
