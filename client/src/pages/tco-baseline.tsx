@@ -396,15 +396,6 @@ export default function TcoBaseline() {
 
   const { isTourOpen, startTour, closeTour, completeTour, hasCompletedTour } = useTourState();
 
-  useEffect(() => {
-    if (!hasCompletedTour && activeTab === "home") {
-      const timer = setTimeout(() => {
-        startTour();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
   const tourSteps: TourStep[] = useMemo(() => [
     {
       target: "[data-testid='home-assessment-options']",
