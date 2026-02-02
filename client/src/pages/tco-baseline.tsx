@@ -10,8 +10,10 @@ import {
   FileText,
   Info,
   Lock,
+  Printer,
   Shield,
   Sparkles,
+  Table,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1006,6 +1008,254 @@ export default function TcoBaseline() {
     a.download = `tco-assumption-justifications-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportCSV = () => {
+    const rows: string[][] = [];
+    
+    rows.push(["TCO Baseline Micro-Assessment - CSV Export"]);
+    rows.push(["Generated", new Date().toLocaleString()]);
+    rows.push([]);
+    
+    rows.push(["PROJECT INFORMATION"]);
+    rows.push(["Client Name", inputs.project.clientName ?? ""]);
+    rows.push(["Assessment Date", inputs.project.assessmentDate ?? ""]);
+    rows.push(["Customer Champion", inputs.project.customerChampion ?? ""]);
+    rows.push(["XenTegra Engineer", inputs.project.engineerName ?? ""]);
+    rows.push([]);
+    
+    rows.push(["ENVIRONMENT"]);
+    rows.push(["User Count", String(inputs.environment.userCount ?? 0)]);
+    rows.push(["Laptop Count", String(inputs.environment.laptopCount ?? 0)]);
+    rows.push(["Desktop Count", String(inputs.environment.desktopCount ?? 0)]);
+    rows.push(["Thin Client Count", String(inputs.environment.thinClientCount ?? 0)]);
+    rows.push(["Total Endpoints", String(derived.endpoints)]);
+    rows.push(["VDI Present", inputs.vdiDaas.vdiPresent]);
+    rows.push(["VDI % of Users", String(inputs.vdiDaas.vdiPctOfUsers ?? 0)]);
+    rows.push(["VDI User Count", String(derived.vdiUserCount)]);
+    rows.push([]);
+    
+    rows.push(["COST CATEGORIES", "Annual Amount", "Source"]);
+    rows.push(["End-User Devices", String(derived.endUserDevicesValue), inputs.categoryRollups.endUserDevicesAnnual !== undefined ? "Override" : "Calculated"]);
+    rows.push(["Support & Operations", String(derived.supportOpsValue), inputs.categoryRollups.supportOpsAnnual !== undefined ? "Override" : "Calculated"]);
+    rows.push(["Licensing", String(derived.licensingValue), inputs.categoryRollups.licensingAnnual !== undefined ? "Override" : "Calculated"]);
+    rows.push(["Management & Security", String(derived.mgmtSecurityValue), inputs.categoryRollups.mgmtSecurityAnnual !== undefined ? "Override" : "Calculated"]);
+    rows.push(["VDI/DaaS", String(derived.vdiDaasValue), inputs.categoryRollups.vdiDaasAnnual !== undefined ? "Override" : "Calculated"]);
+    rows.push(["Overhead", String(derived.overheadValue), inputs.categoryRollups.overheadAnnual !== undefined ? "Override" : "Calculated"]);
+    rows.push(["Managed Services", String(derived.mspSpend), "Input"]);
+    rows.push([]);
+    
+    rows.push(["SUMMARY METRICS"]);
+    rows.push(["Total Annual Baseline", String(derived.totalAnnualTco)]);
+    rows.push(["Cost per Endpoint", derived.endpoints > 0 ? String(derived.costPerEndpoint) : "N/A"]);
+    rows.push(["Cost per User", derived.userCount > 0 ? String(derived.costPerUser) : "N/A"]);
+    rows.push(["VDI Cost per VDI User", derived.vdiUserCount > 0 ? String(derived.vdiCostPerVdiUser) : "N/A"]);
+    rows.push(["Non-VDI Cost per User", derived.userCount > 0 ? String(derived.nonVdiCostPerUser) : "N/A"]);
+    rows.push([]);
+    
+    rows.push(["ASSUMPTIONS"]);
+    rows.push(["Laptop Refresh Years", String(assumptions.deviceRefreshYears.laptop)]);
+    rows.push(["Desktop Refresh Years", String(assumptions.deviceRefreshYears.desktop)]);
+    rows.push(["Thin Client Refresh Years", String(assumptions.deviceRefreshYears.thinClient)]);
+    rows.push(["Laptop Unit Cost", String(assumptions.deviceUnitCost.laptop)]);
+    rows.push(["Desktop Unit Cost", String(assumptions.deviceUnitCost.desktop)]);
+    rows.push(["Thin Client Unit Cost", String(assumptions.deviceUnitCost.thinClient)]);
+    rows.push(["Tickets per Endpoint/Year", String(assumptions.supportOps.ticketsPerEndpointPerYear)]);
+    rows.push(["Avg Ticket Handling Hours", String(assumptions.supportOps.avgTicketHandlingHours)]);
+    rows.push(["Deployment Hours/Device", String(assumptions.supportOps.deploymentHoursPerDevice)]);
+    rows.push(["Blended Labor Rate ($/hr)", String(assumptions.supportOps.blendedLaborRateHourly)]);
+    rows.push(["License Cost/User/Year", String(assumptions.licensing.avgCostPerUserPerYear)]);
+    rows.push(["License Coverage %", String(assumptions.licensing.coveragePct * 100)]);
+    rows.push(["Mgmt & Security/Endpoint", String(assumptions.mgmtSecurity.costPerEndpointPerYear)]);
+    rows.push(["VDI Platform Cost/User", String(assumptions.vdi.platformCostPerVdiUserPerYear)]);
+    rows.push(["Overhead %", String(assumptions.overhead.pctOfTotal * 100)]);
+    
+    const escapeCSV = (value: string) => {
+      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+    
+    const csvContent = rows.map(row => row.map(escapeCSV).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const clientSlug = inputs.project.clientName?.replace(/\s+/g, "_").toLowerCase() ?? "baseline";
+    a.download = `tco-baseline-${clientSlug}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow popups to generate PDF");
+      return;
+    }
+
+    const clientName = inputs.project.clientName ?? "TCO Baseline";
+    const date = new Date().toLocaleDateString();
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TCO Baseline Report - ${clientName}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.5;
+      color: #1a1a1a;
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 28px; margin-bottom: 8px; color: #0f172a; }
+    h2 { font-size: 18px; margin: 24px 0 12px; color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+    h3 { font-size: 14px; margin: 16px 0 8px; color: #475569; }
+    .header { border-bottom: 3px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+    .subtitle { color: #64748b; font-size: 14px; }
+    .meta { display: flex; gap: 32px; margin-top: 12px; font-size: 12px; color: #64748b; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #64748b; }
+    td { font-size: 13px; }
+    .amount { text-align: right; font-family: 'SF Mono', Monaco, monospace; }
+    .total-row { background: #f1f5f9; font-weight: 600; }
+    .total-row td { border-top: 2px solid #cbd5e1; }
+    .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+    .metric-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .metric-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .metric-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
+    .disclaimer { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; font-size: 11px; color: #92400e; margin: 16px 0; }
+    @media print {
+      body { padding: 20px; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>TCO Baseline Report</h1>
+    <p class="subtitle">End User Computing Total Cost of Ownership Assessment</p>
+    <div class="meta">
+      <span><strong>Client:</strong> ${clientName}</span>
+      <span><strong>Date:</strong> ${date}</span>
+      ${inputs.project.customerChampion ? `<span><strong>Champion:</strong> ${inputs.project.customerChampion}</span>` : ""}
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Disclaimer:</strong> This report represents a current-state TCO baseline only. 
+    It does not include ROI projections, savings estimates, or solution recommendations.
+  </div>
+
+  <h2>Environment Summary</h2>
+  <table>
+    <tr><td>Total Users</td><td class="amount">${fmtNumber(derived.userCount)}</td></tr>
+    <tr><td>Total Endpoints</td><td class="amount">${fmtNumber(derived.endpoints)}</td></tr>
+    <tr><td>Laptops</td><td class="amount">${fmtNumber(inputs.environment.laptopCount ?? 0)}</td></tr>
+    <tr><td>Desktops</td><td class="amount">${fmtNumber(inputs.environment.desktopCount ?? 0)}</td></tr>
+    <tr><td>Thin Clients</td><td class="amount">${fmtNumber(inputs.environment.thinClientCount ?? 0)}</td></tr>
+    ${derived.vdiPresent ? `<tr><td>VDI Users</td><td class="amount">${fmtNumber(derived.vdiUserCount)} (${inputs.vdiDaas.vdiPctOfUsers ?? 0}%)</td></tr>` : ""}
+  </table>
+
+  <h2>Annual Cost Breakdown</h2>
+  <table>
+    <thead>
+      <tr><th>Category</th><th class="amount">Annual Cost</th><th class="amount">% of Total</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>End-User Devices</td>
+        <td class="amount">${fmtMoney(derived.endUserDevicesValue)}</td>
+        <td class="amount">${pct(derived.endUserDevicesValue, derived.totalAnnualTco)}%</td>
+      </tr>
+      <tr>
+        <td>Support & Operations</td>
+        <td class="amount">${fmtMoney(derived.supportOpsValue)}</td>
+        <td class="amount">${pct(derived.supportOpsValue, derived.totalAnnualTco)}%</td>
+      </tr>
+      <tr>
+        <td>Licensing</td>
+        <td class="amount">${fmtMoney(derived.licensingValue)}</td>
+        <td class="amount">${pct(derived.licensingValue, derived.totalAnnualTco)}%</td>
+      </tr>
+      <tr>
+        <td>Management & Security</td>
+        <td class="amount">${fmtMoney(derived.mgmtSecurityValue)}</td>
+        <td class="amount">${pct(derived.mgmtSecurityValue, derived.totalAnnualTco)}%</td>
+      </tr>
+      ${derived.vdiPresent ? `
+      <tr>
+        <td>VDI/DaaS</td>
+        <td class="amount">${fmtMoney(derived.vdiDaasValue)}</td>
+        <td class="amount">${pct(derived.vdiDaasValue, derived.totalAnnualTco)}%</td>
+      </tr>` : ""}
+      <tr>
+        <td>Overhead</td>
+        <td class="amount">${fmtMoney(derived.overheadValue)}</td>
+        <td class="amount">${pct(derived.overheadValue, derived.totalAnnualTco)}%</td>
+      </tr>
+      ${derived.mspSpend > 0 ? `
+      <tr>
+        <td>Managed Services</td>
+        <td class="amount">${fmtMoney(derived.mspSpend)}</td>
+        <td class="amount">${pct(derived.mspSpend, derived.totalAnnualTco)}%</td>
+      </tr>` : ""}
+      <tr class="total-row">
+        <td><strong>Total Annual Baseline</strong></td>
+        <td class="amount"><strong>${fmtMoney(derived.totalAnnualTco)}</strong></td>
+        <td class="amount"><strong>100%</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Per-Unit Metrics</h2>
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-value">${derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "N/A"}</div>
+      <div class="metric-label">Cost per Endpoint</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">${derived.userCount > 0 ? fmtMoney(derived.costPerUser) : "N/A"}</div>
+      <div class="metric-label">Cost per User</div>
+    </div>
+    ${derived.vdiPresent ? `
+    <div class="metric-card">
+      <div class="metric-value">${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "N/A"}</div>
+      <div class="metric-label">VDI Cost per VDI User</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">${derived.userCount > 0 ? fmtMoney(derived.nonVdiCostPerUser) : "N/A"}</div>
+      <div class="metric-label">Non-VDI Cost per User</div>
+    </div>` : ""}
+  </div>
+
+  ${inputs.observations.notes?.trim() ? `
+  <h2>Observations</h2>
+  <p style="font-size: 13px; color: #475569;">${inputs.observations.notes}</p>
+  ` : ""}
+
+  <div class="footer">
+    <p>TCO Baseline Micro-Assessment Tool | Generated ${new Date().toLocaleString()}</p>
+    <p style="margin-top: 4px;">This is a vendor-neutral, current-state baseline assessment.</p>
+  </div>
+
+  <script>
+    window.onload = function() {
+      window.print();
+    };
+  </script>
+</body>
+</html>`;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
   };
 
   return (
@@ -2475,16 +2725,35 @@ export default function TcoBaseline() {
                       icon={<Info className="h-4 w-4" />}
                       testId="info-ready"
                     />
-                    <Button className="w-full gap-2" onClick={exportJson} data-testid="button-export-summary">
-                      <FileDown className="h-4 w-4" /> Export baseline JSON
+                    <div className="text-xs font-medium tracking-wide text-muted-foreground mb-2">
+                      Export Options
+                    </div>
+                    <Button className="w-full gap-2" onClick={exportJson} data-testid="button-export-json">
+                      <FileDown className="h-4 w-4" /> Export JSON
                     </Button>
                     <Button
                       variant="secondary"
                       className="w-full gap-2"
-                      onClick={() => window.print()}
-                      data-testid="button-print"
+                      onClick={exportCSV}
+                      data-testid="button-export-csv"
                     >
-                      <FileDown className="h-4 w-4" /> Print / PDF
+                      <Table className="h-4 w-4" /> Export CSV
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="w-full gap-2"
+                      onClick={exportPDF}
+                      data-testid="button-export-pdf"
+                    >
+                      <Printer className="h-4 w-4" /> Export PDF
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={exportAuditTrail}
+                      data-testid="button-export-audit"
+                    >
+                      <FileText className="h-4 w-4" /> Export Audit Trail
                     </Button>
                   </div>
                 </div>

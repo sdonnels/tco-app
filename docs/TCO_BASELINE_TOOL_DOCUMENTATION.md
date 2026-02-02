@@ -345,7 +345,7 @@ Total Annual Baseline = End-User Devices + Support & Ops + Licensing
 
 ## Export Options
 
-The tool provides three distinct export formats, each serving a different purpose.
+The tool provides five distinct export formats, each serving a different purpose. Most exports are available with a single click from the Summary tab, with some also accessible from other relevant tabs.
 
 ### 1. JSON Export
 
@@ -457,7 +457,85 @@ It does not include ROI projections, savings estimates, or solution recommendati
 ...
 ```
 
-### 3. Assumption Justifications Export
+### 3. CSV Export
+
+**Purpose:** Spreadsheet-compatible format for data analysis and reporting
+
+**Filename Pattern:** `tco-baseline-{client-name}-{date}.csv`
+
+**Contents:**
+The CSV export includes all key data in a tabular format that can be opened in Excel, Google Sheets, or any spreadsheet application:
+
+- Project Information (Client, Date, Contacts)
+- Environment Details (User counts, endpoint counts)
+- Cost Categories with annual amounts and source indicators
+- Summary Metrics (Total baseline, per-unit costs)
+- All 15 Assumption Values
+
+**Sample Structure:**
+```csv
+TCO Baseline Micro-Assessment - CSV Export
+Generated,2/2/2026 10:30:00 AM
+
+PROJECT INFORMATION
+Client Name,Acme Corporation
+Assessment Date,2026-02-02
+Customer Champion,Jane Smith
+XenTegra Engineer,John Doe
+
+ENVIRONMENT
+User Count,500
+Laptop Count,300
+Desktop Count,150
+Thin Client Count,50
+Total Endpoints,500
+
+COST CATEGORIES,Annual Amount,Source
+End-User Devices,250000,Calculated
+Support & Operations,75000,Calculated
+Licensing,200000,Calculated
+...
+```
+
+**Use Cases:**
+- Import into Excel for custom analysis
+- Integration with financial reporting tools
+- Data comparison across multiple assessments
+- Pivot table analysis
+
+### 4. PDF Export
+
+**Purpose:** Professional, print-ready report for stakeholder presentations
+
+**Access:** Opens a print-friendly version in a new browser window with automatic print dialog
+
+**Report Features:**
+- Clean, professional typography
+- Company branding-ready layout
+- Color-coded sections
+- Metric cards with visual hierarchy
+- Disclaimer banner included
+
+**Report Sections:**
+1. **Header** - Client name, date, assessment contacts
+2. **Disclaimer** - Baseline-only notice
+3. **Environment Summary** - Users, endpoints, device breakdown
+4. **Annual Cost Breakdown** - Category table with percentages
+5. **Per-Unit Metrics** - Visual metric cards
+6. **Observations** - If captured during assessment
+
+**Print/Save Options:**
+- Print directly to paper
+- Save as PDF using browser's "Save as PDF" print option
+- Works with all modern browsers (Chrome, Firefox, Safari, Edge)
+
+**Use Cases:**
+- Executive presentations
+- Customer deliverables
+- Physical documentation
+- Archived records
+
+### 5. Assumption Justifications Export
 
 **Purpose:** Detailed rationales for each assumption based on industry research
 
@@ -510,6 +588,20 @@ used in the TCO baseline calculation.
     escalate by 148% by year 5 and can reach 300% by year 7.
 ...
 ```
+
+---
+
+## Export Quick Reference
+
+| Format | Extension | Best For | Access Location |
+|--------|-----------|----------|-----------------|
+| JSON | .json | Data interchange, integrations | Summary tab, Header |
+| CSV | .csv | Spreadsheet analysis, Excel | Summary tab |
+| PDF | .pdf | Presentations, print | Summary tab |
+| Audit Trail | .txt | Full traceability, compliance | Summary tab, Inputs tab |
+| Justifications | .txt | Assumption defense | Assumptions tab |
+
+**Note:** The JSON export button also appears in the header area for quick access from any tab. The Audit Trail export is available on both the Inputs and Summary tabs. Assumption Justifications can only be exported from the Assumptions tab where the values are displayed.
 
 ---
 
