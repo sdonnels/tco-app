@@ -199,29 +199,6 @@ export default function TcoHome(props: { onStartBaseline: () => void }) {
           </Card>
         </motion.div>
       </div>
-
-      <Card className="glass hairline rounded-3xl p-6">
-        <div className="flex items-start gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl border bg-card shadow-sm">
-            <ClipboardCheck className="h-5 w-5 text-primary" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-medium tracking-wide text-muted-foreground">
-              Design Philosophy
-            </div>
-            <h3 className="mt-0.5 font-serif text-xl tracking-tight">
-              Each assessment has a specific mandate
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              The <strong>Baseline Assessment</strong> establishes current-state truth
-              without bias or optimization language. The <strong>Pro Assessment</strong>{" "}
-              then builds on that foundation with real usage data to identify waste and
-              optimization opportunities. They serve different purposes and should not be
-              conflated.
-            </p>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }
