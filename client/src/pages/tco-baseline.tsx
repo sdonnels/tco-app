@@ -2236,49 +2236,8 @@ export default function TcoBaseline() {
 
         <footer className="mt-10" data-testid="section-footer">
           <div className="glass hairline rounded-3xl px-6 py-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm font-medium" data-testid="text-footer-title">
-                Guardrails
-              </div>
-              <div className="text-xs text-muted-foreground" data-testid="text-footer-subtitle">
-                Baseline first. No future-state math. No ROI.
-              </div>
-            </div>
-            <Separator className="my-4" />
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                {
-                  icon: <Shield className="h-4 w-4" />,
-                  t: "Vendor-neutral",
-                  d: "No comparisons or bias.",
-                },
-                {
-                  icon: <Lock className="h-4 w-4" />,
-                  t: "Traceable",
-                  d: "Every number is explainable.",
-                },
-                {
-                  icon: <CheckCircle2 className="h-4 w-4" />,
-                  t: "Assumption-backed",
-                  d: "Unknowns are explicit.",
-                },
-              ].map((b, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl border bg-card/60 px-4 py-3"
-                  data-testid={`card-guardrail-${idx}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="text-muted-foreground">{b.icon}</div>
-                    <div className="text-sm font-semibold" data-testid={`text-guardrail-title-${idx}`}>
-                      {b.t}
-                    </div>
-                  </div>
-                  <div className="mt-1 text-xs text-muted-foreground" data-testid={`text-guardrail-desc-${idx}`}>
-                    {b.d}
-                  </div>
-                </div>
-              ))}
+            <div className="text-center text-xs text-muted-foreground" data-testid="text-footer-placeholder">
+              {/* Reserved for future content */}
             </div>
           </div>
         </footer>
