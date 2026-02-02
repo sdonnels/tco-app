@@ -1,0 +1,116 @@
+# TCO Baseline Micro-Assessment Tool
+
+## Overview
+
+This is a vendor-neutral, current-state Total Cost of Ownership (TCO) baseline tool designed for enterprise End User Computing (EUC) environments. The application produces credible, defensible TCO baselines for desktops and applications without prescribing solutions or calculating ROI. It serves as a micro-assessment tool that establishes a single source of truth for what a customer's environment actually costs today.
+
+**Core Purpose:**
+- Establish transparent, explainable cost baselines
+- Support vendor-neutral, solution-agnostic assessments
+- Enable informed conversations without sales narratives
+- Every number must be traceable and defensible
+
+## Excel Workbook Alignment (v2.0)
+
+The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workbook_v2_0_FROZEN.xlsx`:
+
+### Input Structure
+- **Project Info**: Client Name, Assessment Date, Customer Champion, XenTegra Engineer
+- **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count
+- **VDI/DaaS**: VDI % of Users, Platform Presence (Citrix, AVD, Windows 365, Horizon, Parallels)
+- **Tool Presence**: Intune, SCCM, Workspace ONE, Jamf, ControlUp, Nerdio
+- **Category Roll-ups**: Optional overrides for total spend per category
+
+### Assumptions (17 values matching Excel)
+- Device Refresh Years: Laptop=3, Desktop=3, Thin Client=5
+- Device Unit Costs: Laptop=$1200, Desktop=$1100, Thin Client=$600
+- Support Ops: Ticket Time=0.5hrs, Deploy Time=1.5hrs, Labor Rate=$50/hr, Tickets/Endpoint=2
+- Licensing: $400/user/year, 100% coverage
+- Management & Security: $200/endpoint/year
+- VDI Platform: $800/VDI user/year
+- Overhead: 7% of subtotal
+
+### Calculations
+- End-User Devices = Σ(device count × unit cost ÷ refresh years)
+- Support & Ops = ticket labor + deployment labor
+- Licensing = users × cost/user × coverage %
+- Management & Security = endpoints × cost/endpoint
+- VDI/DaaS = VDI users × platform cost (gated on VDI presence)
+- Overhead = subtotal × overhead %
+
+### Summary Metrics
+- Total Annual Baseline, Cost per Endpoint, Cost per User
+- VDI Cost per VDI User, Non-VDI Cost per User, VDI User Premium
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework:** React 18 with TypeScript
+- **Routing:** Wouter (lightweight React router)
+- **State Management:** TanStack React Query for server state
+- **UI Components:** shadcn/ui component library built on Radix UI primitives
+- **Styling:** Tailwind CSS with CSS variables for theming
+- **Animations:** Framer Motion for page transitions and micro-interactions
+- **Build Tool:** Vite with custom plugins for Replit integration
+
+### Backend Architecture
+- **Runtime:** Node.js with Express 5
+- **Language:** TypeScript with ES modules
+- **API Pattern:** RESTful API with `/api` prefix convention
+- **Development:** Hot module replacement via Vite middleware
+- **Production:** Static file serving with SPA fallback
+
+### Data Layer
+- **ORM:** Drizzle ORM with PostgreSQL dialect
+- **Schema Location:** `shared/schema.ts` (shared between client and server)
+- **Validation:** Zod schemas with drizzle-zod integration
+- **Storage Abstraction:** Interface-based storage pattern (`IStorage`) allowing memory or database backends
+- **Current Implementation:** In-memory storage (`MemStorage`) with database schema ready for PostgreSQL
+
+### Project Structure
+```
+├── client/src/          # React frontend application
+│   ├── components/ui/   # shadcn/ui components
+│   ├── pages/           # Route components
+│   ├── hooks/           # Custom React hooks
+│   └── lib/             # Utilities and query client
+├── server/              # Express backend
+│   ├── routes.ts        # API route definitions
+│   ├── storage.ts       # Data access layer
+│   └── vite.ts          # Development server setup
+├── shared/              # Shared types and schemas
+└── attached_assets/     # Documentation and reference materials
+```
+
+### Build System
+- **Development:** Vite dev server with HMR proxied through Express
+- **Production:** esbuild bundles server with allowlisted dependencies for cold start optimization
+- **Database Migrations:** Drizzle Kit with `db:push` command
+
+## External Dependencies
+
+### Database
+- **PostgreSQL:** Required via `DATABASE_URL` environment variable
+- **Session Store:** connect-pg-simple for session persistence
+
+### UI Framework Dependencies
+- **Radix UI:** Full primitive component library (dialog, dropdown, tabs, etc.)
+- **Lucide React:** Icon library
+- **Embla Carousel:** Carousel/slider functionality
+- **Recharts:** Charting library for data visualization
+
+### Development Tools
+- **Replit Plugins:** Cartographer, dev banner, runtime error overlay
+- **Meta Images Plugin:** Custom Vite plugin for OpenGraph image handling
+
+### Key NPM Packages
+- `@tanstack/react-query` - Server state management
+- `drizzle-orm` / `drizzle-zod` - Database ORM and validation
+- `class-variance-authority` - Component variant management
+- `react-hook-form` / `@hookform/resolvers` - Form handling
+- `date-fns` - Date utilities
+- `xlsx` - Excel file handling (for potential export features)
