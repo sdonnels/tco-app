@@ -28,40 +28,45 @@ import TcoHome from "@/pages/tco-home";
 type YesNo = "yes" | "no" | "unknown";
 
 type Inputs = {
-  devices: {
-    desktops?: number;
-    laptops?: number;
-    thinClients?: number;
-    mobile?: number;
-    sharedKiosk?: number;
+  project: {
+    clientName?: string;
+    assessmentDate?: string;
+    customerChampion?: string;
+    engineerName?: string;
   };
-  support: {
-    tier1Fte?: number;
-    tier2Fte?: number;
-    tier3Fte?: number;
-    avgFullyBurdenedSalary?: number;
-    ticketVolume?: number;
+  environment: {
+    userCount?: number;
+    laptopCount?: number;
+    desktopCount?: number;
+    thinClientCount?: number;
   };
-  licensing: {
-    eucPlatformAnnual?: number;
-    endpointOsAnnual?: number;
-    securityToolingAnnual?: number;
-    managementToolingAnnual?: number;
+  categoryRollups: {
+    endUserDevicesAnnual?: number;
+    supportOpsAnnual?: number;
+    licensingAnnual?: number;
+    mgmtSecurityAnnual?: number;
+    vdiDaasAnnual?: number;
+    overheadAnnual?: number;
   };
-  presence: {
-    uemPresent: YesNo;
-    edrPresent: YesNo;
-    patchToolingPresent: YesNo;
+  vdiDaas: {
+    vdiPresent: YesNo;
+    vdiPctOfUsers?: number;
+    citrixPresent: YesNo;
+    avdPresent: YesNo;
+    w365Present: YesNo;
+    horizonPresent: YesNo;
+    parallelsPresent: YesNo;
   };
-  virtualization: {
-    onPremVdiUsers?: number;
-    cloudDaasUsers?: number;
-    sessionDensity?: number;
-    infraOwnership: "customer" | "provider" | "unknown";
+  toolPresence: {
+    intunePresent: YesNo;
+    sccmPresent: YesNo;
+    workspaceOnePresent: YesNo;
+    jamfPresent: YesNo;
+    controlUpPresent: YesNo;
+    nerdioPresent: YesNo;
   };
   managedServices: {
     totalAnnualSpend?: number;
-    userCount?: number;
     outsourcedEndpointMgmt: boolean;
     outsourcedSecurity: boolean;
     outsourcedPatching: boolean;
@@ -70,34 +75,40 @@ type Inputs = {
     outsourcedOther: boolean;
     otherDescription?: string;
   };
-  overhead: {
-    facilitiesAnnual?: number;
-    trainingAnnual?: number;
-    contractorAnnual?: number;
-  };
   observations: {
     notes?: string;
   };
 };
 
 type Assumptions = {
-  replacementCycleYears: {
-    pc: number;
+  deviceRefreshYears: {
+    laptop: number;
+    desktop: number;
     thinClient: number;
   };
-  supportRatio: {
-    endpointsPerTier1: number;
-    endpointsPerTier2: number;
-    endpointsPerTier3: number;
+  deviceUnitCost: {
+    laptop: number;
+    desktop: number;
+    thinClient: number;
   };
-  salary: {
-    tier1: number;
-    tier2: number;
-    tier3: number;
+  supportOps: {
+    avgTicketHandlingHours: number;
+    deploymentHoursPerDevice: number;
+    blendedLaborRateHourly: number;
+    ticketsPerEndpointPerYear: number;
   };
-  licensingBenchmarks: {
-    uemPerEndpoint: number;
-    securityPerEndpoint: number;
+  licensing: {
+    avgCostPerUserPerYear: number;
+    coveragePct: number;
+  };
+  mgmtSecurity: {
+    costPerEndpointPerYear: number;
+  };
+  vdi: {
+    platformCostPerVdiUserPerYear: number;
+  };
+  overhead: {
+    pctOfTotal: number;
   };
 };
 
@@ -250,16 +261,24 @@ export default function TcoBaseline() {
   >("home");
 
   const [inputs, setInputs] = useState<Inputs>({
-    devices: {},
-    support: {},
-    licensing: {},
-    presence: {
-      uemPresent: "unknown",
-      edrPresent: "unknown",
-      patchToolingPresent: "unknown",
+    project: {},
+    environment: {},
+    categoryRollups: {},
+    vdiDaas: {
+      vdiPresent: "unknown",
+      citrixPresent: "unknown",
+      avdPresent: "unknown",
+      w365Present: "unknown",
+      horizonPresent: "unknown",
+      parallelsPresent: "unknown",
     },
-    virtualization: {
-      infraOwnership: "unknown",
+    toolPresence: {
+      intunePresent: "unknown",
+      sccmPresent: "unknown",
+      workspaceOnePresent: "unknown",
+      jamfPresent: "unknown",
+      controlUpPresent: "unknown",
+      nerdioPresent: "unknown",
     },
     managedServices: {
       outsourcedEndpointMgmt: false,
@@ -269,173 +288,148 @@ export default function TcoBaseline() {
       outsourcedTier2Plus: false,
       outsourcedOther: false,
     },
-    overhead: {},
     observations: {},
   });
 
   const [assumptions, setAssumptions] = useState<Assumptions>({
-    replacementCycleYears: {
-      pc: 4,
+    deviceRefreshYears: {
+      laptop: 3,
+      desktop: 3,
       thinClient: 5,
     },
-    supportRatio: {
-      endpointsPerTier1: 600,
-      endpointsPerTier2: 1500,
-      endpointsPerTier3: 4000,
+    deviceUnitCost: {
+      laptop: 1200,
+      desktop: 1100,
+      thinClient: 600,
     },
-    salary: {
-      tier1: 85000,
-      tier2: 115000,
-      tier3: 155000,
+    supportOps: {
+      avgTicketHandlingHours: 0.5,
+      deploymentHoursPerDevice: 1.5,
+      blendedLaborRateHourly: 50,
+      ticketsPerEndpointPerYear: 2,
     },
-    licensingBenchmarks: {
-      uemPerEndpoint: 36,
-      securityPerEndpoint: 48,
+    licensing: {
+      avgCostPerUserPerYear: 400,
+      coveragePct: 1.0,
+    },
+    mgmtSecurity: {
+      costPerEndpointPerYear: 200,
+    },
+    vdi: {
+      platformCostPerVdiUserPerYear: 800,
+    },
+    overhead: {
+      pctOfTotal: 0.07,
     },
   });
 
   const derived = useMemo(() => {
-    const endpoints =
-      (nonNeg(inputs.devices.desktops) ?? 0) +
-      (nonNeg(inputs.devices.laptops) ?? 0) +
-      (nonNeg(inputs.devices.thinClients) ?? 0) +
-      (nonNeg(inputs.devices.mobile) ?? 0) +
-      (nonNeg(inputs.devices.sharedKiosk) ?? 0);
+    const laptops = nonNeg(inputs.environment.laptopCount) ?? 0;
+    const desktops = nonNeg(inputs.environment.desktopCount) ?? 0;
+    const thinClients = nonNeg(inputs.environment.thinClientCount) ?? 0;
+    const userCount = nonNeg(inputs.environment.userCount) ?? 0;
+    const endpoints = laptops + desktops + thinClients;
 
-    const tier1Salary =
-      nonNeg(inputs.support.avgFullyBurdenedSalary) ?? assumptions.salary.tier1;
-    const tier2Salary = assumptions.salary.tier2;
-    const tier3Salary = assumptions.salary.tier3;
+    const vdiPctOfUsers = nonNeg(inputs.vdiDaas.vdiPctOfUsers) ?? 0;
+    const vdiPresent = inputs.vdiDaas.vdiPresent === "yes" || vdiPctOfUsers > 0;
+    const vdiUserCount = vdiPresent ? Math.round(userCount * vdiPctOfUsers / 100) : 0;
 
-    const tier1Fte = nonNeg(inputs.support.tier1Fte);
-    const tier2Fte = nonNeg(inputs.support.tier2Fte);
-    const tier3Fte = nonNeg(inputs.support.tier3Fte);
+    const derivedEndUserDevices =
+      (laptops * assumptions.deviceUnitCost.laptop / assumptions.deviceRefreshYears.laptop) +
+      (desktops * assumptions.deviceUnitCost.desktop / assumptions.deviceRefreshYears.desktop) +
+      (thinClients * assumptions.deviceUnitCost.thinClient / assumptions.deviceRefreshYears.thinClient);
 
-    const derivedTier1 = endpoints / assumptions.supportRatio.endpointsPerTier1;
-    const derivedTier2 = endpoints / assumptions.supportRatio.endpointsPerTier2;
-    const derivedTier3 = endpoints / assumptions.supportRatio.endpointsPerTier3;
+    const avgRefreshYears = endpoints > 0
+      ? (laptops * assumptions.deviceRefreshYears.laptop + 
+         desktops * assumptions.deviceRefreshYears.desktop + 
+         thinClients * assumptions.deviceRefreshYears.thinClient) / endpoints
+      : assumptions.deviceRefreshYears.laptop;
 
-    const laborLines: CalcLine[] = [
-      {
-        key: "labor-tier1",
-        label: "Tier 1 support labor",
-        value: (tier1Fte ?? derivedTier1) * tier1Salary,
-        basis:
-          tier1Fte !== undefined
-            ? `${tier1Fte} FTE × ${fmtMoney(tier1Salary)} (input salary)`
-            : `${derivedTier1.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier1Salary)} (assumed tier1 salary)`,
-        isAssumed: tier1Fte === undefined,
-      },
-      {
-        key: "labor-tier2",
-        label: "Tier 2 support labor",
-        value: (tier2Fte ?? derivedTier2) * tier2Salary,
-        basis:
-          tier2Fte !== undefined
-            ? `${tier2Fte} FTE × ${fmtMoney(tier2Salary)} (assumed salary)`
-            : `${derivedTier2.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier2Salary)} (assumed salary)`,
-        isAssumed: tier2Fte === undefined,
-      },
-      {
-        key: "labor-tier3",
-        label: "Tier 3 support labor",
-        value: (tier3Fte ?? derivedTier3) * tier3Salary,
-        basis:
-          tier3Fte !== undefined
-            ? `${tier3Fte} FTE × ${fmtMoney(tier3Salary)} (assumed salary)`
-            : `${derivedTier3.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier3Salary)} (assumed salary)`,
-        isAssumed: tier3Fte === undefined,
-      },
-    ];
+    const derivedSupportOps =
+      (endpoints * assumptions.supportOps.ticketsPerEndpointPerYear * assumptions.supportOps.avgTicketHandlingHours * assumptions.supportOps.blendedLaborRateHourly) +
+      ((endpoints / avgRefreshYears) * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly);
 
-    const licensingLines: CalcLine[] = [
-      {
-        key: "lic-euc",
-        label: "EUC platform licensing",
-        value: nonNeg(inputs.licensing.eucPlatformAnnual) ?? 0,
-        basis:
-          inputs.licensing.eucPlatformAnnual !== undefined
-            ? `${fmtMoney(inputs.licensing.eucPlatformAnnual)} (input)`
-            : "Not provided (0 in baseline until known)",
-        isAssumed: false,
-      },
-      {
-        key: "lic-os",
-        label: "Endpoint OS licensing",
-        value: nonNeg(inputs.licensing.endpointOsAnnual) ?? 0,
-        basis:
-          inputs.licensing.endpointOsAnnual !== undefined
-            ? `${fmtMoney(inputs.licensing.endpointOsAnnual)} (input)`
-            : "Not provided (0 in baseline until known)",
-        isAssumed: false,
-      },
-      {
-        key: "lic-security",
-        label: "Security tooling",
-        value:
-          nonNeg(inputs.licensing.securityToolingAnnual) ??
-          endpoints * assumptions.licensingBenchmarks.securityPerEndpoint,
-        basis:
-          inputs.licensing.securityToolingAnnual !== undefined
-            ? `${fmtMoney(inputs.licensing.securityToolingAnnual)} (input)`
-            : `${fmtNumber(endpoints)} endpoints × ${fmtMoney(assumptions.licensingBenchmarks.securityPerEndpoint)} per endpoint (assumption)`,
-        isAssumed: inputs.licensing.securityToolingAnnual === undefined,
-      },
-      {
-        key: "lic-mgmt",
-        label: "Management tooling",
-        value:
-          nonNeg(inputs.licensing.managementToolingAnnual) ??
-          endpoints * assumptions.licensingBenchmarks.uemPerEndpoint,
-        basis:
-          inputs.licensing.managementToolingAnnual !== undefined
-            ? `${fmtMoney(inputs.licensing.managementToolingAnnual)} (input)`
-            : `${fmtNumber(endpoints)} endpoints × ${fmtMoney(assumptions.licensingBenchmarks.uemPerEndpoint)} per endpoint (assumption)`,
-        isAssumed: inputs.licensing.managementToolingAnnual === undefined,
-      },
-    ];
+    const derivedLicensing = userCount * assumptions.licensing.avgCostPerUserPerYear * assumptions.licensing.coveragePct;
 
-    const virtualizationUsers =
-      (nonNeg(inputs.virtualization.onPremVdiUsers) ?? 0) +
-      (nonNeg(inputs.virtualization.cloudDaasUsers) ?? 0);
+    const derivedMgmtSecurity = endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear;
 
-    const overheadLines: CalcLine[] = [
-      {
-        key: "overhead-facilities",
-        label: "Facilities allocation",
-        value: nonNeg(inputs.overhead.facilitiesAnnual) ?? 0,
-        basis:
-          inputs.overhead.facilitiesAnnual !== undefined
-            ? `${fmtMoney(inputs.overhead.facilitiesAnnual)} (input)`
-            : "Not provided (0 in baseline until known)",
-        isAssumed: false,
-      },
-      {
-        key: "overhead-training",
-        label: "Training budget",
-        value: nonNeg(inputs.overhead.trainingAnnual) ?? 0,
-        basis:
-          inputs.overhead.trainingAnnual !== undefined
-            ? `${fmtMoney(inputs.overhead.trainingAnnual)} (input)`
-            : "Not provided (0 in baseline until known)",
-        isAssumed: false,
-      },
-      {
-        key: "overhead-contractors",
-        label: "Contractor spend",
-        value: nonNeg(inputs.overhead.contractorAnnual) ?? 0,
-        basis:
-          inputs.overhead.contractorAnnual !== undefined
-            ? `${fmtMoney(inputs.overhead.contractorAnnual)} (input)`
-            : "Not provided (0 in baseline until known)",
-        isAssumed: false,
-      },
-    ];
+    const derivedVdiDaas = vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear;
+
+    const endUserDevicesValue = nonNeg(inputs.categoryRollups.endUserDevicesAnnual) ?? derivedEndUserDevices;
+    const supportOpsValue = nonNeg(inputs.categoryRollups.supportOpsAnnual) ?? derivedSupportOps;
+    const licensingValue = nonNeg(inputs.categoryRollups.licensingAnnual) ?? derivedLicensing;
+    const mgmtSecurityValue = nonNeg(inputs.categoryRollups.mgmtSecurityAnnual) ?? derivedMgmtSecurity;
+    const vdiDaasValue = nonNeg(inputs.categoryRollups.vdiDaasAnnual) ?? derivedVdiDaas;
+
+    const subtotalBeforeOverhead = endUserDevicesValue + supportOpsValue + licensingValue + mgmtSecurityValue + vdiDaasValue;
+    const derivedOverhead = subtotalBeforeOverhead * assumptions.overhead.pctOfTotal;
+    const overheadValue = nonNeg(inputs.categoryRollups.overheadAnnual) ?? derivedOverhead;
+
+    const endUserDevicesLine: CalcLine = {
+      key: "end-user-devices",
+      label: "End-User Devices",
+      value: endUserDevicesValue,
+      basis: inputs.categoryRollups.endUserDevicesAnnual !== undefined
+        ? `${fmtMoney(endUserDevicesValue)} (input)`
+        : `${fmtNumber(laptops)} laptops × $${assumptions.deviceUnitCost.laptop}/${assumptions.deviceRefreshYears.laptop}yr + ${fmtNumber(desktops)} desktops × $${assumptions.deviceUnitCost.desktop}/${assumptions.deviceRefreshYears.desktop}yr + ${fmtNumber(thinClients)} thin clients × $${assumptions.deviceUnitCost.thinClient}/${assumptions.deviceRefreshYears.thinClient}yr`,
+      isAssumed: inputs.categoryRollups.endUserDevicesAnnual === undefined,
+    };
+
+    const supportOpsLine: CalcLine = {
+      key: "support-ops",
+      label: "Support & Operations",
+      value: supportOpsValue,
+      basis: inputs.categoryRollups.supportOpsAnnual !== undefined
+        ? `${fmtMoney(supportOpsValue)} (input)`
+        : `${fmtNumber(endpoints)} endpoints × ${assumptions.supportOps.ticketsPerEndpointPerYear} tickets/yr × ${assumptions.supportOps.avgTicketHandlingHours}hr × $${assumptions.supportOps.blendedLaborRateHourly}/hr + deployment labor`,
+      isAssumed: inputs.categoryRollups.supportOpsAnnual === undefined,
+    };
+
+    const licensingLine: CalcLine = {
+      key: "licensing",
+      label: "Licensing",
+      value: licensingValue,
+      basis: inputs.categoryRollups.licensingAnnual !== undefined
+        ? `${fmtMoney(licensingValue)} (input)`
+        : `${fmtNumber(userCount)} users × $${assumptions.licensing.avgCostPerUserPerYear}/user × ${(assumptions.licensing.coveragePct * 100).toFixed(0)}% coverage`,
+      isAssumed: inputs.categoryRollups.licensingAnnual === undefined,
+    };
+
+    const mgmtSecurityLine: CalcLine = {
+      key: "mgmt-security",
+      label: "Management & Security",
+      value: mgmtSecurityValue,
+      basis: inputs.categoryRollups.mgmtSecurityAnnual !== undefined
+        ? `${fmtMoney(mgmtSecurityValue)} (input)`
+        : `${fmtNumber(endpoints)} endpoints × $${assumptions.mgmtSecurity.costPerEndpointPerYear}/endpoint`,
+      isAssumed: inputs.categoryRollups.mgmtSecurityAnnual === undefined,
+    };
+
+    const vdiDaasLine: CalcLine = {
+      key: "vdi-daas",
+      label: "VDI / DaaS",
+      value: vdiDaasValue,
+      basis: inputs.categoryRollups.vdiDaasAnnual !== undefined
+        ? `${fmtMoney(vdiDaasValue)} (input)`
+        : `${fmtNumber(vdiUserCount)} VDI users × $${assumptions.vdi.platformCostPerVdiUserPerYear}/user`,
+      isAssumed: inputs.categoryRollups.vdiDaasAnnual === undefined,
+    };
+
+    const overheadLine: CalcLine = {
+      key: "overhead",
+      label: "Overhead",
+      value: overheadValue,
+      basis: inputs.categoryRollups.overheadAnnual !== undefined
+        ? `${fmtMoney(overheadValue)} (input)`
+        : `${(assumptions.overhead.pctOfTotal * 100).toFixed(0)}% × ${fmtMoney(subtotalBeforeOverhead)} subtotal`,
+      isAssumed: inputs.categoryRollups.overheadAnnual === undefined,
+    };
+
+    const categoryLines: CalcLine[] = [endUserDevicesLine, supportOpsLine, licensingLine, mgmtSecurityLine, vdiDaasLine, overheadLine];
 
     const mspSpend = nonNeg(inputs.managedServices.totalAnnualSpend) ?? 0;
-    const mspUserCount = nonNeg(inputs.managedServices.userCount) ?? 0;
     const mspCostPerDevice = endpoints > 0 ? mspSpend / endpoints : 0;
-    const mspCostPerUser = mspUserCount > 0 ? mspSpend / mspUserCount : 0;
+    const mspCostPerUser = userCount > 0 ? mspSpend / userCount : 0;
 
     const outsourcedServices: string[] = [];
     if (inputs.managedServices.outsourcedEndpointMgmt) outsourcedServices.push("Endpoint Management");
@@ -458,17 +452,13 @@ export default function TcoBaseline() {
       },
     ];
 
-    const laborTotal = laborLines.reduce((s, l) => s + l.value, 0);
-    const licensingTotal = licensingLines.reduce((s, l) => s + l.value, 0);
-    const overheadTotal = overheadLines.reduce((s, l) => s + l.value, 0);
-    const managedServicesTotal = managedServicesLines.reduce((s, l) => s + l.value, 0);
-
-    const totalAnnualTco = laborTotal + licensingTotal + overheadTotal + managedServicesTotal;
+    const totalAnnualTco = endUserDevicesValue + supportOpsValue + licensingValue + mgmtSecurityValue + vdiDaasValue + overheadValue + mspSpend;
     const costPerEndpoint = endpoints > 0 ? totalAnnualTco / endpoints : 0;
+    const costPerUser = userCount > 0 ? totalAnnualTco / userCount : 0;
+    const vdiCostPerVdiUser = vdiUserCount > 0 ? vdiDaasValue / vdiUserCount : 0;
+    const nonVdiCostPerUser = userCount > 0 ? (totalAnnualTco - vdiDaasValue) / userCount : 0;
 
-    const assumedLines = [...laborLines, ...licensingLines, ...overheadLines, ...managedServicesLines].filter(
-      (l) => l.isAssumed,
-    );
+    const assumedLines = categoryLines.filter((l) => l.isAssumed);
 
     const readiness = {
       endpointsPresent: endpoints > 0,
@@ -480,27 +470,29 @@ export default function TcoBaseline() {
 
     return {
       endpoints,
-      virtualizationUsers,
-      laborLines,
-      licensingLines,
-      overheadLines,
+      userCount,
+      vdiPresent,
+      vdiUserCount,
+      categoryLines,
       managedServicesLines,
-      laborTotal,
-      licensingTotal,
-      overheadTotal,
-      managedServicesTotal,
+      endUserDevicesValue,
+      supportOpsValue,
+      licensingValue,
+      mgmtSecurityValue,
+      vdiDaasValue,
+      overheadValue,
+      mspSpend,
       mspCostPerDevice,
       mspCostPerUser,
-      mspUserCount,
       outsourcedServices,
       totalAnnualTco,
       costPerEndpoint,
+      costPerUser,
+      vdiCostPerVdiUser,
+      nonVdiCostPerUser,
       assumedLines,
       readiness,
       readinessScore,
-      derivedTier1,
-      derivedTier2,
-      derivedTier3,
     };
   }, [inputs, assumptions]);
 
@@ -513,25 +505,37 @@ export default function TcoBaseline() {
   const exportJson = () => {
     const payload = {
       tool: "tco-baseline-micro-assessment",
-      version: "0.1-mockup",
+      version: "0.3-excel-aligned",
       generatedAt: new Date().toISOString(),
+      project: {
+        clientName: inputs.project.clientName ?? null,
+        assessmentDate: inputs.project.assessmentDate ?? null,
+        customerChampion: inputs.project.customerChampion ?? null,
+        engineerName: inputs.project.engineerName ?? null,
+      },
       inputs,
       assumptions,
       derived: {
         endpoints: derived.endpoints,
-        virtualizationUsers: derived.virtualizationUsers,
+        userCount: derived.userCount,
+        vdiPresent: derived.vdiPresent,
+        vdiUserCount: derived.vdiUserCount,
         totals: {
-          laborTotal: derived.laborTotal,
-          licensingTotal: derived.licensingTotal,
-          overheadTotal: derived.overheadTotal,
-          managedServicesTotal: derived.managedServicesTotal,
+          endUserDevices: derived.endUserDevicesValue,
+          supportOps: derived.supportOpsValue,
+          licensing: derived.licensingValue,
+          mgmtSecurity: derived.mgmtSecurityValue,
+          vdiDaas: derived.vdiDaasValue,
+          overhead: derived.overheadValue,
+          managedServices: derived.mspSpend,
           totalAnnualTco: derived.totalAnnualTco,
           costPerEndpoint: derived.costPerEndpoint,
+          costPerUser: derived.costPerUser,
+          vdiCostPerVdiUser: derived.vdiCostPerVdiUser,
+          nonVdiCostPerUser: derived.nonVdiCostPerUser,
         },
         trace: {
-          laborLines: derived.laborLines,
-          licensingLines: derived.licensingLines,
-          overheadLines: derived.overheadLines,
+          categoryLines: derived.categoryLines,
           managedServicesLines: derived.managedServicesLines,
         },
       },
@@ -602,15 +606,25 @@ export default function TcoBaseline() {
                     variant="secondary"
                     onClick={() => {
                       setInputs({
-                        devices: {},
-                        support: {},
-                        licensing: {},
-                        presence: {
-                          uemPresent: "unknown",
-                          edrPresent: "unknown",
-                          patchToolingPresent: "unknown",
+                        project: {},
+                        environment: {},
+                        categoryRollups: {},
+                        vdiDaas: {
+                          vdiPresent: "unknown",
+                          citrixPresent: "unknown",
+                          avdPresent: "unknown",
+                          w365Present: "unknown",
+                          horizonPresent: "unknown",
+                          parallelsPresent: "unknown",
                         },
-                        virtualization: { infraOwnership: "unknown" },
+                        toolPresence: {
+                          intunePresent: "unknown",
+                          sccmPresent: "unknown",
+                          workspaceOnePresent: "unknown",
+                          jamfPresent: "unknown",
+                          controlUpPresent: "unknown",
+                          nerdioPresent: "unknown",
+                        },
                         managedServices: {
                           outsourcedEndpointMgmt: false,
                           outsourcedSecurity: false,
@@ -619,7 +633,6 @@ export default function TcoBaseline() {
                           outsourcedTier2Plus: false,
                           outsourcedOther: false,
                         },
-                        overhead: {},
                         observations: {},
                       });
                     }}
@@ -753,6 +766,87 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
+                    title="Project information"
+                    description="Identify the assessment for documentation and traceability."
+                    testId="header-project"
+                  />
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientName" data-testid="label-clientname">
+                        Client name
+                      </Label>
+                      <Input
+                        id="clientName"
+                        placeholder="e.g., Acme Corp"
+                        value={inputs.project.clientName ?? ""}
+                        onChange={(e) =>
+                          setInputs((s) => ({
+                            ...s,
+                            project: { ...s.project, clientName: e.target.value || undefined },
+                          }))
+                        }
+                        data-testid="input-clientname"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="assessmentDate" data-testid="label-assessmentdate">
+                        Assessment date
+                      </Label>
+                      <Input
+                        id="assessmentDate"
+                        type="date"
+                        value={inputs.project.assessmentDate ?? ""}
+                        onChange={(e) =>
+                          setInputs((s) => ({
+                            ...s,
+                            project: { ...s.project, assessmentDate: e.target.value || undefined },
+                          }))
+                        }
+                        data-testid="input-assessmentdate"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="champion" data-testid="label-champion">
+                        Customer champion
+                      </Label>
+                      <Input
+                        id="champion"
+                        placeholder="e.g., John Smith"
+                        value={inputs.project.customerChampion ?? ""}
+                        onChange={(e) =>
+                          setInputs((s) => ({
+                            ...s,
+                            project: { ...s.project, customerChampion: e.target.value || undefined },
+                          }))
+                        }
+                        data-testid="input-champion"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="engineer" data-testid="label-engineer">
+                        XenTegra engineer
+                      </Label>
+                      <Input
+                        id="engineer"
+                        placeholder="e.g., Jane Doe"
+                        value={inputs.project.engineerName ?? ""}
+                        onChange={(e) =>
+                          setInputs((s) => ({
+                            ...s,
+                            project: { ...s.project, engineerName: e.target.value || undefined },
+                          }))
+                        }
+                        data-testid="input-engineer"
+                      />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
+                    eyebrow="Inputs"
                     title="Environment facts"
                     description="Enter what you know. Leave unknowns blank—assumptions will be explicit and challengeable."
                     testId="header-inputs"
@@ -779,35 +873,51 @@ export default function TcoBaseline() {
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                          <Label htmlFor="desktops" data-testid="label-desktops">
-                            Physical desktops
+                          <Label htmlFor="userCount" data-testid="label-usercount">
+                            Total users
                           </Label>
                           <Input
-                            id="desktops"
-                            placeholder="e.g., 350"
-                            {...numberField(inputs.devices.desktops, (v) =>
+                            id="userCount"
+                            placeholder="e.g., 1500"
+                            {...numberField(inputs.environment.userCount, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                devices: { ...s.devices, desktops: nonNeg(v) },
+                                environment: { ...s.environment, userCount: nonNeg(v) },
                               })),
                             )}
-                            data-testid="input-desktops"
+                            data-testid="input-usercount"
                           />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="laptops" data-testid="label-laptops">
-                            Physical laptops
+                            Laptops
                           </Label>
                           <Input
                             id="laptops"
                             placeholder="e.g., 1200"
-                            {...numberField(inputs.devices.laptops, (v) =>
+                            {...numberField(inputs.environment.laptopCount, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                devices: { ...s.devices, laptops: nonNeg(v) },
+                                environment: { ...s.environment, laptopCount: nonNeg(v) },
                               })),
                             )}
                             data-testid="input-laptops"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="desktops" data-testid="label-desktops">
+                            Desktops
+                          </Label>
+                          <Input
+                            id="desktops"
+                            placeholder="e.g., 350"
+                            {...numberField(inputs.environment.desktopCount, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                environment: { ...s.environment, desktopCount: nonNeg(v) },
+                              })),
+                            )}
+                            data-testid="input-desktops"
                           />
                         </div>
                         <div className="space-y-2">
@@ -817,146 +927,55 @@ export default function TcoBaseline() {
                           <Input
                             id="thinClients"
                             placeholder="e.g., 80"
-                            {...numberField(inputs.devices.thinClients, (v) =>
+                            {...numberField(inputs.environment.thinClientCount, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                devices: {
-                                  ...s.devices,
-                                  thinClients: nonNeg(v),
-                                },
+                                environment: { ...s.environment, thinClientCount: nonNeg(v) },
                               })),
                             )}
                             data-testid="input-thinclients"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="mobile" data-testid="label-mobile">
-                            Mobile devices (optional)
-                          </Label>
-                          <Input
-                            id="mobile"
-                            placeholder="e.g., 200"
-                            {...numberField(inputs.devices.mobile, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                devices: { ...s.devices, mobile: nonNeg(v) },
-                              })),
-                            )}
-                            data-testid="input-mobile"
-                          />
-                        </div>
-                        <div className="space-y-2 sm:col-span-2">
-                          <Label htmlFor="shared" data-testid="label-shared">
-                            Shared / kiosk devices (optional)
-                          </Label>
-                          <Input
-                            id="shared"
-                            placeholder="e.g., 40"
-                            {...numberField(inputs.devices.sharedKiosk, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                devices: {
-                                  ...s.devices,
-                                  sharedKiosk: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-shared"
-                          />
-                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-5" data-testid="group-support">
+                    <div className="space-y-5" data-testid="group-vdi">
                       <div>
-                        <div className="text-sm font-semibold" data-testid="text-support-title">
-                          Support & operations
+                        <div className="text-sm font-semibold" data-testid="text-vdi-title">
+                          VDI / DaaS
                         </div>
-                        <div className="text-xs text-muted-foreground" data-testid="text-support-subtitle">
-                          Provide FTE counts if known. If not, the tool will derive staffing
-                          from a visible ratio.
+                        <div className="text-xs text-muted-foreground" data-testid="text-vdi-subtitle">
+                          Percentage of users on virtual desktop infrastructure.
                         </div>
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                          <Label htmlFor="tier1" data-testid="label-tier1">
-                            Tier 1 FTE
+                          <Label htmlFor="vdiPct" data-testid="label-vdipct">
+                            VDI % of users
                           </Label>
                           <Input
-                            id="tier1"
-                            placeholder="e.g., 4"
-                            {...numberField(inputs.support.tier1Fte, (v) =>
+                            id="vdiPct"
+                            placeholder="e.g., 20"
+                            {...numberField(inputs.vdiDaas.vdiPctOfUsers, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                support: { ...s.support, tier1Fte: nonNeg(v) },
+                                vdiDaas: { ...s.vdiDaas, vdiPctOfUsers: nonNeg(v) },
                               })),
                             )}
                             data-testid="input-tier1"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="tier2" data-testid="label-tier2">
-                            Tier 2 FTE
-                          </Label>
-                          <Input
-                            id="tier2"
-                            placeholder="e.g., 2"
-                            {...numberField(inputs.support.tier2Fte, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                support: { ...s.support, tier2Fte: nonNeg(v) },
-                              })),
-                            )}
-                            data-testid="input-tier2"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="tier3" data-testid="label-tier3">
-                            Tier 3 FTE
-                          </Label>
-                          <Input
-                            id="tier3"
-                            placeholder="e.g., 1"
-                            {...numberField(inputs.support.tier3Fte, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                support: { ...s.support, tier3Fte: nonNeg(v) },
-                              })),
-                            )}
-                            data-testid="input-tier3"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="salary" data-testid="label-salary">
-                            Avg fully burdened salary (optional)
-                          </Label>
-                          <Input
-                            id="salary"
-                            placeholder="e.g., 90000"
-                            {...numberField(inputs.support.avgFullyBurdenedSalary, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                support: {
-                                  ...s.support,
-                                  avgFullyBurdenedSalary: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-salary"
-                          />
-                        </div>
                       </div>
 
-                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-support-derived">
+                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-vdi-derived">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
                             <div className="text-sm font-semibold" data-testid="text-derived-title">
-                              Derived staffing (if blanks)
+                              Derived VDI users
                             </div>
                             <div className="mt-1 text-xs text-muted-foreground" data-testid="text-derived-subtitle">
-                              Based on your endpoint count and the visible ratios in
-                              Assumptions.
+                              Based on user count and VDI percentage.
                             </div>
                           </div>
                           <Badge
@@ -964,28 +983,8 @@ export default function TcoBaseline() {
                             className="rounded-full"
                             data-testid="badge-derived"
                           >
-                            Assumption-backed
+                            {fmtNumber(derived.vdiUserCount)} VDI users
                           </Badge>
-                        </div>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                          <div className="rounded-xl border bg-card px-3 py-2" data-testid="derived-tier1">
-                            <div className="text-xs text-muted-foreground">Tier 1</div>
-                            <div className="text-sm font-semibold">
-                              {derived.derivedTier1.toFixed(2)} FTE
-                            </div>
-                          </div>
-                          <div className="rounded-xl border bg-card px-3 py-2" data-testid="derived-tier2">
-                            <div className="text-xs text-muted-foreground">Tier 2</div>
-                            <div className="text-sm font-semibold">
-                              {derived.derivedTier2.toFixed(2)} FTE
-                            </div>
-                          </div>
-                          <div className="rounded-xl border bg-card px-3 py-2" data-testid="derived-tier3">
-                            <div className="text-xs text-muted-foreground">Tier 3</div>
-                            <div className="text-sm font-semibold">
-                              {derived.derivedTier3.toFixed(2)} FTE
-                            </div>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -996,113 +995,161 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
-                    title="Licensing, tools, and overhead"
-                    description="Enter known annual spend. If unknown, some categories can use per-endpoint assumptions (clearly labeled)."
-                    testId="header-licensing"
+                    title="Category rollups (optional overrides)"
+                    description="If you know total annual spend for a category, enter it here. Otherwise, the tool calculates from environment data and assumptions."
+                    testId="header-rollups"
                   />
 
                   <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                    <div className="space-y-4" data-testid="group-licensing">
-                      <div className="text-sm font-semibold" data-testid="text-licensing-title">
-                        Licensing (annual)
+                    <div className="space-y-4" data-testid="group-rollups-1">
+                      <div className="text-sm font-semibold" data-testid="text-rollups-title">
+                        Cost categories (annual)
                       </div>
                       <div className="space-y-3">
                         <div className="space-y-2">
-                          <Label htmlFor="lic-euc" data-testid="label-lic-euc">
-                            EUC platform
+                          <Label htmlFor="rollup-devices" data-testid="label-rollup-devices">
+                            End-User Devices
                           </Label>
                           <Input
-                            id="lic-euc"
-                            placeholder="e.g., 125000"
-                            {...numberField(inputs.licensing.eucPlatformAnnual, (v) =>
+                            id="rollup-devices"
+                            placeholder={`derived: ${fmtMoney(derived.endUserDevicesValue)}`}
+                            {...numberField(inputs.categoryRollups.endUserDevicesAnnual, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                licensing: {
-                                  ...s.licensing,
-                                  eucPlatformAnnual: nonNeg(v),
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  endUserDevicesAnnual: nonNeg(v),
                                 },
                               })),
                             )}
-                            data-testid="input-lic-euc"
+                            data-testid="input-rollup-devices"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="lic-os" data-testid="label-lic-os">
-                            Endpoint OS
+                          <Label htmlFor="rollup-support" data-testid="label-rollup-support">
+                            Support & Ops
                           </Label>
                           <Input
-                            id="lic-os"
-                            placeholder="e.g., 48000"
-                            {...numberField(inputs.licensing.endpointOsAnnual, (v) =>
+                            id="rollup-support"
+                            placeholder={`derived: ${fmtMoney(derived.supportOpsValue)}`}
+                            {...numberField(inputs.categoryRollups.supportOpsAnnual, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                licensing: {
-                                  ...s.licensing,
-                                  endpointOsAnnual: nonNeg(v),
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  supportOpsAnnual: nonNeg(v),
                                 },
                               })),
                             )}
-                            data-testid="input-lic-os"
+                            data-testid="input-rollup-support"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="lic-sec" data-testid="label-lic-sec">
-                            Security tooling
+                          <Label htmlFor="rollup-licensing" data-testid="label-rollup-licensing">
+                            Licensing
                           </Label>
                           <Input
-                            id="lic-sec"
-                            placeholder="blank = per-endpoint assumption"
-                            {...numberField(inputs.licensing.securityToolingAnnual, (v) =>
+                            id="rollup-licensing"
+                            placeholder={`derived: ${fmtMoney(derived.licensingValue)}`}
+                            {...numberField(inputs.categoryRollups.licensingAnnual, (v) =>
                               setInputs((s) => ({
                                 ...s,
-                                licensing: {
-                                  ...s.licensing,
-                                  securityToolingAnnual: nonNeg(v),
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  licensingAnnual: nonNeg(v),
                                 },
                               })),
                             )}
-                            data-testid="input-lic-sec"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lic-mgmt" data-testid="label-lic-mgmt">
-                            Management tooling
-                          </Label>
-                          <Input
-                            id="lic-mgmt"
-                            placeholder="blank = per-endpoint assumption"
-                            {...numberField(inputs.licensing.managementToolingAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                licensing: {
-                                  ...s.licensing,
-                                  managementToolingAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-lic-mgmt"
+                            data-testid="input-rollup-licensing"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-4" data-testid="group-presence">
-                      <div className="text-sm font-semibold" data-testid="text-presence-title">
-                        Presence (signals only)
+                    <div className="space-y-4" data-testid="group-rollups-2">
+                      <div className="text-sm font-semibold" data-testid="text-rollups-title-2">
+                        More categories (annual)
                       </div>
-                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-presence">
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-mgmt" data-testid="label-rollup-mgmt">
+                            Management & Security
+                          </Label>
+                          <Input
+                            id="rollup-mgmt"
+                            placeholder={`derived: ${fmtMoney(derived.mgmtSecurityValue)}`}
+                            {...numberField(inputs.categoryRollups.mgmtSecurityAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  mgmtSecurityAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-mgmt"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-vdi" data-testid="label-rollup-vdi">
+                            VDI / DaaS
+                          </Label>
+                          <Input
+                            id="rollup-vdi"
+                            placeholder={`derived: ${fmtMoney(derived.vdiDaasValue)}`}
+                            {...numberField(inputs.categoryRollups.vdiDaasAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  vdiDaasAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-vdi"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-overhead" data-testid="label-rollup-overhead">
+                            Overhead
+                          </Label>
+                          <Input
+                            id="rollup-overhead"
+                            placeholder={`derived: ${fmtMoney(derived.overheadValue)}`}
+                            {...numberField(inputs.categoryRollups.overheadAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  overheadAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-overhead"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4" data-testid="group-vdi-platforms">
+                      <div className="text-sm font-semibold" data-testid="text-vdi-platforms-title">
+                        VDI / DaaS platforms
+                      </div>
+                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-vdi-platforms">
                         <div className="grid gap-4">
                           {([
-                            { k: "uemPresent", label: "UEM present" },
-                            { k: "edrPresent", label: "EDR present" },
-                            { k: "patchToolingPresent", label: "Patch tooling present" },
+                            { k: "citrixPresent", label: "Citrix" },
+                            { k: "avdPresent", label: "Azure Virtual Desktop" },
+                            { k: "w365Present", label: "Windows 365" },
+                            { k: "horizonPresent", label: "VMware Horizon" },
+                            { k: "parallelsPresent", label: "Parallels RAS" },
                           ] as const).map((row) => (
                             <div
                               key={row.k}
                               className="flex items-center justify-between gap-3"
-                              data-testid={`row-presence-${row.k}`}
+                              data-testid={`row-vdi-${row.k}`}
                             >
-                              <div className="text-sm" data-testid={`text-presence-${row.k}`}>
+                              <div className="text-sm" data-testid={`text-vdi-${row.k}`}>
                                 {row.label}
                               </div>
                               <div className="flex items-center gap-2">
@@ -1111,7 +1158,7 @@ export default function TcoBaseline() {
                                     key={v}
                                     type="button"
                                     variant={
-                                      inputs.presence[row.k] === v
+                                      inputs.vdiDaas[row.k] === v
                                         ? "default"
                                         : "secondary"
                                     }
@@ -1119,12 +1166,60 @@ export default function TcoBaseline() {
                                     onClick={() =>
                                       setInputs((s) => ({
                                         ...s,
-                                        presence: { ...s.presence, [row.k]: v },
+                                        vdiDaas: { ...s.vdiDaas, [row.k]: v },
                                       }))
                                     }
-                                    data-testid={`button-presence-${row.k}-${v}`}
+                                    data-testid={`button-vdi-${row.k}-${v}`}
                                   >
-                                    {v === "yes" ? "Yes" : v === "no" ? "No" : "Unknown"}
+                                    {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold mt-4" data-testid="text-tool-presence-title">
+                        Endpoint & management tools
+                      </div>
+                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-tool-presence">
+                        <div className="grid gap-4">
+                          {([
+                            { k: "intunePresent", label: "Intune" },
+                            { k: "sccmPresent", label: "SCCM" },
+                            { k: "workspaceOnePresent", label: "Workspace ONE" },
+                            { k: "jamfPresent", label: "Jamf" },
+                            { k: "controlUpPresent", label: "ControlUp" },
+                            { k: "nerdioPresent", label: "Nerdio" },
+                          ] as const).map((row) => (
+                            <div
+                              key={row.k}
+                              className="flex items-center justify-between gap-3"
+                              data-testid={`row-tool-${row.k}`}
+                            >
+                              <div className="text-sm" data-testid={`text-tool-${row.k}`}>
+                                {row.label}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {(["yes", "no", "unknown"] as const).map((v) => (
+                                  <Button
+                                    key={v}
+                                    type="button"
+                                    variant={
+                                      inputs.toolPresence[row.k] === v
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="h-8 rounded-xl px-3 text-xs"
+                                    onClick={() =>
+                                      setInputs((s) => ({
+                                        ...s,
+                                        toolPresence: { ...s.toolPresence, [row.k]: v },
+                                      }))
+                                    }
+                                    data-testid={`button-tool-${row.k}-${v}`}
+                                  >
+                                    {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
                                   </Button>
                                 ))}
                               </div>
@@ -1134,75 +1229,10 @@ export default function TcoBaseline() {
                       </div>
                       <InlineInfo
                         title="Why this matters"
-                        body="These are baseline context flags, not maturity scoring. They don't change totals unless you enter actual spend."
+                        body="These are baseline context flags for discovery. They don't change totals unless you enter actual spend."
                         icon={<BookOpen className="h-4 w-4" />}
-                        testId="info-presence"
+                        testId="info-tool-presence"
                       />
-                    </div>
-
-                    <div className="space-y-4" data-testid="group-overhead">
-                      <div className="text-sm font-semibold" data-testid="text-overhead-title">
-                        Overhead (annual)
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="oh-fac" data-testid="label-oh-fac">
-                            Facilities allocation
-                          </Label>
-                          <Input
-                            id="oh-fac"
-                            placeholder="e.g., 25000"
-                            {...numberField(inputs.overhead.facilitiesAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                overhead: {
-                                  ...s.overhead,
-                                  facilitiesAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-oh-fac"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="oh-train" data-testid="label-oh-train">
-                            Training budget
-                          </Label>
-                          <Input
-                            id="oh-train"
-                            placeholder="e.g., 15000"
-                            {...numberField(inputs.overhead.trainingAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                overhead: {
-                                  ...s.overhead,
-                                  trainingAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-oh-train"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="oh-contract" data-testid="label-oh-contract">
-                            Contractor spend
-                          </Label>
-                          <Input
-                            id="oh-contract"
-                            placeholder="e.g., 90000"
-                            {...numberField(inputs.overhead.contractorAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                overhead: {
-                                  ...s.overhead,
-                                  contractorAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-oh-contract"
-                          />
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </Card>
@@ -1237,23 +1267,6 @@ export default function TcoBaseline() {
                             data-testid="input-msp-total"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="msp-users">User count (for per-user calc)</Label>
-                          <Input
-                            id="msp-users"
-                            placeholder="e.g., 1500"
-                            {...numberField(inputs.managedServices.userCount, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                managedServices: {
-                                  ...s.managedServices,
-                                  userCount: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-msp-users"
-                          />
-                        </div>
                       </div>
 
                       {(inputs.managedServices.totalAnnualSpend ?? 0) > 0 && (
@@ -1269,7 +1282,7 @@ export default function TcoBaseline() {
                             <div className="rounded-xl border bg-card px-3 py-2">
                               <div className="text-xs text-muted-foreground">Per user</div>
                               <div className="text-sm font-semibold">
-                                {derived.mspUserCount > 0 ? fmtMoney(derived.mspCostPerUser) : "N/A"}
+                                {derived.userCount > 0 ? fmtMoney(derived.mspCostPerUser) : "N/A"}
                               </div>
                             </div>
                           </div>
@@ -1359,171 +1372,288 @@ export default function TcoBaseline() {
                 />
 
                 <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-support">
-                    <div className="text-sm font-semibold" data-testid="text-assump-support-title">
-                      Support ratios
+                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-devices">
+                    <div className="text-sm font-semibold" data-testid="text-assump-devices-title">
+                      Device refresh & cost
                     </div>
                     <div className="mt-4 grid gap-3">
                       <div className="space-y-2">
-                        <Label htmlFor="a-t1" data-testid="label-a-t1">
-                          Endpoints per Tier 1
+                        <Label htmlFor="a-laptop-refresh" data-testid="label-a-laptop-refresh">
+                          Laptop refresh (years)
                         </Label>
                         <Input
-                          id="a-t1"
-                          {...numberField(assumptions.supportRatio.endpointsPerTier1, (v) =>
+                          id="a-laptop-refresh"
+                          {...numberField(assumptions.deviceRefreshYears.laptop, (v) =>
                             setAssumptions((s) => ({
                               ...s,
-                              supportRatio: {
-                                ...s.supportRatio,
-                                endpointsPerTier1: Math.max(1, nonNeg(v) ?? 1),
+                              deviceRefreshYears: {
+                                ...s.deviceRefreshYears,
+                                laptop: Math.max(1, nonNeg(v) ?? 3),
                               },
                             })),
                           )}
-                          data-testid="input-a-t1"
+                          data-testid="input-a-laptop-refresh"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="a-t2" data-testid="label-a-t2">
-                          Endpoints per Tier 2
+                        <Label htmlFor="a-laptop-cost" data-testid="label-a-laptop-cost">
+                          Laptop unit cost ($)
                         </Label>
                         <Input
-                          id="a-t2"
-                          {...numberField(assumptions.supportRatio.endpointsPerTier2, (v) =>
+                          id="a-laptop-cost"
+                          {...numberField(assumptions.deviceUnitCost.laptop, (v) =>
                             setAssumptions((s) => ({
                               ...s,
-                              supportRatio: {
-                                ...s.supportRatio,
-                                endpointsPerTier2: Math.max(1, nonNeg(v) ?? 1),
+                              deviceUnitCost: {
+                                ...s.deviceUnitCost,
+                                laptop: nonNeg(v) ?? 1200,
                               },
                             })),
                           )}
-                          data-testid="input-a-t2"
+                          data-testid="input-a-laptop-cost"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="a-t3" data-testid="label-a-t3">
-                          Endpoints per Tier 3
+                        <Label htmlFor="a-desktop-refresh" data-testid="label-a-desktop-refresh">
+                          Desktop refresh (years)
                         </Label>
                         <Input
-                          id="a-t3"
-                          {...numberField(assumptions.supportRatio.endpointsPerTier3, (v) =>
+                          id="a-desktop-refresh"
+                          {...numberField(assumptions.deviceRefreshYears.desktop, (v) =>
                             setAssumptions((s) => ({
                               ...s,
-                              supportRatio: {
-                                ...s.supportRatio,
-                                endpointsPerTier3: Math.max(1, nonNeg(v) ?? 1),
+                              deviceRefreshYears: {
+                                ...s.deviceRefreshYears,
+                                desktop: Math.max(1, nonNeg(v) ?? 3),
                               },
                             })),
                           )}
-                          data-testid="input-a-t3"
+                          data-testid="input-a-desktop-refresh"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-desktop-cost" data-testid="label-a-desktop-cost">
+                          Desktop unit cost ($)
+                        </Label>
+                        <Input
+                          id="a-desktop-cost"
+                          {...numberField(assumptions.deviceUnitCost.desktop, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              deviceUnitCost: {
+                                ...s.deviceUnitCost,
+                                desktop: nonNeg(v) ?? 1100,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-desktop-cost"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-thin-refresh" data-testid="label-a-thin-refresh">
+                          Thin client refresh (years)
+                        </Label>
+                        <Input
+                          id="a-thin-refresh"
+                          {...numberField(assumptions.deviceRefreshYears.thinClient, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              deviceRefreshYears: {
+                                ...s.deviceRefreshYears,
+                                thinClient: Math.max(1, nonNeg(v) ?? 5),
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-thin-refresh"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-thin-cost" data-testid="label-a-thin-cost">
+                          Thin client unit cost ($)
+                        </Label>
+                        <Input
+                          id="a-thin-cost"
+                          {...numberField(assumptions.deviceUnitCost.thinClient, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              deviceUnitCost: {
+                                ...s.deviceUnitCost,
+                                thinClient: nonNeg(v) ?? 600,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-thin-cost"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-devices-hint">
+                      Used to calculate annualized device costs.
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-support">
+                    <div className="text-sm font-semibold" data-testid="text-assump-support-title">
+                      Support & operations
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="a-tickets" data-testid="label-a-tickets">
+                          Tickets per endpoint/year
+                        </Label>
+                        <Input
+                          id="a-tickets"
+                          {...numberField(assumptions.supportOps.ticketsPerEndpointPerYear, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportOps: {
+                                ...s.supportOps,
+                                ticketsPerEndpointPerYear: nonNeg(v) ?? 2,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-tickets"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-ticket-hours" data-testid="label-a-ticket-hours">
+                          Avg ticket handling hours
+                        </Label>
+                        <Input
+                          id="a-ticket-hours"
+                          {...numberField(assumptions.supportOps.avgTicketHandlingHours, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportOps: {
+                                ...s.supportOps,
+                                avgTicketHandlingHours: nonNeg(v) ?? 0.5,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-ticket-hours"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-deploy-hours" data-testid="label-a-deploy-hours">
+                          Deployment hours/device
+                        </Label>
+                        <Input
+                          id="a-deploy-hours"
+                          {...numberField(assumptions.supportOps.deploymentHoursPerDevice, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportOps: {
+                                ...s.supportOps,
+                                deploymentHoursPerDevice: nonNeg(v) ?? 1.5,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-deploy-hours"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-labor-rate" data-testid="label-a-labor-rate">
+                          Blended labor rate ($/hr)
+                        </Label>
+                        <Input
+                          id="a-labor-rate"
+                          {...numberField(assumptions.supportOps.blendedLaborRateHourly, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportOps: {
+                                ...s.supportOps,
+                                blendedLaborRateHourly: nonNeg(v) ?? 50,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-labor-rate"
                         />
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-support-hint">
-                      Used to derive staffing if FTE counts are blank.
+                      Used to calculate support & ops costs if not provided.
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-salary">
-                    <div className="text-sm font-semibold" data-testid="text-assump-salary-title">
-                      Salary benchmarks
+                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-other">
+                    <div className="text-sm font-semibold" data-testid="text-assump-other-title">
+                      Licensing, VDI & Overhead
                     </div>
                     <div className="mt-4 grid gap-3">
                       <div className="space-y-2">
-                        <Label htmlFor="a-s1" data-testid="label-a-s1">
-                          Tier 1 salary
+                        <Label htmlFor="a-lic-user" data-testid="label-a-lic-user">
+                          Licensing $/user/year
                         </Label>
                         <Input
-                          id="a-s1"
-                          {...numberField(assumptions.salary.tier1, (v) =>
+                          id="a-lic-user"
+                          {...numberField(assumptions.licensing.avgCostPerUserPerYear, (v) =>
                             setAssumptions((s) => ({
                               ...s,
-                              salary: { ...s.salary, tier1: nonNeg(v) ?? 0 },
-                            })),
-                          )}
-                          data-testid="input-a-s1"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="a-s2" data-testid="label-a-s2">
-                          Tier 2 salary
-                        </Label>
-                        <Input
-                          id="a-s2"
-                          {...numberField(assumptions.salary.tier2, (v) =>
-                            setAssumptions((s) => ({
-                              ...s,
-                              salary: { ...s.salary, tier2: nonNeg(v) ?? 0 },
-                            })),
-                          )}
-                          data-testid="input-a-s2"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="a-s3" data-testid="label-a-s3">
-                          Tier 3 salary
-                        </Label>
-                        <Input
-                          id="a-s3"
-                          {...numberField(assumptions.salary.tier3, (v) =>
-                            setAssumptions((s) => ({
-                              ...s,
-                              salary: { ...s.salary, tier3: nonNeg(v) ?? 0 },
-                            })),
-                          )}
-                          data-testid="input-a-s3"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-salary-hint">
-                      These are used only when an input salary isn't provided.
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-lic">
-                    <div className="text-sm font-semibold" data-testid="text-assump-lic-title">
-                      Per-endpoint licensing
-                    </div>
-                    <div className="mt-4 grid gap-3">
-                      <div className="space-y-2">
-                        <Label htmlFor="a-uem" data-testid="label-a-uem">
-                          UEM per endpoint (annual)
-                        </Label>
-                        <Input
-                          id="a-uem"
-                          {...numberField(assumptions.licensingBenchmarks.uemPerEndpoint, (v) =>
-                            setAssumptions((s) => ({
-                              ...s,
-                              licensingBenchmarks: {
-                                ...s.licensingBenchmarks,
-                                uemPerEndpoint: nonNeg(v) ?? 0,
+                              licensing: {
+                                ...s.licensing,
+                                avgCostPerUserPerYear: nonNeg(v) ?? 400,
                               },
                             })),
                           )}
-                          data-testid="input-a-uem"
+                          data-testid="input-a-lic-user"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="a-sec" data-testid="label-a-sec">
-                          Security per endpoint (annual)
+                        <Label htmlFor="a-mgmt-endpoint" data-testid="label-a-mgmt-endpoint">
+                          Mgmt & Security $/endpoint/year
                         </Label>
                         <Input
-                          id="a-sec"
-                          {...numberField(assumptions.licensingBenchmarks.securityPerEndpoint, (v) =>
+                          id="a-mgmt-endpoint"
+                          {...numberField(assumptions.mgmtSecurity.costPerEndpointPerYear, (v) =>
                             setAssumptions((s) => ({
                               ...s,
-                              licensingBenchmarks: {
-                                ...s.licensingBenchmarks,
-                                securityPerEndpoint: nonNeg(v) ?? 0,
+                              mgmtSecurity: {
+                                ...s.mgmtSecurity,
+                                costPerEndpointPerYear: nonNeg(v) ?? 200,
                               },
                             })),
                           )}
-                          data-testid="input-a-sec"
+                          data-testid="input-a-mgmt-endpoint"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-vdi-user" data-testid="label-a-vdi-user">
+                          VDI/DaaS $/user/year
+                        </Label>
+                        <Input
+                          id="a-vdi-user"
+                          {...numberField(assumptions.vdi.platformCostPerVdiUserPerYear, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              vdi: {
+                                ...s.vdi,
+                                platformCostPerVdiUserPerYear: nonNeg(v) ?? 800,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-vdi-user"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="a-overhead-pct" data-testid="label-a-overhead-pct">
+                          Overhead % of total
+                        </Label>
+                        <Input
+                          id="a-overhead-pct"
+                          {...numberField(assumptions.overhead.pctOfTotal * 100, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              overhead: {
+                                ...s.overhead,
+                                pctOfTotal: (nonNeg(v) ?? 7) / 100,
+                              },
+                            })),
+                          )}
+                          data-testid="input-a-overhead-pct"
                         />
                       </div>
                     </div>
-                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-lic-hint">
-                      Only applies when annual security/management spend is left blank.
+                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-other-hint">
+                      Applied when category rollups are not provided.
                     </div>
                   </div>
                 </div>
@@ -1589,24 +1719,22 @@ export default function TcoBaseline() {
                     <div className="space-y-4" data-testid="trace-section">
                       <div className="text-sm font-semibold">Calculation trace</div>
                       {[
-                        { title: "Labor", lines: derived.laborLines },
-                        { title: "Licensing", lines: derived.licensingLines },
-                        { title: "Overhead", lines: derived.overheadLines },
+                        { title: "Cost Categories", lines: derived.categoryLines },
                         { title: "Managed Services", lines: derived.managedServicesLines },
                       ].map((block) => (
                         <div
                           key={block.title}
                           className="rounded-2xl border bg-card/60"
-                          data-testid={`trace-block-${block.title.toLowerCase()}`}
+                          data-testid={`trace-block-${block.title.toLowerCase().replace(/\s+/g, "-")}`}
                         >
                           <div className="flex items-center justify-between px-4 py-3">
-                            <div className="text-sm font-semibold" data-testid={`text-trace-title-${block.title.toLowerCase()}`}>
+                            <div className="text-sm font-semibold" data-testid={`text-trace-title-${block.title.toLowerCase().replace(/\s+/g, "-")}`}>
                               {block.title}
                             </div>
                             <Badge
                               variant="secondary"
                               className="rounded-full"
-                              data-testid={`badge-trace-${block.title.toLowerCase()}`}
+                              data-testid={`badge-trace-${block.title.toLowerCase().replace(/\s+/g, "-")}`}
                             >
                               {block.lines.filter((l) => l.isAssumed).length} assumed
                             </Badge>
@@ -1707,9 +1835,38 @@ export default function TcoBaseline() {
                   testId="header-summary"
                 />
 
+                {(inputs.project.clientName || inputs.project.assessmentDate) && (
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground" data-testid="panel-project-summary">
+                    {inputs.project.clientName && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">Client:</span>
+                        <span>{inputs.project.clientName}</span>
+                      </div>
+                    )}
+                    {inputs.project.assessmentDate && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">Date:</span>
+                        <span>{new Date(inputs.project.assessmentDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {inputs.project.customerChampion && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">Champion:</span>
+                        <span>{inputs.project.customerChampion}</span>
+                      </div>
+                    )}
+                    {inputs.project.engineerName && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">Engineer:</span>
+                        <span>{inputs.project.engineerName}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-6 grid gap-6 lg:grid-cols-3">
                   <div className="lg:col-span-2 space-y-4">
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                       <MiniKpi
                         label="Total annual baseline"
                         value={fmtMoney(derived.totalAnnualTco)}
@@ -1722,6 +1879,38 @@ export default function TcoBaseline() {
                         hint="Baseline ÷ endpoints"
                         testId="kpi-sum-cpe"
                       />
+                      <MiniKpi
+                        label="Cost per user"
+                        value={derived.userCount > 0 ? fmtMoney(derived.costPerUser) : "$0"}
+                        hint="Baseline ÷ user count"
+                        testId="kpi-sum-cpu"
+                      />
+                      <MiniKpi
+                        label="VDI cost per VDI user"
+                        value={derived.vdiUserCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "$0"}
+                        hint="VDI/DaaS spend ÷ VDI users"
+                        testId="kpi-sum-vdicpu"
+                      />
+                    </div>
+
+                    <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-vdi-analytics">
+                      <div className="text-sm font-semibold" data-testid="text-vdi-analytics-title">
+                        VDI analytics
+                      </div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-xl border bg-card px-3 py-2">
+                          <div className="text-xs text-muted-foreground">VDI users</div>
+                          <div className="text-sm font-semibold">{fmtNumber(derived.vdiUserCount)}</div>
+                        </div>
+                        <div className="rounded-xl border bg-card px-3 py-2">
+                          <div className="text-xs text-muted-foreground">Non-VDI cost per user</div>
+                          <div className="text-sm font-semibold">{derived.userCount > 0 ? fmtMoney(derived.nonVdiCostPerUser) : "$0"}</div>
+                        </div>
+                        <div className="rounded-xl border bg-card px-3 py-2">
+                          <div className="text-xs text-muted-foreground">VDI user premium</div>
+                          <div className="text-sm font-semibold">{derived.vdiUserCount > 0 && derived.userCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "N/A"}</div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-category">
@@ -1731,27 +1920,45 @@ export default function TcoBaseline() {
                       <div className="mt-3 grid gap-2">
                         {[
                           {
-                            k: "labor",
-                            label: "Labor",
-                            v: derived.laborTotal,
+                            k: "devices",
+                            label: "End-User Devices",
+                            v: derived.endUserDevicesValue,
+                            total: derived.totalAnnualTco,
+                          },
+                          {
+                            k: "support",
+                            label: "Support & Ops",
+                            v: derived.supportOpsValue,
                             total: derived.totalAnnualTco,
                           },
                           {
                             k: "licensing",
                             label: "Licensing",
-                            v: derived.licensingTotal,
+                            v: derived.licensingValue,
+                            total: derived.totalAnnualTco,
+                          },
+                          {
+                            k: "mgmt",
+                            label: "Mgmt & Security",
+                            v: derived.mgmtSecurityValue,
+                            total: derived.totalAnnualTco,
+                          },
+                          {
+                            k: "vdi",
+                            label: "VDI / DaaS",
+                            v: derived.vdiDaasValue,
                             total: derived.totalAnnualTco,
                           },
                           {
                             k: "overhead",
                             label: "Overhead",
-                            v: derived.overheadTotal,
+                            v: derived.overheadValue,
                             total: derived.totalAnnualTco,
                           },
                           {
                             k: "msp",
                             label: "Managed Services",
-                            v: derived.managedServicesTotal,
+                            v: derived.mspSpend,
                             total: derived.totalAnnualTco,
                           },
                         ].map((row) => (
