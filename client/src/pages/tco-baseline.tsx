@@ -7,6 +7,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   FileDown,
+  FileText,
   Info,
   Lock,
   Shield,
@@ -155,10 +156,14 @@ function numberField(
   onChange: (next: number | undefined) => void,
 ) {
   return {
+    type: "text" as const,
     value: value === undefined ? "" : String(value),
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
-      if (raw.trim() === "") return onChange(undefined);
+      if (raw.trim() === "") {
+        onChange(undefined);
+        return;
+      }
       const next = Number(raw);
       if (!Number.isFinite(next)) return;
       onChange(next);
@@ -166,6 +171,69 @@ function numberField(
     inputMode: "numeric" as const,
   };
 }
+
+const ASSUMPTION_JUSTIFICATIONS: Record<string, { source: string; rationale: string }> = {
+  "deviceRefreshYears.laptop": {
+    source: "EUC TCO Analysis, Hardware Section",
+    rationale: "Industry standards suggest a 3-4 year refresh cycle where maintenance costs begin to exceed replacement costs. Maintenance costs escalate by 148% by year 5 and can reach 300% by year 7 compared to years 1-2."
+  },
+  "deviceRefreshYears.desktop": {
+    source: "EUC TCO Analysis, Hardware Section",
+    rationale: "Business desktops have a standard lifecycle of 4-5 years. A 3-year refresh aligns with optimal TCO before support costs escalate significantly."
+  },
+  "deviceRefreshYears.thinClient": {
+    source: "EUC TCO Analysis, Hardware Section",
+    rationale: "Thin clients have longer lifecycles (5+ years) due to simpler architecture and lower failure rates than full PCs."
+  },
+  "deviceUnitCost.laptop": {
+    source: "EUC TCO Analysis, Endpoint Acquisition Table",
+    rationale: "Mid-range business laptop costs range $900-$1,700. $1,200 represents a reasonable mid-point for standard knowledge worker provisioning."
+  },
+  "deviceUnitCost.desktop": {
+    source: "EUC TCO Analysis, Endpoint Acquisition Table",
+    rationale: "Business desktop costs range $600-$1,800. $1,100 represents mid-tier provisioning suitable for most business users."
+  },
+  "deviceUnitCost.thinClient": {
+    source: "EUC TCO Analysis, Infrastructure Section",
+    rationale: "Thin clients cost significantly less than full PCs, typically $400-$800. $600 represents a capable modern thin client."
+  },
+  "supportOps.ticketsPerEndpointPerYear": {
+    source: "EUC TCO Analysis, Labor Section",
+    rationale: "Industry benchmark of 2 tickets per endpoint per year based on standard service desk metrics for well-managed environments."
+  },
+  "supportOps.avgTicketHandlingHours": {
+    source: "EUC TCO Analysis, Labor Section",
+    rationale: "Average Level 1/2 ticket resolution time of 30 minutes (0.5 hours) based on typical IT service desk benchmarks."
+  },
+  "supportOps.deploymentHoursPerDevice": {
+    source: "EUC TCO Analysis, Labor Section",
+    rationale: "Standard device imaging, configuration, and deployment takes 1.5 hours with modern provisioning tools."
+  },
+  "supportOps.blendedLaborRateHourly": {
+    source: "EUC TCO Analysis, True Cost of Support Personnel",
+    rationale: "Blended rate of $50/hour accounts for mix of Level 1-3 support staff. Base salaries range $70K-$150K plus 25% payroll burden."
+  },
+  "licensing.avgCostPerUserPerYear": {
+    source: "EUC TCO Analysis, Microsoft 365 Licensing",
+    rationale: "M365 E3 at $36/month = $432/year. $400/user/year is conservative baseline for core productivity licensing."
+  },
+  "licensing.coveragePct": {
+    source: "EUC TCO Analysis, Licensing Model",
+    rationale: "100% coverage assumes all users require productivity suite licensing as baseline."
+  },
+  "mgmtSecurity.costPerEndpointPerYear": {
+    source: "EUC TCO Analysis, Management Tools Section",
+    rationale: "Combined UEM (Intune ~$96/yr) plus security/DEX tools. $200/endpoint covers endpoint management and security baseline."
+  },
+  "vdi.platformCostPerVdiUserPerYear": {
+    source: "EUC TCO Analysis, Virtualization and DaaS",
+    rationale: "Citrix DaaS ranges $156-$276/user/year. AVD $120/user/year. $800 accounts for platform licensing plus infrastructure costs."
+  },
+  "overhead.pctOfTotal": {
+    source: "EUC TCO Analysis, Infrastructure Overhead",
+    rationale: "7% overhead covers administrative costs, facilities allocation, and indirect IT costs not captured in direct categories."
+  }
+};
 
 function SectionHeader(props: {
   icon: React.ReactNode;
@@ -819,6 +887,123 @@ export default function TcoBaseline() {
     a.href = url;
     const clientSlug = inputs.project.clientName?.replace(/\s+/g, "_").toLowerCase() ?? "baseline";
     a.download = `tco-audit-trail-${clientSlug}-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportJustificationReport = () => {
+    const lines: string[] = [];
+    const hr = "═".repeat(72);
+    const date = new Date().toLocaleDateString();
+
+    lines.push(hr);
+    lines.push("TCO ASSUMPTION JUSTIFICATION REPORT");
+    lines.push(`Generated: ${date}`);
+    lines.push(hr);
+    lines.push("");
+    lines.push("This report provides industry-sourced justifications for each assumption");
+    lines.push("used in the TCO baseline calculation. All assumptions are derived from");
+    lines.push("the EUC TCO Analysis and Discovery Roadmap document.");
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(70) + "┐");
+    lines.push("│ DEVICE REFRESH & COST ASSUMPTIONS" + " ".repeat(35) + "│");
+    lines.push("└" + "─".repeat(70) + "┘");
+    lines.push("");
+
+    const deviceKeys = [
+      { key: "deviceRefreshYears.laptop", label: "Laptop Refresh Cycle", value: `${assumptions.deviceRefreshYears.laptop} years` },
+      { key: "deviceRefreshYears.desktop", label: "Desktop Refresh Cycle", value: `${assumptions.deviceRefreshYears.desktop} years` },
+      { key: "deviceRefreshYears.thinClient", label: "Thin Client Refresh Cycle", value: `${assumptions.deviceRefreshYears.thinClient} years` },
+      { key: "deviceUnitCost.laptop", label: "Laptop Unit Cost", value: `$${assumptions.deviceUnitCost.laptop}` },
+      { key: "deviceUnitCost.desktop", label: "Desktop Unit Cost", value: `$${assumptions.deviceUnitCost.desktop}` },
+      { key: "deviceUnitCost.thinClient", label: "Thin Client Unit Cost", value: `$${assumptions.deviceUnitCost.thinClient}` },
+    ];
+
+    deviceKeys.forEach(({ key, label, value }) => {
+      const justification = ASSUMPTION_JUSTIFICATIONS[key];
+      lines.push(`  ${label}: ${value}`);
+      lines.push(`    Source: ${justification?.source ?? "Industry benchmark"}`);
+      lines.push(`    Rationale: ${justification?.rationale ?? "Standard industry assumption"}`);
+      lines.push("");
+    });
+
+    lines.push("┌" + "─".repeat(70) + "┐");
+    lines.push("│ SUPPORT & OPERATIONS ASSUMPTIONS" + " ".repeat(36) + "│");
+    lines.push("└" + "─".repeat(70) + "┘");
+    lines.push("");
+
+    const supportKeys = [
+      { key: "supportOps.ticketsPerEndpointPerYear", label: "Tickets per Endpoint/Year", value: `${assumptions.supportOps.ticketsPerEndpointPerYear}` },
+      { key: "supportOps.avgTicketHandlingHours", label: "Avg Ticket Handling Time", value: `${assumptions.supportOps.avgTicketHandlingHours} hours` },
+      { key: "supportOps.deploymentHoursPerDevice", label: "Deployment Hours/Device", value: `${assumptions.supportOps.deploymentHoursPerDevice} hours` },
+      { key: "supportOps.blendedLaborRateHourly", label: "Blended Labor Rate", value: `$${assumptions.supportOps.blendedLaborRateHourly}/hour` },
+    ];
+
+    supportKeys.forEach(({ key, label, value }) => {
+      const justification = ASSUMPTION_JUSTIFICATIONS[key];
+      lines.push(`  ${label}: ${value}`);
+      lines.push(`    Source: ${justification?.source ?? "Industry benchmark"}`);
+      lines.push(`    Rationale: ${justification?.rationale ?? "Standard industry assumption"}`);
+      lines.push("");
+    });
+
+    lines.push("┌" + "─".repeat(70) + "┐");
+    lines.push("│ LICENSING & MANAGEMENT ASSUMPTIONS" + " ".repeat(34) + "│");
+    lines.push("└" + "─".repeat(70) + "┘");
+    lines.push("");
+
+    const licensingKeys = [
+      { key: "licensing.avgCostPerUserPerYear", label: "Licensing Cost/User/Year", value: `$${assumptions.licensing.avgCostPerUserPerYear}` },
+      { key: "licensing.coveragePct", label: "Licensing Coverage", value: `${(assumptions.licensing.coveragePct * 100).toFixed(0)}%` },
+      { key: "mgmtSecurity.costPerEndpointPerYear", label: "Management & Security/Endpoint", value: `$${assumptions.mgmtSecurity.costPerEndpointPerYear}/year` },
+    ];
+
+    licensingKeys.forEach(({ key, label, value }) => {
+      const justification = ASSUMPTION_JUSTIFICATIONS[key];
+      lines.push(`  ${label}: ${value}`);
+      lines.push(`    Source: ${justification?.source ?? "Industry benchmark"}`);
+      lines.push(`    Rationale: ${justification?.rationale ?? "Standard industry assumption"}`);
+      lines.push("");
+    });
+
+    lines.push("┌" + "─".repeat(70) + "┐");
+    lines.push("│ VDI/DaaS & OVERHEAD ASSUMPTIONS" + " ".repeat(37) + "│");
+    lines.push("└" + "─".repeat(70) + "┘");
+    lines.push("");
+
+    const vdiKeys = [
+      { key: "vdi.platformCostPerVdiUserPerYear", label: "VDI Platform Cost/User/Year", value: `$${assumptions.vdi.platformCostPerVdiUserPerYear}` },
+      { key: "overhead.pctOfTotal", label: "Overhead Percentage", value: `${(assumptions.overhead.pctOfTotal * 100).toFixed(0)}%` },
+    ];
+
+    vdiKeys.forEach(({ key, label, value }) => {
+      const justification = ASSUMPTION_JUSTIFICATIONS[key];
+      lines.push(`  ${label}: ${value}`);
+      lines.push(`    Source: ${justification?.source ?? "Industry benchmark"}`);
+      lines.push(`    Rationale: ${justification?.rationale ?? "Standard industry assumption"}`);
+      lines.push("");
+    });
+
+    lines.push(hr);
+    lines.push("REFERENCE DOCUMENT");
+    lines.push(hr);
+    lines.push("");
+    lines.push("Strategic Financial Architecture of End User Computing:");
+    lines.push("A Comprehensive Total Cost of Ownership Analysis");
+    lines.push("");
+    lines.push("This report is based on industry research and benchmarks compiled in the");
+    lines.push("EUC TCO Analysis and Discovery Roadmap document, which synthesizes data");
+    lines.push("from Gartner, IDC, Microsoft, Citrix, and other authoritative sources.");
+    lines.push("");
+    lines.push(hr);
+
+    const content = lines.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tco-assumption-justifications-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -1627,6 +1812,18 @@ export default function TcoBaseline() {
                   title="Explicit, labeled, overrideable"
                   description="These values are used only when an input is missing. Inputs always override assumptions."
                   testId="header-assumptions"
+                  right={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={exportJustificationReport}
+                      className="flex items-center gap-2"
+                      data-testid="btn-export-justifications"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Export Justifications
+                    </Button>
+                  }
                 />
 
                 <div className="mt-6 grid gap-6 lg:grid-cols-3">
