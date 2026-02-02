@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import TcoHome from "@/pages/tco-home";
 
 type YesNo = "yes" | "no" | "unknown";
 
@@ -233,6 +234,10 @@ function InlineInfo(props: {
 
 export default function TcoBaseline() {
   const [dark, setDark] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "home" | "inputs" | "assumptions" | "trace" | "summary"
+  >("home");
+
   const [inputs, setInputs] = useState<Inputs>({
     devices: {},
     support: {},
@@ -298,8 +303,8 @@ export default function TcoBaseline() {
         value: (tier1Fte ?? derivedTier1) * tier1Salary,
         basis:
           tier1Fte !== undefined
-            ? `${tier1Fte} FTE × ${fmtMoney(tier1Salary)} (input salary)`
-            : `${derivedTier1.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier1Salary)} (assumed tier1 salary)`,
+            ? `${tier1Fte} FTE \u00d7 ${fmtMoney(tier1Salary)} (input salary)`
+            : `${derivedTier1.toFixed(2)} FTE (assumed ratio) \u00d7 ${fmtMoney(tier1Salary)} (assumed tier1 salary)`,
         isAssumed: tier1Fte === undefined,
       },
       {
@@ -308,8 +313,8 @@ export default function TcoBaseline() {
         value: (tier2Fte ?? derivedTier2) * tier2Salary,
         basis:
           tier2Fte !== undefined
-            ? `${tier2Fte} FTE × ${fmtMoney(tier2Salary)} (assumed salary)`
-            : `${derivedTier2.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier2Salary)} (assumed salary)`,
+            ? `${tier2Fte} FTE \u00d7 ${fmtMoney(tier2Salary)} (assumed salary)`
+            : `${derivedTier2.toFixed(2)} FTE (assumed ratio) \u00d7 ${fmtMoney(tier2Salary)} (assumed salary)`,
         isAssumed: tier2Fte === undefined,
       },
       {
@@ -318,8 +323,8 @@ export default function TcoBaseline() {
         value: (tier3Fte ?? derivedTier3) * tier3Salary,
         basis:
           tier3Fte !== undefined
-            ? `${tier3Fte} FTE × ${fmtMoney(tier3Salary)} (assumed salary)`
-            : `${derivedTier3.toFixed(2)} FTE (assumed ratio) × ${fmtMoney(tier3Salary)} (assumed salary)`,
+            ? `${tier3Fte} FTE \u00d7 ${fmtMoney(tier3Salary)} (assumed salary)`
+            : `${derivedTier3.toFixed(2)} FTE (assumed ratio) \u00d7 ${fmtMoney(tier3Salary)} (assumed salary)`,
         isAssumed: tier3Fte === undefined,
       },
     ];
@@ -354,7 +359,7 @@ export default function TcoBaseline() {
         basis:
           inputs.licensing.securityToolingAnnual !== undefined
             ? `${fmtMoney(inputs.licensing.securityToolingAnnual)} (input)`
-            : `${fmtNumber(endpoints)} endpoints × ${fmtMoney(assumptions.licensingBenchmarks.securityPerEndpoint)} per endpoint (assumption)`,
+            : `${fmtNumber(endpoints)} endpoints \u00d7 ${fmtMoney(assumptions.licensingBenchmarks.securityPerEndpoint)} per endpoint (assumption)`,
         isAssumed: inputs.licensing.securityToolingAnnual === undefined,
       },
       {
@@ -366,7 +371,7 @@ export default function TcoBaseline() {
         basis:
           inputs.licensing.managementToolingAnnual !== undefined
             ? `${fmtMoney(inputs.licensing.managementToolingAnnual)} (input)`
-            : `${fmtNumber(endpoints)} endpoints × ${fmtMoney(assumptions.licensingBenchmarks.uemPerEndpoint)} per endpoint (assumption)`,
+            : `${fmtNumber(endpoints)} endpoints \u00d7 ${fmtMoney(assumptions.licensingBenchmarks.uemPerEndpoint)} per endpoint (assumption)`,
         isAssumed: inputs.licensing.managementToolingAnnual === undefined,
       },
     ];
@@ -509,7 +514,7 @@ export default function TcoBaseline() {
                   >
                     Neutral / Unbiased Baseline
                   </Badge>
-                  <span className="hidden sm:inline">•</span>
+                  <span className="hidden sm:inline"></span>
                   <span className="hidden sm:inline">Mirror reality. No ROI.</span>
                 </div>
                 <h1
@@ -523,7 +528,7 @@ export default function TcoBaseline() {
                   data-testid="text-subtitle"
                 >
                   Define your current state with transparent inputs, explicit assumptions,
-                  and defensible math. This produces a baseline only—no future-state
+                  and defensible math. This produces a baseline onlyno future-state
                   scenarios, no savings narratives.
                 </p>
               </div>
@@ -588,24 +593,22 @@ export default function TcoBaseline() {
               />
               <MiniKpi
                 label="Cost per endpoint"
-                value={
-                  derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"
-                }
-                hint="Baseline ÷ endpoints"
+                value={derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"}
+                hint="Baseline  endpoints"
                 testId="kpi-cost-per-endpoint"
               />
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <InlineInfo
-                title="Governed inputs → traceable output"
+                title="Governed inputs  traceable output"
                 body="Every total is explainable. When an input is missing, the tool uses an explicit assumption and labels it."
                 icon={<Lock className="h-4 w-4" />}
                 testId="info-governance"
               />
               <InlineInfo
                 title="Baseline only (no ROI)"
-                body="This tool won’t model future state, savings, or vendor comparisons. It’s designed to earn trust first."
+                body="This tool wont model future state, savings, or vendor comparisons. Its designed to earn trust first."
                 icon={<Shield className="h-4 w-4" />}
                 testId="info-baseline-only"
               />
@@ -614,9 +617,17 @@ export default function TcoBaseline() {
         </header>
 
         <main className="mt-8 grid gap-6">
-          <Tabs defaultValue="inputs" className="w-full" data-testid="tabs-root">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+            className="w-full"
+            data-testid="tabs-root"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <TabsList className="rounded-2xl" data-testid="tabs-list">
+                <TabsTrigger value="home" data-testid="tab-home">
+                  Home
+                </TabsTrigger>
                 <TabsTrigger value="inputs" data-testid="tab-inputs">
                   Inputs
                 </TabsTrigger>
@@ -641,10 +652,7 @@ export default function TcoBaseline() {
                       Readiness
                     </div>
                     <div className="mt-1 flex items-center gap-2">
-                      <span
-                        className="text-sm font-semibold"
-                        data-testid="text-readiness"
-                      >
+                      <span className="text-sm font-semibold" data-testid="text-readiness">
                         {derived.readinessScore >= 100
                           ? "Ready"
                           : derived.readinessScore >= 50
@@ -657,10 +665,7 @@ export default function TcoBaseline() {
                     </div>
                   </div>
                   <div className="w-36">
-                    <Progress
-                      value={derived.readinessScore}
-                      data-testid="progress-readiness"
-                    />
+                    <Progress value={derived.readinessScore} data-testid="progress-readiness" />
                   </div>
                 </div>
                 <div
@@ -672,6 +677,14 @@ export default function TcoBaseline() {
               </div>
             </div>
 
+            <TabsContent value="home" className="mt-5" data-testid="panel-home">
+              <TcoHome
+                onStart={() => setActiveTab("inputs")}
+                onOpenAssumptions={() => setActiveTab("assumptions")}
+                onOpenTrace={() => setActiveTab("trace")}
+              />
+            </TabsContent>
+
             <TabsContent value="inputs" className="mt-5" data-testid="panel-inputs">
               <div className="grid gap-6">
                 <Card className="glass hairline rounded-3xl p-6">
@@ -679,7 +692,7 @@ export default function TcoBaseline() {
                     icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
                     title="Environment facts"
-                    description="Enter what you know. Leave unknowns blank—assumptions will be explicit and challengeable."
+                    description="Enter what you know. Leave unknowns blankassumptions will be explicit and challengeable."
                     testId="header-inputs"
                   />
 
@@ -687,16 +700,10 @@ export default function TcoBaseline() {
                     <div className="space-y-5" data-testid="group-devices">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div
-                            className="text-sm font-semibold"
-                            data-testid="text-devices-title"
-                          >
+                          <div className="text-sm font-semibold" data-testid="text-devices-title">
                             End-user devices
                           </div>
-                          <div
-                            className="text-xs text-muted-foreground"
-                            data-testid="text-devices-subtitle"
-                          >
+                          <div className="text-xs text-muted-foreground" data-testid="text-devices-subtitle">
                             Counts only. No pricing here.
                           </div>
                         </div>
@@ -742,10 +749,7 @@ export default function TcoBaseline() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label
-                            htmlFor="thinClients"
-                            data-testid="label-thinclients"
-                          >
+                          <Label htmlFor="thinClients" data-testid="label-thinclients">
                             Thin clients
                           </Label>
                           <Input
@@ -803,16 +807,10 @@ export default function TcoBaseline() {
 
                     <div className="space-y-5" data-testid="group-support">
                       <div>
-                        <div
-                          className="text-sm font-semibold"
-                          data-testid="text-support-title"
-                        >
+                        <div className="text-sm font-semibold" data-testid="text-support-title">
                           Support & operations
                         </div>
-                        <div
-                          className="text-xs text-muted-foreground"
-                          data-testid="text-support-subtitle"
-                        >
+                        <div className="text-xs text-muted-foreground" data-testid="text-support-subtitle">
                           Provide FTE counts if known. If not, the tool will derive staffing
                           from a visible ratio.
                         </div>
@@ -874,38 +872,27 @@ export default function TcoBaseline() {
                           <Input
                             id="salary"
                             placeholder="e.g., 90000"
-                            {...numberField(
-                              inputs.support.avgFullyBurdenedSalary,
-                              (v) =>
-                                setInputs((s) => ({
-                                  ...s,
-                                  support: {
-                                    ...s.support,
-                                    avgFullyBurdenedSalary: nonNeg(v),
-                                  },
-                                })),
+                            {...numberField(inputs.support.avgFullyBurdenedSalary, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                support: {
+                                  ...s.support,
+                                  avgFullyBurdenedSalary: nonNeg(v),
+                                },
+                              })),
                             )}
                             data-testid="input-salary"
                           />
                         </div>
                       </div>
 
-                      <div
-                        className="rounded-2xl border bg-card/60 p-4"
-                        data-testid="panel-support-derived"
-                      >
+                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-support-derived">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0">
-                            <div
-                              className="text-sm font-semibold"
-                              data-testid="text-derived-title"
-                            >
+                            <div className="text-sm font-semibold" data-testid="text-derived-title">
                               Derived staffing (if blanks)
                             </div>
-                            <div
-                              className="mt-1 text-xs text-muted-foreground"
-                              data-testid="text-derived-subtitle"
-                            >
+                            <div className="mt-1 text-xs text-muted-foreground" data-testid="text-derived-subtitle">
                               Based on your endpoint count and the visible ratios in
                               Assumptions.
                             </div>
@@ -919,28 +906,19 @@ export default function TcoBaseline() {
                           </Badge>
                         </div>
                         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                          <div
-                            className="rounded-xl border bg-card px-3 py-2"
-                            data-testid="derived-tier1"
-                          >
+                          <div className="rounded-xl border bg-card px-3 py-2" data-testid="derived-tier1">
                             <div className="text-xs text-muted-foreground">Tier 1</div>
                             <div className="text-sm font-semibold">
                               {derived.derivedTier1.toFixed(2)} FTE
                             </div>
                           </div>
-                          <div
-                            className="rounded-xl border bg-card px-3 py-2"
-                            data-testid="derived-tier2"
-                          >
+                          <div className="rounded-xl border bg-card px-3 py-2" data-testid="derived-tier2">
                             <div className="text-xs text-muted-foreground">Tier 2</div>
                             <div className="text-sm font-semibold">
                               {derived.derivedTier2.toFixed(2)} FTE
                             </div>
                           </div>
-                          <div
-                            className="rounded-xl border bg-card px-3 py-2"
-                            data-testid="derived-tier3"
-                          >
+                          <div className="rounded-xl border bg-card px-3 py-2" data-testid="derived-tier3">
                             <div className="text-xs text-muted-foreground">Tier 3</div>
                             <div className="text-sm font-semibold">
                               {derived.derivedTier3.toFixed(2)} FTE
@@ -963,10 +941,7 @@ export default function TcoBaseline() {
 
                   <div className="mt-6 grid gap-6 lg:grid-cols-3">
                     <div className="space-y-4" data-testid="group-licensing">
-                      <div
-                        className="text-sm font-semibold"
-                        data-testid="text-licensing-title"
-                      >
+                      <div className="text-sm font-semibold" data-testid="text-licensing-title">
                         Licensing (annual)
                       </div>
                       <div className="space-y-3">
@@ -1015,16 +990,14 @@ export default function TcoBaseline() {
                           <Input
                             id="lic-sec"
                             placeholder="blank = per-endpoint assumption"
-                            {...numberField(
-                              inputs.licensing.securityToolingAnnual,
-                              (v) =>
-                                setInputs((s) => ({
-                                  ...s,
-                                  licensing: {
-                                    ...s.licensing,
-                                    securityToolingAnnual: nonNeg(v),
-                                  },
-                                })),
+                            {...numberField(inputs.licensing.securityToolingAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                licensing: {
+                                  ...s.licensing,
+                                  securityToolingAnnual: nonNeg(v),
+                                },
+                              })),
                             )}
                             data-testid="input-lic-sec"
                           />
@@ -1036,16 +1009,14 @@ export default function TcoBaseline() {
                           <Input
                             id="lic-mgmt"
                             placeholder="blank = per-endpoint assumption"
-                            {...numberField(
-                              inputs.licensing.managementToolingAnnual,
-                              (v) =>
-                                setInputs((s) => ({
-                                  ...s,
-                                  licensing: {
-                                    ...s.licensing,
-                                    managementToolingAnnual: nonNeg(v),
-                                  },
-                                })),
+                            {...numberField(inputs.licensing.managementToolingAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                licensing: {
+                                  ...s.licensing,
+                                  managementToolingAnnual: nonNeg(v),
+                                },
+                              })),
                             )}
                             data-testid="input-lic-mgmt"
                           />
@@ -1054,16 +1025,10 @@ export default function TcoBaseline() {
                     </div>
 
                     <div className="space-y-4" data-testid="group-presence">
-                      <div
-                        className="text-sm font-semibold"
-                        data-testid="text-presence-title"
-                      >
+                      <div className="text-sm font-semibold" data-testid="text-presence-title">
                         Presence (signals only)
                       </div>
-                      <div
-                        className="rounded-2xl border bg-card/60 p-4"
-                        data-testid="panel-presence"
-                      >
+                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-presence">
                         <div className="grid gap-4">
                           {([
                             { k: "uemPresent", label: "UEM present" },
@@ -1075,10 +1040,7 @@ export default function TcoBaseline() {
                               className="flex items-center justify-between gap-3"
                               data-testid={`row-presence-${row.k}`}
                             >
-                              <div
-                                className="text-sm"
-                                data-testid={`text-presence-${row.k}`}
-                              >
+                              <div className="text-sm" data-testid={`text-presence-${row.k}`}>
                                 {row.label}
                               </div>
                               <div className="flex items-center gap-2">
@@ -1100,11 +1062,7 @@ export default function TcoBaseline() {
                                     }
                                     data-testid={`button-presence-${row.k}-${v}`}
                                   >
-                                    {v === "yes"
-                                      ? "Yes"
-                                      : v === "no"
-                                        ? "No"
-                                        : "Unknown"}
+                                    {v === "yes" ? "Yes" : v === "no" ? "No" : "Unknown"}
                                   </Button>
                                 ))}
                               </div>
@@ -1114,17 +1072,14 @@ export default function TcoBaseline() {
                       </div>
                       <InlineInfo
                         title="Why this matters"
-                        body="These are baseline context flags, not maturity scoring. They don’t change totals unless you enter actual spend."
+                        body="These are baseline context flags, not maturity scoring. They dont change totals unless you enter actual spend."
                         icon={<BookOpen className="h-4 w-4" />}
                         testId="info-presence"
                       />
                     </div>
 
                     <div className="space-y-4" data-testid="group-overhead">
-                      <div
-                        className="text-sm font-semibold"
-                        data-testid="text-overhead-title"
-                      >
+                      <div className="text-sm font-semibold" data-testid="text-overhead-title">
                         Overhead (annual)
                       </div>
                       <div className="space-y-3">
@@ -1167,10 +1122,7 @@ export default function TcoBaseline() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label
-                            htmlFor="oh-contract"
-                            data-testid="label-oh-contract"
-                          >
+                          <Label htmlFor="oh-contract" data-testid="label-oh-contract">
                             Contractor spend
                           </Label>
                           <Input
@@ -1198,7 +1150,7 @@ export default function TcoBaseline() {
                     icon={<Sparkles className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
                     title="Observations (human commentary)"
-                    description="Capture caveats, scope notes, and anything a client should hear—without editorializing."
+                    description="Capture caveats, scope notes, and anything a client should hearwithout editorializing."
                     testId="header-observations"
                   />
 
@@ -1223,10 +1175,7 @@ export default function TcoBaseline() {
                         }
                         data-testid="textarea-notes"
                       />
-                      <div
-                        className="mt-2 text-xs text-muted-foreground"
-                        data-testid="text-notes-hint"
-                      >
+                      <div className="mt-2 text-xs text-muted-foreground" data-testid="text-notes-hint">
                         This section does not affect calculations.
                       </div>
                     </div>
@@ -1239,7 +1188,7 @@ export default function TcoBaseline() {
                       />
                       <InlineInfo
                         title="Transparency over precision theater"
-                        body="When something is unknown, we say so—and we show the assumption used (if any)."
+                        body="When something is unknown, we say soand we show the assumption used (if any)."
                         icon={<Info className="h-4 w-4" />}
                         testId="info-transparency"
                       />
@@ -1249,11 +1198,7 @@ export default function TcoBaseline() {
               </div>
             </TabsContent>
 
-            <TabsContent
-              value="assumptions"
-              className="mt-5"
-              data-testid="panel-assumptions"
-            >
+            <TabsContent value="assumptions" className="mt-5" data-testid="panel-assumptions">
               <Card className="glass hairline rounded-3xl p-6">
                 <SectionHeader
                   icon={<BookOpen className="h-5 w-5 text-primary" />}
@@ -1264,14 +1209,8 @@ export default function TcoBaseline() {
                 />
 
                 <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                  <div
-                    className="rounded-2xl border bg-card/60 p-4"
-                    data-testid="card-assumptions-support"
-                  >
-                    <div
-                      className="text-sm font-semibold"
-                      data-testid="text-assump-support-title"
-                    >
+                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-support">
+                    <div className="text-sm font-semibold" data-testid="text-assump-support-title">
                       Support ratios
                     </div>
                     <div className="mt-4 grid gap-3">
@@ -1281,16 +1220,14 @@ export default function TcoBaseline() {
                         </Label>
                         <Input
                           id="a-t1"
-                          {...numberField(
-                            assumptions.supportRatio.endpointsPerTier1,
-                            (v) =>
-                              setAssumptions((s) => ({
-                                ...s,
-                                supportRatio: {
-                                  ...s.supportRatio,
-                                  endpointsPerTier1: Math.max(1, nonNeg(v) ?? 1),
-                                },
-                              })),
+                          {...numberField(assumptions.supportRatio.endpointsPerTier1, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportRatio: {
+                                ...s.supportRatio,
+                                endpointsPerTier1: Math.max(1, nonNeg(v) ?? 1),
+                              },
+                            })),
                           )}
                           data-testid="input-a-t1"
                         />
@@ -1301,16 +1238,14 @@ export default function TcoBaseline() {
                         </Label>
                         <Input
                           id="a-t2"
-                          {...numberField(
-                            assumptions.supportRatio.endpointsPerTier2,
-                            (v) =>
-                              setAssumptions((s) => ({
-                                ...s,
-                                supportRatio: {
-                                  ...s.supportRatio,
-                                  endpointsPerTier2: Math.max(1, nonNeg(v) ?? 1),
-                                },
-                              })),
+                          {...numberField(assumptions.supportRatio.endpointsPerTier2, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportRatio: {
+                                ...s.supportRatio,
+                                endpointsPerTier2: Math.max(1, nonNeg(v) ?? 1),
+                              },
+                            })),
                           )}
                           data-testid="input-a-t2"
                         />
@@ -1321,37 +1256,26 @@ export default function TcoBaseline() {
                         </Label>
                         <Input
                           id="a-t3"
-                          {...numberField(
-                            assumptions.supportRatio.endpointsPerTier3,
-                            (v) =>
-                              setAssumptions((s) => ({
-                                ...s,
-                                supportRatio: {
-                                  ...s.supportRatio,
-                                  endpointsPerTier3: Math.max(1, nonNeg(v) ?? 1),
-                                },
-                              })),
+                          {...numberField(assumptions.supportRatio.endpointsPerTier3, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              supportRatio: {
+                                ...s.supportRatio,
+                                endpointsPerTier3: Math.max(1, nonNeg(v) ?? 1),
+                              },
+                            })),
                           )}
                           data-testid="input-a-t3"
                         />
                       </div>
                     </div>
-                    <div
-                      className="mt-3 text-xs text-muted-foreground"
-                      data-testid="text-assump-support-hint"
-                    >
+                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-support-hint">
                       Used to derive staffing if FTE counts are blank.
                     </div>
                   </div>
 
-                  <div
-                    className="rounded-2xl border bg-card/60 p-4"
-                    data-testid="card-assumptions-salary"
-                  >
-                    <div
-                      className="text-sm font-semibold"
-                      data-testid="text-assump-salary-title"
-                    >
+                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-salary">
+                    <div className="text-sm font-semibold" data-testid="text-assump-salary-title">
                       Salary benchmarks
                     </div>
                     <div className="mt-4 grid gap-3">
@@ -1401,22 +1325,13 @@ export default function TcoBaseline() {
                         />
                       </div>
                     </div>
-                    <div
-                      className="mt-3 text-xs text-muted-foreground"
-                      data-testid="text-assump-salary-hint"
-                    >
-                      These are used only when an input salary isn’t provided.
+                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-salary-hint">
+                      These are used only when an input salary isnt provided.
                     </div>
                   </div>
 
-                  <div
-                    className="rounded-2xl border bg-card/60 p-4"
-                    data-testid="card-assumptions-lic"
-                  >
-                    <div
-                      className="text-sm font-semibold"
-                      data-testid="text-assump-lic-title"
-                    >
+                  <div className="rounded-2xl border bg-card/60 p-4" data-testid="card-assumptions-lic">
+                    <div className="text-sm font-semibold" data-testid="text-assump-lic-title">
                       Per-endpoint licensing
                     </div>
                     <div className="mt-4 grid gap-3">
@@ -1426,16 +1341,14 @@ export default function TcoBaseline() {
                         </Label>
                         <Input
                           id="a-uem"
-                          {...numberField(
-                            assumptions.licensingBenchmarks.uemPerEndpoint,
-                            (v) =>
-                              setAssumptions((s) => ({
-                                ...s,
-                                licensingBenchmarks: {
-                                  ...s.licensingBenchmarks,
-                                  uemPerEndpoint: nonNeg(v) ?? 0,
-                                },
-                              })),
+                          {...numberField(assumptions.licensingBenchmarks.uemPerEndpoint, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              licensingBenchmarks: {
+                                ...s.licensingBenchmarks,
+                                uemPerEndpoint: nonNeg(v) ?? 0,
+                              },
+                            })),
                           )}
                           data-testid="input-a-uem"
                         />
@@ -1446,25 +1359,20 @@ export default function TcoBaseline() {
                         </Label>
                         <Input
                           id="a-sec"
-                          {...numberField(
-                            assumptions.licensingBenchmarks.securityPerEndpoint,
-                            (v) =>
-                              setAssumptions((s) => ({
-                                ...s,
-                                licensingBenchmarks: {
-                                  ...s.licensingBenchmarks,
-                                  securityPerEndpoint: nonNeg(v) ?? 0,
-                                },
-                              })),
+                          {...numberField(assumptions.licensingBenchmarks.securityPerEndpoint, (v) =>
+                            setAssumptions((s) => ({
+                              ...s,
+                              licensingBenchmarks: {
+                                ...s.licensingBenchmarks,
+                                securityPerEndpoint: nonNeg(v) ?? 0,
+                              },
+                            })),
                           )}
                           data-testid="input-a-sec"
                         />
                       </div>
                     </div>
-                    <div
-                      className="mt-3 text-xs text-muted-foreground"
-                      data-testid="text-assump-lic-hint"
-                    >
+                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-lic-hint">
                       Only applies when annual security/management spend is left blank.
                     </div>
                   </div>
@@ -1475,7 +1383,7 @@ export default function TcoBaseline() {
                 <div className="grid gap-4 lg:grid-cols-2">
                   <InlineInfo
                     title="Assumption application logic"
-                    body="Input present → use input. Input missing → use assumption. Input always overrides assumption."
+                    body="Input present  use input. Input missing  use assumption. Input always overrides assumption."
                     icon={<CheckCircle2 className="h-4 w-4" />}
                     testId="info-logic"
                   />
@@ -1512,10 +1420,7 @@ export default function TcoBaseline() {
                         data-testid={`trace-block-${block.title.toLowerCase()}`}
                       >
                         <div className="flex items-center justify-between px-4 py-3">
-                          <div
-                            className="text-sm font-semibold"
-                            data-testid={`text-trace-title-${block.title.toLowerCase()}`}
-                          >
+                          <div className="text-sm font-semibold" data-testid={`text-trace-title-${block.title.toLowerCase()}`}>
                             {block.title}
                           </div>
                           <Badge
@@ -1537,10 +1442,7 @@ export default function TcoBaseline() {
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <div
-                                      className="text-sm font-semibold"
-                                      data-testid={`text-line-label-${l.key}`}
-                                    >
+                                    <div className="text-sm font-semibold" data-testid={`text-line-label-${l.key}`}>
                                       {l.label}
                                     </div>
                                     {l.isAssumed ? (
@@ -1553,17 +1455,11 @@ export default function TcoBaseline() {
                                       </Badge>
                                     ) : null}
                                   </div>
-                                  <div
-                                    className="mt-1 text-xs text-muted-foreground"
-                                    data-testid={`text-line-basis-${l.key}`}
-                                  >
+                                  <div className="mt-1 text-xs text-muted-foreground" data-testid={`text-line-basis-${l.key}`}>
                                     {l.basis}
                                   </div>
                                 </div>
-                                <div
-                                  className="text-sm font-semibold"
-                                  data-testid={`text-line-value-${l.key}`}
-                                >
+                                <div className="text-sm font-semibold" data-testid={`text-line-value-${l.key}`}>
                                   {fmtMoney(l.value)}
                                 </div>
                               </div>
@@ -1577,54 +1473,31 @@ export default function TcoBaseline() {
                   <div className="space-y-4" data-testid="trace-side">
                     <InlineInfo
                       title="No hidden logic"
-                      body="If a line is assumed, it’s labeled. If it’s input, it’s labeled. Nothing silently defaults."
+                      body="If a line is assumed, its labeled. If its input, its labeled. Nothing silently defaults."
                       icon={<Shield className="h-4 w-4" />}
                       testId="info-no-hidden"
                     />
-                    <div
-                      className="rounded-2xl border bg-card/60 p-4"
-                      data-testid="panel-assumed-list"
-                    >
+                    <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-assumed-list">
                       <div className="flex items-center justify-between">
-                        <div
-                          className="text-sm font-semibold"
-                          data-testid="text-assumed-title"
-                        >
+                        <div className="text-sm font-semibold" data-testid="text-assumed-title">
                           Assumptions used
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="rounded-full"
-                          data-testid="badge-assumed-count"
-                        >
+                        <Badge variant="secondary" className="rounded-full" data-testid="badge-assumed-count">
                           {derived.assumedLines.length}
                         </Badge>
                       </div>
                       <div className="mt-3 space-y-2">
                         {derived.assumedLines.length === 0 ? (
-                          <div
-                            className="text-sm text-muted-foreground"
-                            data-testid="text-assumed-empty"
-                          >
+                          <div className="text-sm text-muted-foreground" data-testid="text-assumed-empty">
                             None. Everything is input-based.
                           </div>
                         ) : (
                           derived.assumedLines.map((l) => (
-                            <div
-                              key={l.key}
-                              className="rounded-xl border bg-card px-3 py-2"
-                              data-testid={`card-assumed-${l.key}`}
-                            >
-                              <div
-                                className="text-xs font-medium"
-                                data-testid={`text-assumed-label-${l.key}`}
-                              >
+                            <div key={l.key} className="rounded-xl border bg-card px-3 py-2" data-testid={`card-assumed-${l.key}`}>
+                              <div className="text-xs font-medium" data-testid={`text-assumed-label-${l.key}`}>
                                 {l.label}
                               </div>
-                              <div
-                                className="mt-0.5 text-xs text-muted-foreground"
-                                data-testid={`text-assumed-basis-${l.key}`}
-                              >
+                              <div className="mt-0.5 text-xs text-muted-foreground" data-testid={`text-assumed-basis-${l.key}`}>
                                 {l.basis}
                               </div>
                             </div>
@@ -1666,24 +1539,14 @@ export default function TcoBaseline() {
                       />
                       <MiniKpi
                         label="Cost per endpoint"
-                        value={
-                          derived.endpoints > 0
-                            ? fmtMoney(derived.costPerEndpoint)
-                            : "$0"
-                        }
-                        hint="Baseline ÷ endpoints"
+                        value={derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "$0"}
+                        hint="Baseline  endpoints"
                         testId="kpi-sum-cpe"
                       />
                     </div>
 
-                    <div
-                      className="rounded-2xl border bg-card/60 p-4"
-                      data-testid="panel-category"
-                    >
-                      <div
-                        className="text-sm font-semibold"
-                        data-testid="text-category-title"
-                      >
+                    <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-category">
+                      <div className="text-sm font-semibold" data-testid="text-category-title">
                         Category totals
                       </div>
                       <div className="mt-3 grid gap-2">
@@ -1713,16 +1576,10 @@ export default function TcoBaseline() {
                             data-testid={`row-category-${row.k}`}
                           >
                             <div className="flex items-center justify-between">
-                              <div
-                                className="text-sm font-medium"
-                                data-testid={`text-category-${row.k}`}
-                              >
+                              <div className="text-sm font-medium" data-testid={`text-category-${row.k}`}>
                                 {row.label}
                               </div>
-                              <div
-                                className="text-sm font-semibold"
-                                data-testid={`text-category-value-${row.k}`}
-                              >
+                              <div className="text-sm font-semibold" data-testid={`text-category-value-${row.k}`}>
                                 {fmtMoney(row.v)}
                               </div>
                             </div>
@@ -1737,23 +1594,12 @@ export default function TcoBaseline() {
                       </div>
                     </div>
 
-                    <div
-                      className="rounded-2xl border bg-card/60 p-4"
-                      data-testid="panel-notes-summary"
-                    >
-                      <div
-                        className="text-sm font-semibold"
-                        data-testid="text-notes-summary-title"
-                      >
+                    <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-notes-summary">
+                      <div className="text-sm font-semibold" data-testid="text-notes-summary-title">
                         Observations
                       </div>
-                      <div
-                        className="mt-2 text-sm text-muted-foreground"
-                        data-testid="text-notes-summary"
-                      >
-                        {inputs.observations.notes?.trim()
-                          ? inputs.observations.notes
-                          : "No observations captured."}
+                      <div className="mt-2 text-sm text-muted-foreground" data-testid="text-notes-summary">
+                        {inputs.observations.notes?.trim() ? inputs.observations.notes : "No observations captured."}
                       </div>
                     </div>
                   </div>
@@ -1771,11 +1617,7 @@ export default function TcoBaseline() {
                       icon={<Info className="h-4 w-4" />}
                       testId="info-ready"
                     />
-                    <Button
-                      className="w-full gap-2"
-                      onClick={exportJson}
-                      data-testid="button-export-summary"
-                    >
+                    <Button className="w-full gap-2" onClick={exportJson} data-testid="button-export-summary">
                       <FileDown className="h-4 w-4" /> Export baseline JSON
                     </Button>
                     <Button
@@ -1799,10 +1641,7 @@ export default function TcoBaseline() {
               <div className="text-sm font-medium" data-testid="text-footer-title">
                 Guardrails
               </div>
-              <div
-                className="text-xs text-muted-foreground"
-                data-testid="text-footer-subtitle"
-              >
+              <div className="text-xs text-muted-foreground" data-testid="text-footer-subtitle">
                 Baseline first. No future-state math. No ROI.
               </div>
             </div>
@@ -1832,17 +1671,11 @@ export default function TcoBaseline() {
                 >
                   <div className="flex items-center gap-2">
                     <div className="text-muted-foreground">{b.icon}</div>
-                    <div
-                      className="text-sm font-semibold"
-                      data-testid={`text-guardrail-title-${idx}`}
-                    >
+                    <div className="text-sm font-semibold" data-testid={`text-guardrail-title-${idx}`}>
                       {b.t}
                     </div>
                   </div>
-                  <div
-                    className="mt-1 text-xs text-muted-foreground"
-                    data-testid={`text-guardrail-desc-${idx}`}
-                  >
+                  <div className="mt-1 text-xs text-muted-foreground" data-testid={`text-guardrail-desc-${idx}`}>
                     {b.d}
                   </div>
                 </div>
