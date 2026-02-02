@@ -59,6 +59,17 @@ type Inputs = {
     sessionDensity?: number;
     infraOwnership: "customer" | "provider" | "unknown";
   };
+  managedServices: {
+    totalAnnualSpend?: number;
+    userCount?: number;
+    outsourcedEndpointMgmt: boolean;
+    outsourcedSecurity: boolean;
+    outsourcedPatching: boolean;
+    outsourcedHelpdesk: boolean;
+    outsourcedTier2Plus: boolean;
+    outsourcedOther: boolean;
+    otherDescription?: string;
+  };
   overhead: {
     facilitiesAnnual?: number;
     trainingAnnual?: number;
@@ -250,6 +261,14 @@ export default function TcoBaseline() {
     virtualization: {
       infraOwnership: "unknown",
     },
+    managedServices: {
+      outsourcedEndpointMgmt: false,
+      outsourcedSecurity: false,
+      outsourcedPatching: false,
+      outsourcedHelpdesk: false,
+      outsourcedTier2Plus: false,
+      outsourcedOther: false,
+    },
     overhead: {},
     observations: {},
   });
@@ -413,14 +432,41 @@ export default function TcoBaseline() {
       },
     ];
 
+    const mspSpend = nonNeg(inputs.managedServices.totalAnnualSpend) ?? 0;
+    const mspUserCount = nonNeg(inputs.managedServices.userCount) ?? 0;
+    const mspCostPerDevice = endpoints > 0 ? mspSpend / endpoints : 0;
+    const mspCostPerUser = mspUserCount > 0 ? mspSpend / mspUserCount : 0;
+
+    const outsourcedServices: string[] = [];
+    if (inputs.managedServices.outsourcedEndpointMgmt) outsourcedServices.push("Endpoint Management");
+    if (inputs.managedServices.outsourcedSecurity) outsourcedServices.push("Security/EDR");
+    if (inputs.managedServices.outsourcedPatching) outsourcedServices.push("Patching");
+    if (inputs.managedServices.outsourcedHelpdesk) outsourcedServices.push("Helpdesk/Tier 1");
+    if (inputs.managedServices.outsourcedTier2Plus) outsourcedServices.push("Tier 2+ Support");
+    if (inputs.managedServices.outsourcedOther) outsourcedServices.push(inputs.managedServices.otherDescription || "Other");
+
+    const managedServicesLines: CalcLine[] = [
+      {
+        key: "msp-total",
+        label: "Managed services spend",
+        value: mspSpend,
+        basis:
+          inputs.managedServices.totalAnnualSpend !== undefined
+            ? `${fmtMoney(mspSpend)} (input)${outsourcedServices.length > 0 ? ` — covers: ${outsourcedServices.join(", ")}` : ""}`
+            : "Not provided (0 in baseline until known)",
+        isAssumed: false,
+      },
+    ];
+
     const laborTotal = laborLines.reduce((s, l) => s + l.value, 0);
     const licensingTotal = licensingLines.reduce((s, l) => s + l.value, 0);
     const overheadTotal = overheadLines.reduce((s, l) => s + l.value, 0);
+    const managedServicesTotal = managedServicesLines.reduce((s, l) => s + l.value, 0);
 
-    const totalAnnualTco = laborTotal + licensingTotal + overheadTotal;
+    const totalAnnualTco = laborTotal + licensingTotal + overheadTotal + managedServicesTotal;
     const costPerEndpoint = endpoints > 0 ? totalAnnualTco / endpoints : 0;
 
-    const assumedLines = [...laborLines, ...licensingLines, ...overheadLines].filter(
+    const assumedLines = [...laborLines, ...licensingLines, ...overheadLines, ...managedServicesLines].filter(
       (l) => l.isAssumed,
     );
 
@@ -438,9 +484,15 @@ export default function TcoBaseline() {
       laborLines,
       licensingLines,
       overheadLines,
+      managedServicesLines,
       laborTotal,
       licensingTotal,
       overheadTotal,
+      managedServicesTotal,
+      mspCostPerDevice,
+      mspCostPerUser,
+      mspUserCount,
+      outsourcedServices,
       totalAnnualTco,
       costPerEndpoint,
       assumedLines,
@@ -472,6 +524,7 @@ export default function TcoBaseline() {
           laborTotal: derived.laborTotal,
           licensingTotal: derived.licensingTotal,
           overheadTotal: derived.overheadTotal,
+          managedServicesTotal: derived.managedServicesTotal,
           totalAnnualTco: derived.totalAnnualTco,
           costPerEndpoint: derived.costPerEndpoint,
         },
@@ -479,6 +532,7 @@ export default function TcoBaseline() {
           laborLines: derived.laborLines,
           licensingLines: derived.licensingLines,
           overheadLines: derived.overheadLines,
+          managedServicesLines: derived.managedServicesLines,
         },
       },
     };
@@ -557,6 +611,14 @@ export default function TcoBaseline() {
                           patchToolingPresent: "unknown",
                         },
                         virtualization: { infraOwnership: "unknown" },
+                        managedServices: {
+                          outsourcedEndpointMgmt: false,
+                          outsourcedSecurity: false,
+                          outsourcedPatching: false,
+                          outsourcedHelpdesk: false,
+                          outsourcedTier2Plus: false,
+                          outsourcedOther: false,
+                        },
                         overhead: {},
                         observations: {},
                       });
@@ -1144,6 +1206,145 @@ export default function TcoBaseline() {
                     </div>
                   </div>
                 </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<Activity className="h-5 w-5 text-primary" />}
+                    eyebrow="Inputs"
+                    title="Managed services & outsourcing"
+                    description="If you pay an MSP or outsource any EUC functions, capture the annual spend and what's covered."
+                    testId="header-managed-services"
+                  />
+
+                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                    <div className="space-y-4" data-testid="group-msp-spend">
+                      <div className="text-sm font-semibold">Annual spend</div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="msp-total">Total MSP / managed services</Label>
+                          <Input
+                            id="msp-total"
+                            placeholder="e.g., 250000"
+                            {...numberField(inputs.managedServices.totalAnnualSpend, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                managedServices: {
+                                  ...s.managedServices,
+                                  totalAnnualSpend: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-msp-total"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="msp-users">User count (for per-user calc)</Label>
+                          <Input
+                            id="msp-users"
+                            placeholder="e.g., 1500"
+                            {...numberField(inputs.managedServices.userCount, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                managedServices: {
+                                  ...s.managedServices,
+                                  userCount: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-msp-users"
+                          />
+                        </div>
+                      </div>
+
+                      {(inputs.managedServices.totalAnnualSpend ?? 0) > 0 && (
+                        <div className="rounded-2xl border bg-card/60 p-4">
+                          <div className="text-sm font-semibold">Derived cost metrics</div>
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <div className="rounded-xl border bg-card px-3 py-2">
+                              <div className="text-xs text-muted-foreground">Per device</div>
+                              <div className="text-sm font-semibold">
+                                {derived.endpoints > 0 ? fmtMoney(derived.mspCostPerDevice) : "N/A"}
+                              </div>
+                            </div>
+                            <div className="rounded-xl border bg-card px-3 py-2">
+                              <div className="text-xs text-muted-foreground">Per user</div>
+                              <div className="text-sm font-semibold">
+                                {derived.mspUserCount > 0 ? fmtMoney(derived.mspCostPerUser) : "N/A"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4" data-testid="group-msp-services">
+                      <div className="text-sm font-semibold">What's outsourced?</div>
+                      <div className="rounded-2xl border bg-card/60 p-4">
+                        <div className="grid gap-3">
+                          {([
+                            { k: "outsourcedEndpointMgmt", label: "Endpoint management (UEM, imaging, lifecycle)" },
+                            { k: "outsourcedSecurity", label: "Security / EDR / SOC" },
+                            { k: "outsourcedPatching", label: "Patching & updates" },
+                            { k: "outsourcedHelpdesk", label: "Helpdesk / Tier 1 support" },
+                            { k: "outsourcedTier2Plus", label: "Tier 2+ support / engineering" },
+                            { k: "outsourcedOther", label: "Other" },
+                          ] as const).map((row) => (
+                            <div
+                              key={row.k}
+                              className="flex items-center gap-3"
+                              data-testid={`row-msp-${row.k}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={row.k}
+                                checked={inputs.managedServices[row.k]}
+                                onChange={(e) =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    managedServices: {
+                                      ...s.managedServices,
+                                      [row.k]: e.target.checked,
+                                    },
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-gray-300"
+                                data-testid={`checkbox-${row.k}`}
+                              />
+                              <Label htmlFor={row.k} className="cursor-pointer text-sm">
+                                {row.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        {inputs.managedServices.outsourcedOther && (
+                          <div className="mt-3">
+                            <Input
+                              placeholder="Describe other outsourced services"
+                              value={inputs.managedServices.otherDescription ?? ""}
+                              onChange={(e) =>
+                                setInputs((s) => ({
+                                  ...s,
+                                  managedServices: {
+                                    ...s.managedServices,
+                                    otherDescription: e.target.value,
+                                  },
+                                }))
+                              }
+                              data-testid="input-msp-other-desc"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <InlineInfo
+                        title="Why this matters"
+                        body="Managed services spend is part of your total baseline TCO. Showing what's outsourced helps understand the full cost picture."
+                        icon={<BookOpen className="h-4 w-4" />}
+                        testId="info-msp"
+                      />
+                    </div>
+                  </div>
+                </Card>
               </div>
             </TabsContent>
 
@@ -1391,6 +1592,7 @@ export default function TcoBaseline() {
                         { title: "Labor", lines: derived.laborLines },
                         { title: "Licensing", lines: derived.licensingLines },
                         { title: "Overhead", lines: derived.overheadLines },
+                        { title: "Managed Services", lines: derived.managedServicesLines },
                       ].map((block) => (
                         <div
                           key={block.title}
@@ -1527,7 +1729,7 @@ export default function TcoBaseline() {
                         Category totals
                       </div>
                       <div className="mt-3 grid gap-2">
-                        {([
+                        {[
                           {
                             k: "labor",
                             label: "Labor",
@@ -1546,7 +1748,13 @@ export default function TcoBaseline() {
                             v: derived.overheadTotal,
                             total: derived.totalAnnualTco,
                           },
-                        ] as const).map((row) => (
+                          {
+                            k: "msp",
+                            label: "Managed Services",
+                            v: derived.managedServicesTotal,
+                            total: derived.totalAnnualTco,
+                          },
+                        ].map((row) => (
                           <div
                             key={row.k}
                             className="rounded-xl border bg-card px-3 py-2"
