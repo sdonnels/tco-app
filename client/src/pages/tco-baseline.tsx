@@ -28,6 +28,8 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import TcoHome from "@/pages/tco-home";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
+import xentegraLogoWhite from "@/assets/xentegra-white.webp";
+import xentegraLogoBlack from "@/assets/xentegra-black.webp";
 
 type YesNo = "yes" | "no" | "unknown";
 
@@ -438,10 +440,10 @@ export default function TcoBaseline() {
       action: () => setActiveTab("summary"),
     },
     {
-      target: "[data-testid='button-export']",
+      target: "[data-testid='button-export-json']",
       title: "Export Your Baseline",
-      content: "Download a complete JSON artifact with all inputs, assumptions, calculations, and derived values for full traceability.",
-      placement: "bottom" as const,
+      content: "Download your baseline in multiple formats: JSON for data interchange, CSV for spreadsheets, PDF for presentations, or full Audit Trail.",
+      placement: "left" as const,
     },
   ], []);
 
@@ -1299,53 +1301,44 @@ export default function TcoBaseline() {
                 </div>
 
                 {activeTab !== "home" && (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setInputs({
-                          project: {},
-                          environment: {},
-                          categoryRollups: {},
-                          vdiDaas: {
-                            vdiPresent: "unknown",
-                            citrixPresent: "unknown",
-                            avdPresent: "unknown",
-                            w365Present: "unknown",
-                            horizonPresent: "unknown",
-                            parallelsPresent: "unknown",
-                          },
-                          toolPresence: {
-                            intunePresent: "unknown",
-                            sccmPresent: "unknown",
-                            workspaceOnePresent: "unknown",
-                            jamfPresent: "unknown",
-                            controlUpPresent: "unknown",
-                            nerdioPresent: "unknown",
-                          },
-                          managedServices: {
-                            outsourcedEndpointMgmt: false,
-                            outsourcedSecurity: false,
-                            outsourcedPatching: false,
-                            outsourcedHelpdesk: false,
-                            outsourcedTier2Plus: false,
-                            outsourcedOther: false,
-                          },
-                          observations: {},
-                        });
-                      }}
-                      data-testid="button-reset"
-                    >
-                      Reset
-                    </Button>
-                    <Button
-                      onClick={exportJson}
-                      className="gap-2"
-                      data-testid="button-export"
-                    >
-                      <FileDown className="h-4 w-4" /> Export baseline
-                    </Button>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setInputs({
+                        project: {},
+                        environment: {},
+                        categoryRollups: {},
+                        vdiDaas: {
+                          vdiPresent: "unknown",
+                          citrixPresent: "unknown",
+                          avdPresent: "unknown",
+                          w365Present: "unknown",
+                          horizonPresent: "unknown",
+                          parallelsPresent: "unknown",
+                        },
+                        toolPresence: {
+                          intunePresent: "unknown",
+                          sccmPresent: "unknown",
+                          workspaceOnePresent: "unknown",
+                          jamfPresent: "unknown",
+                          controlUpPresent: "unknown",
+                          nerdioPresent: "unknown",
+                        },
+                        managedServices: {
+                          outsourcedEndpointMgmt: false,
+                          outsourcedSecurity: false,
+                          outsourcedPatching: false,
+                          outsourcedHelpdesk: false,
+                          outsourcedTier2Plus: false,
+                          outsourcedOther: false,
+                        },
+                        observations: {},
+                      });
+                    }}
+                    data-testid="button-reset"
+                  >
+                    Reset
+                  </Button>
                 )}
 
               </div>
@@ -1684,7 +1677,7 @@ export default function TcoBaseline() {
                     testId="header-rollups"
                   />
 
-                  <div className="mt-6 grid gap-6 lg:grid-cols-3">
+                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
                     <div className="space-y-4" data-testid="group-rollups-1">
                       <div className="text-sm font-semibold" data-testid="text-rollups-title">
                         Cost categories (annual)
@@ -1815,6 +1808,9 @@ export default function TcoBaseline() {
                       </div>
                     </div>
 
+                  </div>
+
+                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
                     <div className="space-y-4" data-testid="group-vdi-platforms">
                       <div className="text-sm font-semibold" data-testid="text-vdi-platforms-title">
                         VDI / DaaS platforms
@@ -1863,7 +1859,10 @@ export default function TcoBaseline() {
                           ))}
                         </div>
                       </div>
-                      <div className="text-sm font-semibold mt-4" data-testid="text-tool-presence-title">
+                    </div>
+
+                    <div className="space-y-4" data-testid="group-tool-presence">
+                      <div className="text-sm font-semibold" data-testid="text-tool-presence-title">
                         Endpoint & management tools
                       </div>
                       <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-tool-presence">
@@ -1911,13 +1910,16 @@ export default function TcoBaseline() {
                           ))}
                         </div>
                       </div>
-                      <InlineInfo
-                        title="Why this matters"
-                        body="These are baseline context flags for discovery. They don't change totals unless you enter actual spend."
-                        icon={<BookOpen className="h-4 w-4" />}
-                        testId="info-tool-presence"
-                      />
                     </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <InlineInfo
+                      title="Why this matters"
+                      body="These are baseline context flags for discovery. They don't change totals unless you enter actual spend."
+                      icon={<BookOpen className="h-4 w-4" />}
+                      testId="info-tool-presence"
+                    />
                   </div>
                 </Card>
 
@@ -2335,15 +2337,22 @@ export default function TcoBaseline() {
                         </Label>
                         <Input
                           id="a-overhead-pct"
-                          {...numberField(assumptions.overhead.pctOfTotal * 100, (v) =>
+                          value={Math.round(assumptions.overhead.pctOfTotal * 100)}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (raw.trim() === "") {
+                              setAssumptions((s) => ({ ...s, overhead: { ...s.overhead, pctOfTotal: 0.07 } }));
+                              return;
+                            }
+                            const next = Number(raw);
+                            if (!Number.isFinite(next)) return;
                             setAssumptions((s) => ({
                               ...s,
-                              overhead: {
-                                ...s.overhead,
-                                pctOfTotal: (nonNeg(v) ?? 7) / 100,
-                              },
-                            })),
-                          )}
+                              overhead: { ...s.overhead, pctOfTotal: Math.max(0, next) / 100 },
+                            }));
+                          }}
+                          type="text"
+                          inputMode="numeric"
                           data-testid="input-a-overhead-pct"
                         />
                       </div>
@@ -2704,48 +2713,38 @@ export default function TcoBaseline() {
                   </div>
 
                   <div className="space-y-4">
-                    <InlineInfo
-                      title="Client-safe view"
-                      body="This summary intentionally hides numeric assumptions. Use Observations & Analysis for defensibility when needed."
-                      icon={<Shield className="h-4 w-4" />}
-                      testId="info-client-safe"
-                    />
-                    <InlineInfo
-                      title="Ready means: not missing everything"
-                      body="Readiness here is a simple gating aid. It does not imply completeness or audit-grade accuracy."
-                      icon={<Info className="h-4 w-4" />}
-                      testId="info-ready"
-                    />
-                    <div className="text-xs font-medium tracking-wide text-muted-foreground mb-2">
-                      Export Options
+                    <div className="rounded-2xl border bg-card/60 p-4">
+                      <div className="text-sm font-semibold mb-3">Export Options</div>
+                      <div className="grid gap-2">
+                        <Button className="w-full gap-2 justify-start" onClick={exportJson} data-testid="button-export-json">
+                          <FileDown className="h-4 w-4" /> JSON (data interchange)
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          className="w-full gap-2 justify-start"
+                          onClick={exportCSV}
+                          data-testid="button-export-csv"
+                        >
+                          <Table className="h-4 w-4" /> CSV (spreadsheet)
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          className="w-full gap-2 justify-start"
+                          onClick={exportPDF}
+                          data-testid="button-export-pdf"
+                        >
+                          <Printer className="h-4 w-4" /> PDF (print-ready)
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 justify-start"
+                          onClick={exportAuditTrail}
+                          data-testid="button-export-audit"
+                        >
+                          <FileText className="h-4 w-4" /> Audit Trail (full traceability)
+                        </Button>
+                      </div>
                     </div>
-                    <Button className="w-full gap-2" onClick={exportJson} data-testid="button-export-json">
-                      <FileDown className="h-4 w-4" /> Export JSON
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="w-full gap-2"
-                      onClick={exportCSV}
-                      data-testid="button-export-csv"
-                    >
-                      <Table className="h-4 w-4" /> Export CSV
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      className="w-full gap-2"
-                      onClick={exportPDF}
-                      data-testid="button-export-pdf"
-                    >
-                      <Printer className="h-4 w-4" /> Export PDF
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={exportAuditTrail}
-                      data-testid="button-export-audit"
-                    >
-                      <FileText className="h-4 w-4" /> Export Audit Trail
-                    </Button>
                   </div>
                 </div>
               </Card>
@@ -2754,9 +2753,17 @@ export default function TcoBaseline() {
         </main>
 
         <footer className="mt-10" data-testid="section-footer">
-          <div className="glass hairline rounded-3xl px-6 py-5">
-            <div className="text-center text-xs text-muted-foreground" data-testid="text-footer-placeholder">
-              {/* Reserved for future content */}
+          <div className="glass hairline rounded-3xl px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground" data-testid="text-footer-date">
+                {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+              </div>
+              <img
+                src={dark ? xentegraLogoWhite : xentegraLogoBlack}
+                alt="XenTegra"
+                className="h-6 object-contain"
+                data-testid="img-footer-logo"
+              />
             </div>
           </div>
         </footer>
