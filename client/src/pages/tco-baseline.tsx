@@ -30,6 +30,13 @@ import TcoHome from "@/pages/tco-home";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
 import xentegraLogoWhite from "@/assets/xentegra-white.webp";
 import xentegraLogoBlack from "@/assets/xentegra-black.webp";
+import {
+  EndpointMixChart,
+  VdiComparisonChart,
+  CostSourceChart,
+  WhereMoneyGoesChart,
+  ChartCard,
+} from "@/components/TcoCharts";
 
 type YesNo = "yes" | "no" | "unknown";
 
@@ -597,7 +604,14 @@ export default function TcoBaseline() {
     const readinessScore =
       (readiness.endpointsPresent ? 50 : 0) + (readiness.hasSomeSpend ? 50 : 0);
 
+    const mspIsInput = inputs.managedServices.totalAnnualSpend !== undefined;
+    const costFromInputs = categoryLines.filter(l => !l.isAssumed).reduce((sum, l) => sum + l.value, 0) + (mspIsInput ? mspSpend : 0);
+    const costFromAssumptions = categoryLines.filter(l => l.isAssumed).reduce((sum, l) => sum + l.value, 0);
+
     return {
+      laptops,
+      desktops,
+      thinClients,
       endpoints,
       userCount,
       vdiPresent,
@@ -622,6 +636,8 @@ export default function TcoBaseline() {
       assumedLines,
       readiness,
       readinessScore,
+      costFromInputs,
+      costFromAssumptions,
     };
   }, [inputs, assumptions]);
 
@@ -1125,9 +1141,27 @@ export default function TcoBaseline() {
     .metric-label { font-size: 12px; color: #64748b; margin-top: 4px; }
     .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
     .disclaimer { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; font-size: 11px; color: #92400e; margin: 16px 0; }
+    .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 16px 0; }
+    .chart-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .chart-title { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 12px; }
+    .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: flex; align-items: center; gap: 8px; }
+    .bar-label { width: 80px; font-size: 11px; color: #64748b; flex-shrink: 0; }
+    .bar-container { flex: 1; height: 18px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; }
+    .bar-value { width: 70px; font-size: 11px; text-align: right; color: #334155; font-weight: 500; }
+    .donut-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .comparison-bars { display: flex; gap: 16px; align-items: flex-end; height: 120px; }
+    .comparison-bar { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .comparison-bar-fill { width: 60px; border-radius: 4px 4px 0 0; }
+    .comparison-bar-label { font-size: 11px; color: #64748b; margin-top: 8px; text-align: center; }
+    .comparison-bar-value { font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 4px; }
     @media print {
       body { padding: 20px; }
       .no-print { display: none; }
+      .chart-grid { break-inside: avoid; }
     }
   </style>
 </head>
@@ -1233,6 +1267,129 @@ export default function TcoBaseline() {
   <h2>Observations</h2>
   <p style="font-size: 13px; color: #475569;">${inputs.observations.notes}</p>
   ` : ""}
+
+  <h2>Visualizations</h2>
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-title">Endpoint Mix</div>
+      <div class="bar-chart">
+        ${derived.endpoints > 0 ? `
+        <div class="bar-row">
+          <span class="bar-label">Laptops</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.laptops, derived.endpoints)}%; background: #3b82f6;"></div>
+          </div>
+          <span class="bar-value">${fmtNumber(derived.laptops)} (${pct(derived.laptops, derived.endpoints)}%)</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Desktops</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.desktops, derived.endpoints)}%; background: #8b5cf6;"></div>
+          </div>
+          <span class="bar-value">${fmtNumber(derived.desktops)} (${pct(derived.desktops, derived.endpoints)}%)</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Thin Clients</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.thinClients, derived.endpoints)}%; background: #22c55e;"></div>
+          </div>
+          <span class="bar-value">${fmtNumber(derived.thinClients)} (${pct(derived.thinClients, derived.endpoints)}%)</span>
+        </div>
+        ` : `<p style="color: #64748b; font-size: 12px;">No device data entered</p>`}
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Cost by Category</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">Devices</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.endUserDevicesValue, derived.totalAnnualTco)}%; background: #3b82f6;"></div>
+          </div>
+          <span class="bar-value">${pct(derived.endUserDevicesValue, derived.totalAnnualTco)}%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Support</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.supportOpsValue, derived.totalAnnualTco)}%; background: #f59e0b;"></div>
+          </div>
+          <span class="bar-value">${pct(derived.supportOpsValue, derived.totalAnnualTco)}%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Licensing</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.licensingValue, derived.totalAnnualTco)}%; background: #22c55e;"></div>
+          </div>
+          <span class="bar-value">${pct(derived.licensingValue, derived.totalAnnualTco)}%</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Mgmt/Sec</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.mgmtSecurityValue, derived.totalAnnualTco)}%; background: #06b6d4;"></div>
+          </div>
+          <span class="bar-value">${pct(derived.mgmtSecurityValue, derived.totalAnnualTco)}%</span>
+        </div>
+        ${derived.vdiPresent ? `
+        <div class="bar-row">
+          <span class="bar-label">VDI/DaaS</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.vdiDaasValue, derived.totalAnnualTco)}%; background: #8b5cf6;"></div>
+          </div>
+          <span class="bar-value">${pct(derived.vdiDaasValue, derived.totalAnnualTco)}%</span>
+        </div>
+        ` : ""}
+        <div class="bar-row">
+          <span class="bar-label">Overhead</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.overheadValue, derived.totalAnnualTco)}%; background: #6b7280;"></div>
+          </div>
+          <span class="bar-value">${pct(derived.overheadValue, derived.totalAnnualTco)}%</span>
+        </div>
+      </div>
+    </div>
+
+    ${derived.vdiPresent && derived.userCount > 0 ? `
+    <div class="chart-card">
+      <div class="chart-title">VDI vs Non-VDI User Cost</div>
+      <div class="comparison-bars">
+        <div class="comparison-bar">
+          <div class="comparison-bar-value">${fmtMoney(derived.nonVdiCostPerUser)}</div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.nonVdiCostPerUser / Math.max(derived.nonVdiCostPerUser, derived.vdiCostPerVdiUser)) * 100)}px; background: #3b82f6;"></div>
+          <div class="comparison-bar-label">Non-VDI User</div>
+        </div>
+        <div class="comparison-bar">
+          <div class="comparison-bar-value">${fmtMoney(derived.vdiCostPerVdiUser)}</div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.vdiCostPerVdiUser / Math.max(derived.nonVdiCostPerUser, derived.vdiCostPerVdiUser)) * 100)}px; background: #8b5cf6;"></div>
+          <div class="comparison-bar-label">VDI User</div>
+        </div>
+      </div>
+    </div>
+    ` : ""}
+
+    <div class="chart-card">
+      <div class="chart-title">Cost Source Composition</div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">From Inputs</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.costFromInputs, derived.totalAnnualTco)}%; background: #3b82f6;"></div>
+          </div>
+          <span class="bar-value">${fmtMoney(derived.costFromInputs)}</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Assumed</span>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${pct(derived.costFromAssumptions, derived.totalAnnualTco)}%; background: #f59e0b;"></div>
+          </div>
+          <span class="bar-value">${fmtMoney(derived.costFromAssumptions)}</span>
+        </div>
+      </div>
+      <div style="margin-top: 8px; font-size: 11px; color: #64748b;">
+        ${pct(derived.costFromInputs, derived.totalAnnualTco)}% from your inputs, ${pct(derived.costFromAssumptions, derived.totalAnnualTco)}% from assumptions
+      </div>
+    </div>
+  </div>
 
   <div class="footer">
     <p>TCO Baseline Micro-Assessment Tool | Generated ${new Date().toLocaleString()}</p>
@@ -2715,6 +2872,66 @@ export default function TcoBaseline() {
                       <div className="mt-2 text-sm text-muted-foreground" data-testid="text-notes-summary">
                         {inputs.observations.notes?.trim() ? inputs.observations.notes : "No observations captured."}
                       </div>
+                    </div>
+
+                    <div className="text-sm font-semibold mt-6 mb-3">Visualizations</div>
+                    <div className="grid gap-4 sm:grid-cols-2" data-testid="panel-charts">
+                      <ChartCard
+                        title="Endpoint Mix"
+                        description="Device distribution by type"
+                        testId="chart-card-endpoint-mix"
+                      >
+                        <EndpointMixChart
+                          data={{
+                            laptops: derived.laptops,
+                            desktops: derived.desktops,
+                            thinClients: derived.thinClients,
+                          }}
+                        />
+                      </ChartCard>
+
+                      <ChartCard
+                        title="Where Does The Money Go?"
+                        description="Annual spend by category"
+                        testId="chart-card-money"
+                      >
+                        <WhereMoneyGoesChart
+                          data={{
+                            endUserDevices: derived.endUserDevicesValue,
+                            supportOps: derived.supportOpsValue,
+                            licensing: derived.licensingValue,
+                            mgmtSecurity: derived.mgmtSecurityValue,
+                            vdiDaas: derived.vdiDaasValue,
+                            overhead: derived.overheadValue,
+                          }}
+                        />
+                      </ChartCard>
+
+                      <ChartCard
+                        title="VDI vs Non-VDI User Cost"
+                        description="Annual cost per user comparison"
+                        testId="chart-card-vdi"
+                      >
+                        <VdiComparisonChart
+                          data={{
+                            vdiCostPerUser: derived.vdiCostPerVdiUser,
+                            nonVdiCostPerUser: derived.nonVdiCostPerUser,
+                          }}
+                        />
+                      </ChartCard>
+
+                      <ChartCard
+                        title="Cost Source Composition"
+                        description="From your inputs vs. assumptions"
+                        testId="chart-card-source"
+                      >
+                        <CostSourceChart
+                          data={{
+                            derived: derived.costFromInputs,
+                            assumed: derived.costFromAssumptions,
+                          }}
+                        />
+                      </ChartCard>
                     </div>
                   </div>
 
