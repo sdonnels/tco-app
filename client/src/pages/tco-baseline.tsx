@@ -1962,14 +1962,20 @@ export default function TcoBaseline() {
                             <div className="rounded-xl border bg-card px-3 py-2">
                               <div className="text-xs text-muted-foreground">Per device</div>
                               <div className="text-sm font-semibold">
-                                {derived.endpoints > 0 ? fmtMoney(derived.mspCostPerDevice) : "N/A"}
+                                {derived.endpoints > 0 ? fmtMoney(derived.mspCostPerDevice) : "—"}
                               </div>
+                              {derived.endpoints === 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">Enter device counts above</div>
+                              )}
                             </div>
                             <div className="rounded-xl border bg-card px-3 py-2">
                               <div className="text-xs text-muted-foreground">Per user</div>
                               <div className="text-sm font-semibold">
-                                {derived.userCount > 0 ? fmtMoney(derived.mspCostPerUser) : "N/A"}
+                                {derived.userCount > 0 ? fmtMoney(derived.mspCostPerUser) : "—"}
                               </div>
+                              {derived.userCount === 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">Enter user count above</div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1996,7 +2002,7 @@ export default function TcoBaseline() {
                               <input
                                 type="checkbox"
                                 id={row.k}
-                                checked={inputs.managedServices[row.k]}
+                                checked={Boolean(inputs.managedServices[row.k as keyof typeof inputs.managedServices])}
                                 onChange={(e) =>
                                   setInputs((s) => ({
                                     ...s,
@@ -2006,7 +2012,7 @@ export default function TcoBaseline() {
                                     },
                                   }))
                                 }
-                                className="h-4 w-4 rounded border-gray-300"
+                                className="h-4 w-4 rounded border-gray-300 accent-primary"
                                 data-testid={`checkbox-${row.k}`}
                               />
                               <Label htmlFor={row.k} className="cursor-pointer text-sm">
