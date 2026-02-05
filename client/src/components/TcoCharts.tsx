@@ -81,14 +81,14 @@ export function EndpointMixChart({ data }: { data: EndpointMixData }) {
 
   return (
     <div className="w-full" data-testid="chart-endpoint-mix">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={240}>
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={50}
-            outerRadius={80}
+            innerRadius={45}
+            outerRadius={75}
             paddingAngle={2}
             dataKey="value"
             label={({ name, percent }) => `${name} ${fmtPct(percent * 100)}`}
@@ -230,17 +230,17 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
 
   return (
     <div className="w-full" data-testid="chart-where-money-goes">
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={260}>
         <PieChart>
           <Pie
             data={chartData}
-            cx="50%"
+            cx="35%"
             cy="50%"
-            innerRadius={55}
-            outerRadius={90}
+            innerRadius={50}
+            outerRadius={80}
             paddingAngle={2}
             dataKey="value"
-            label={({ name, percent }) => percent > 0.05 ? `${fmtPct(percent * 100)}` : ""}
+            label={({ percent }) => percent > 0.05 ? `${fmtPct(percent * 100)}` : ""}
             labelLine={false}
           >
             {chartData.map((entry, index) => (
@@ -273,14 +273,14 @@ export function ChartCard({
 }) {
   return (
     <div
-      className="rounded-2xl border bg-card/60 p-4"
+      className="rounded-2xl border bg-card/60 p-4 overflow-visible"
       data-testid={testId}
     >
       <div className="text-sm font-semibold">{title}</div>
       {description && (
         <div className="text-xs text-muted-foreground mt-1">{description}</div>
       )}
-      <div className="mt-3">{children}</div>
+      <div className="mt-3 min-h-[240px]">{children}</div>
     </div>
   );
 }

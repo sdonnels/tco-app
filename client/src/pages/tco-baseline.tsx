@@ -1195,27 +1195,28 @@ export default function TcoBaseline() {
     .metric-label { font-size: 12px; color: #64748b; margin-top: 4px; }
     .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
     .disclaimer { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; font-size: 11px; color: #92400e; margin: 16px 0; }
-    .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 16px 0; }
-    .chart-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .chart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 16px 0; page-break-inside: avoid; }
+    .chart-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; min-height: 180px; page-break-inside: avoid; }
     .chart-title { font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 12px; }
-    .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+    .bar-chart { display: flex; flex-direction: column; gap: 10px; }
     .bar-row { display: flex; align-items: center; gap: 8px; }
     .bar-label { width: 80px; font-size: 11px; color: #64748b; flex-shrink: 0; }
-    .bar-container { flex: 1; height: 18px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .bar-container { flex: 1; height: 20px; background: #e2e8f0; border-radius: 4px; overflow: hidden; min-width: 80px; }
     .bar-fill { height: 100%; border-radius: 4px; }
-    .bar-value { width: 70px; font-size: 11px; text-align: right; color: #334155; font-weight: 500; }
+    .bar-value { min-width: 90px; font-size: 11px; text-align: right; color: #334155; font-weight: 500; white-space: nowrap; }
     .donut-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
     .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .comparison-bars { display: flex; gap: 16px; align-items: flex-end; height: 120px; }
-    .comparison-bar { flex: 1; display: flex; flex-direction: column; align-items: center; }
-    .comparison-bar-fill { width: 60px; border-radius: 4px 4px 0 0; }
+    .comparison-bars { display: flex; gap: 24px; align-items: flex-end; height: 140px; justify-content: center; padding: 10px 0; }
+    .comparison-bar { display: flex; flex-direction: column; align-items: center; min-width: 100px; }
+    .comparison-bar-fill { width: 70px; border-radius: 4px 4px 0 0; }
     .comparison-bar-label { font-size: 11px; color: #64748b; margin-top: 8px; text-align: center; }
     .comparison-bar-value { font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 4px; }
     @media print {
       body { padding: 20px; }
       .no-print { display: none; }
-      .chart-grid { break-inside: avoid; }
+      .chart-grid { break-inside: avoid; page-break-inside: avoid; }
+      .chart-card { break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
 </head>
