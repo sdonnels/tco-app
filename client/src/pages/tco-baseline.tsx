@@ -65,18 +65,29 @@ type Inputs = {
     vdiPresent: YesNo;
     vdiPctOfUsers?: number;
     citrixPresent: YesNo;
+    citrixSpend?: number;
     avdPresent: YesNo;
+    avdSpend?: number;
     w365Present: YesNo;
+    w365Spend?: number;
     horizonPresent: YesNo;
+    horizonSpend?: number;
     parallelsPresent: YesNo;
+    parallelsSpend?: number;
   };
   toolPresence: {
     intunePresent: YesNo;
+    intuneSpend?: number;
     sccmPresent: YesNo;
+    sccmSpend?: number;
     workspaceOnePresent: YesNo;
+    workspaceOneSpend?: number;
     jamfPresent: YesNo;
+    jamfSpend?: number;
     controlUpPresent: YesNo;
+    controlUpSpend?: number;
     nerdioPresent: YesNo;
+    nerdioSpend?: number;
   };
   managedServices: {
     totalAnnualSpend?: number;
@@ -487,9 +498,24 @@ export default function TcoBaseline() {
 
     const derivedLicensing = userCount * assumptions.licensing.avgCostPerUserPerYear * assumptions.licensing.coveragePct;
 
-    const derivedMgmtSecurity = endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear;
+    const toolSpendTotal = 
+      (inputs.toolPresence.intunePresent === "yes" ? (nonNeg(inputs.toolPresence.intuneSpend) ?? 0) : 0) +
+      (inputs.toolPresence.sccmPresent === "yes" ? (nonNeg(inputs.toolPresence.sccmSpend) ?? 0) : 0) +
+      (inputs.toolPresence.workspaceOnePresent === "yes" ? (nonNeg(inputs.toolPresence.workspaceOneSpend) ?? 0) : 0) +
+      (inputs.toolPresence.jamfPresent === "yes" ? (nonNeg(inputs.toolPresence.jamfSpend) ?? 0) : 0) +
+      (inputs.toolPresence.controlUpPresent === "yes" ? (nonNeg(inputs.toolPresence.controlUpSpend) ?? 0) : 0) +
+      (inputs.toolPresence.nerdioPresent === "yes" ? (nonNeg(inputs.toolPresence.nerdioSpend) ?? 0) : 0);
+    const hasToolSpend = toolSpendTotal > 0;
+    const derivedMgmtSecurity = hasToolSpend ? toolSpendTotal : (endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear);
 
-    const derivedVdiDaas = vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear;
+    const vdiPlatformSpendTotal =
+      (inputs.vdiDaas.citrixPresent === "yes" ? (nonNeg(inputs.vdiDaas.citrixSpend) ?? 0) : 0) +
+      (inputs.vdiDaas.avdPresent === "yes" ? (nonNeg(inputs.vdiDaas.avdSpend) ?? 0) : 0) +
+      (inputs.vdiDaas.w365Present === "yes" ? (nonNeg(inputs.vdiDaas.w365Spend) ?? 0) : 0) +
+      (inputs.vdiDaas.horizonPresent === "yes" ? (nonNeg(inputs.vdiDaas.horizonSpend) ?? 0) : 0) +
+      (inputs.vdiDaas.parallelsPresent === "yes" ? (nonNeg(inputs.vdiDaas.parallelsSpend) ?? 0) : 0);
+    const hasVdiSpend = vdiPlatformSpendTotal > 0;
+    const derivedVdiDaas = hasVdiSpend ? vdiPlatformSpendTotal : (vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear);
 
     const endUserDevicesValue = nonNeg(inputs.categoryRollups.endUserDevicesAnnual) ?? derivedEndUserDevices;
     const supportOpsValue = nonNeg(inputs.categoryRollups.supportOpsAnnual) ?? derivedSupportOps;
@@ -531,24 +557,30 @@ export default function TcoBaseline() {
       isAssumed: inputs.categoryRollups.licensingAnnual === undefined,
     };
 
+    const mgmtSecurityFromInput = inputs.categoryRollups.mgmtSecurityAnnual !== undefined || hasToolSpend;
     const mgmtSecurityLine: CalcLine = {
       key: "mgmt-security",
       label: "Management & Security",
       value: mgmtSecurityValue,
       basis: inputs.categoryRollups.mgmtSecurityAnnual !== undefined
-        ? `${fmtMoney(mgmtSecurityValue)} (input)`
+        ? `${fmtMoney(mgmtSecurityValue)} (input override)`
+        : hasToolSpend
+        ? `${fmtMoney(toolSpendTotal)} (from tool spend inputs)`
         : `${fmtNumber(endpoints)} endpoints × $${assumptions.mgmtSecurity.costPerEndpointPerYear}/endpoint`,
-      isAssumed: inputs.categoryRollups.mgmtSecurityAnnual === undefined,
+      isAssumed: !mgmtSecurityFromInput,
     };
 
+    const vdiFromInput = inputs.categoryRollups.vdiDaasAnnual !== undefined || hasVdiSpend;
     const vdiDaasLine: CalcLine = {
       key: "vdi-daas",
       label: "VDI / DaaS",
       value: vdiDaasValue,
       basis: inputs.categoryRollups.vdiDaasAnnual !== undefined
-        ? `${fmtMoney(vdiDaasValue)} (input)`
+        ? `${fmtMoney(vdiDaasValue)} (input override)`
+        : hasVdiSpend
+        ? `${fmtMoney(vdiPlatformSpendTotal)} (from platform spend inputs)`
         : `${fmtNumber(vdiUserCount)} VDI users × $${assumptions.vdi.platformCostPerVdiUserPerYear}/user`,
-      isAssumed: inputs.categoryRollups.vdiDaasAnnual === undefined,
+      isAssumed: !vdiFromInput,
     };
 
     const overheadLine: CalcLine = {
@@ -1975,43 +2007,69 @@ export default function TcoBaseline() {
                       <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-vdi-platforms">
                         <div className="grid gap-4">
                           {([
-                            { k: "citrixPresent", label: "Citrix" },
-                            { k: "avdPresent", label: "Azure Virtual Desktop" },
-                            { k: "w365Present", label: "Windows 365" },
-                            { k: "horizonPresent", label: "VMware Horizon" },
-                            { k: "parallelsPresent", label: "Parallels RAS" },
+                            { k: "citrixPresent", spendKey: "citrixSpend", label: "Citrix" },
+                            { k: "avdPresent", spendKey: "avdSpend", label: "Azure Virtual Desktop" },
+                            { k: "w365Present", spendKey: "w365Spend", label: "Windows 365" },
+                            { k: "horizonPresent", spendKey: "horizonSpend", label: "VMware Horizon" },
+                            { k: "parallelsPresent", spendKey: "parallelsSpend", label: "Parallels RAS" },
                           ] as const).map((row) => (
                             <div
                               key={row.k}
-                              className="flex items-center justify-between gap-3"
+                              className="space-y-2"
                               data-testid={`row-vdi-${row.k}`}
                             >
-                              <div className="text-sm" data-testid={`text-vdi-${row.k}`}>
-                                {row.label}
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-sm" data-testid={`text-vdi-${row.k}`}>
+                                  {row.label}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {(["yes", "no", "unknown"] as const).map((v) => (
+                                    <Button
+                                      key={v}
+                                      type="button"
+                                      variant={
+                                        inputs.vdiDaas[row.k] === v
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className="h-8 rounded-xl px-3 text-xs"
+                                      onClick={() =>
+                                        setInputs((s) => ({
+                                          ...s,
+                                          vdiDaas: { ...s.vdiDaas, [row.k]: v },
+                                        }))
+                                      }
+                                      data-testid={`button-vdi-${row.k}-${v}`}
+                                    >
+                                      {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
+                                    </Button>
+                                  ))}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {(["yes", "no", "unknown"] as const).map((v) => (
-                                  <Button
-                                    key={v}
-                                    type="button"
-                                    variant={
-                                      inputs.vdiDaas[row.k] === v
-                                        ? "default"
-                                        : "secondary"
-                                    }
-                                    className="h-8 rounded-xl px-3 text-xs"
-                                    onClick={() =>
-                                      setInputs((s) => ({
-                                        ...s,
-                                        vdiDaas: { ...s.vdiDaas, [row.k]: v },
-                                      }))
-                                    }
-                                    data-testid={`button-vdi-${row.k}-${v}`}
-                                  >
-                                    {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
-                                  </Button>
-                                ))}
-                              </div>
+                              {inputs.vdiDaas[row.k] === "yes" && (
+                                <div className="ml-4 flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Annual spend:</span>
+                                  <div className="relative flex-1 max-w-[160px]">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                                    <Input
+                                      type="number"
+                                      placeholder="Optional"
+                                      className="h-8 pl-6 text-sm"
+                                      value={inputs.vdiDaas[row.spendKey] ?? ""}
+                                      onChange={(e) =>
+                                        setInputs((s) => ({
+                                          ...s,
+                                          vdiDaas: {
+                                            ...s.vdiDaas,
+                                            [row.spendKey]: e.target.value ? Number(e.target.value) : undefined,
+                                          },
+                                        }))
+                                      }
+                                      data-testid={`input-vdi-${row.spendKey}`}
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -2025,44 +2083,70 @@ export default function TcoBaseline() {
                       <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-tool-presence">
                         <div className="grid gap-4">
                           {([
-                            { k: "intunePresent", label: "Intune" },
-                            { k: "sccmPresent", label: "SCCM" },
-                            { k: "workspaceOnePresent", label: "Workspace ONE" },
-                            { k: "jamfPresent", label: "Jamf" },
-                            { k: "controlUpPresent", label: "ControlUp" },
-                            { k: "nerdioPresent", label: "Nerdio" },
+                            { k: "intunePresent", spendKey: "intuneSpend", label: "Intune" },
+                            { k: "sccmPresent", spendKey: "sccmSpend", label: "SCCM" },
+                            { k: "workspaceOnePresent", spendKey: "workspaceOneSpend", label: "Workspace ONE" },
+                            { k: "jamfPresent", spendKey: "jamfSpend", label: "Jamf" },
+                            { k: "controlUpPresent", spendKey: "controlUpSpend", label: "ControlUp" },
+                            { k: "nerdioPresent", spendKey: "nerdioSpend", label: "Nerdio" },
                           ] as const).map((row) => (
                             <div
                               key={row.k}
-                              className="flex items-center justify-between gap-3"
+                              className="space-y-2"
                               data-testid={`row-tool-${row.k}`}
                             >
-                              <div className="text-sm" data-testid={`text-tool-${row.k}`}>
-                                {row.label}
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-sm" data-testid={`text-tool-${row.k}`}>
+                                  {row.label}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {(["yes", "no", "unknown"] as const).map((v) => (
+                                    <Button
+                                      key={v}
+                                      type="button"
+                                      variant={
+                                        inputs.toolPresence[row.k] === v
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className="h-8 rounded-xl px-3 text-xs"
+                                      onClick={() =>
+                                        setInputs((s) => ({
+                                          ...s,
+                                          toolPresence: { ...s.toolPresence, [row.k]: v },
+                                        }))
+                                      }
+                                      data-testid={`button-tool-${row.k}-${v}`}
+                                    >
+                                      {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
+                                    </Button>
+                                  ))}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {(["yes", "no", "unknown"] as const).map((v) => (
-                                  <Button
-                                    key={v}
-                                    type="button"
-                                    variant={
-                                      inputs.toolPresence[row.k] === v
-                                        ? "default"
-                                        : "secondary"
-                                    }
-                                    className="h-8 rounded-xl px-3 text-xs"
-                                    onClick={() =>
-                                      setInputs((s) => ({
-                                        ...s,
-                                        toolPresence: { ...s.toolPresence, [row.k]: v },
-                                      }))
-                                    }
-                                    data-testid={`button-tool-${row.k}-${v}`}
-                                  >
-                                    {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
-                                  </Button>
-                                ))}
-                              </div>
+                              {inputs.toolPresence[row.k] === "yes" && (
+                                <div className="ml-4 flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Annual spend:</span>
+                                  <div className="relative flex-1 max-w-[160px]">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+                                    <Input
+                                      type="number"
+                                      placeholder="Optional"
+                                      className="h-8 pl-6 text-sm"
+                                      value={inputs.toolPresence[row.spendKey] ?? ""}
+                                      onChange={(e) =>
+                                        setInputs((s) => ({
+                                          ...s,
+                                          toolPresence: {
+                                            ...s.toolPresence,
+                                            [row.spendKey]: e.target.value ? Number(e.target.value) : undefined,
+                                          },
+                                        }))
+                                      }
+                                      data-testid={`input-tool-${row.spendKey}`}
+                                    />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -2072,8 +2156,8 @@ export default function TcoBaseline() {
 
                   <div className="mt-4">
                     <InlineInfo
-                      title="Why this matters"
-                      body="These are baseline context flags for discovery. They don't change totals unless you enter actual spend."
+                      title="How this works"
+                      body="When you enter actual annual spend for a tool, we use your real data instead of assumptions. Leave spend blank to use industry-standard cost estimates."
                       icon={<BookOpen className="h-4 w-4" />}
                       testId="info-tool-presence"
                     />
