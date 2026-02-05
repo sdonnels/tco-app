@@ -2716,11 +2716,16 @@ export default function TcoBaseline() {
                     <div className="rounded-2xl border bg-card/60 p-4">
                       <div className="text-sm font-semibold mb-3">Export Options</div>
                       <div className="grid gap-2">
-                        <Button className="w-full gap-2 justify-start" onClick={exportJson} data-testid="button-export-json">
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 justify-start"
+                          onClick={exportJson}
+                          data-testid="button-export-json"
+                        >
                           <FileDown className="h-4 w-4" /> JSON (data interchange)
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="outline"
                           className="w-full gap-2 justify-start"
                           onClick={exportCSV}
                           data-testid="button-export-csv"
@@ -2728,7 +2733,7 @@ export default function TcoBaseline() {
                           <Table className="h-4 w-4" /> CSV (spreadsheet)
                         </Button>
                         <Button
-                          variant="secondary"
+                          variant="outline"
                           className="w-full gap-2 justify-start"
                           onClick={exportPDF}
                           data-testid="button-export-pdf"
