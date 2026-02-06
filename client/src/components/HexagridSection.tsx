@@ -143,80 +143,81 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
                         {spEntries.map((entry) => (
                           <div
                             key={entry.id}
-                            className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors"
+                            className="py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors space-y-1"
                             data-testid={`vendor-row-${entry.id}`}
                           >
-                            <div className="min-w-0 w-[140px] shrink-0 flex items-center gap-1">
-                              {entry.isCustom ? (
-                                <Input
-                                  className="h-7 text-xs font-medium"
-                                  value={entry.vendorName}
-                                  onChange={(e) =>
-                                    updateEntry(entry.id, { vendorName: e.target.value })
-                                  }
-                                  placeholder="Custom vendor name"
-                                  data-testid={`input-custom-name-${entry.id}`}
-                                />
-                              ) : (
-                                <span className="text-xs font-medium truncate">
-                                  {entry.vendorName}
-                                </span>
-                              )}
-                              {entry.url && (
-                                <a
-                                  href={entry.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-muted-foreground hover:text-foreground shrink-0"
-                                  data-testid={`link-vendor-${entry.id}`}
-                                >
-                                  <Link2 className="h-3 w-3" />
-                                </a>
-                              )}
+                            <div className="flex items-center gap-1.5">
+                              <div className="min-w-0 flex-1 flex items-center gap-1">
+                                {entry.isCustom ? (
+                                  <Input
+                                    className="h-7 text-xs font-medium"
+                                    value={entry.vendorName}
+                                    onChange={(e) =>
+                                      updateEntry(entry.id, { vendorName: e.target.value })
+                                    }
+                                    placeholder="Custom vendor name"
+                                    data-testid={`input-custom-name-${entry.id}`}
+                                  />
+                                ) : (
+                                  <span className="text-xs font-medium truncate">
+                                    {entry.vendorName}
+                                  </span>
+                                )}
+                                {entry.url && (
+                                  <a
+                                    href={entry.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-muted-foreground hover:text-foreground shrink-0"
+                                    data-testid={`link-vendor-${entry.id}`}
+                                  >
+                                    <Link2 className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 h-7 w-7"
+                                onClick={() => removeEntry(entry.id)}
+                                data-testid={`button-delete-${entry.id}`}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
-
-                            <Input
-                              className="w-[110px] shrink-0 h-7 text-xs"
-                              type="text"
-                              inputMode="numeric"
-                              placeholder="Annual Cost (Optional)"
-                              value={
-                                entry.yearlyCost === undefined ? "" : String(entry.yearlyCost)
-                              }
-                              onChange={(e) => {
-                                const raw = e.target.value;
-                                if (raw.trim() === "") {
-                                  updateEntry(entry.id, { yearlyCost: undefined });
-                                  return;
+                            <div className="flex items-center gap-1.5 pl-1">
+                              <Input
+                                className="w-[130px] shrink-0 h-7 text-xs"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="Cost/Annual"
+                                value={
+                                  entry.yearlyCost === undefined ? "" : String(entry.yearlyCost)
                                 }
-                                const next = Number(raw);
-                                if (!Number.isFinite(next)) return;
-                                updateEntry(entry.id, { yearlyCost: next });
-                              }}
-                              data-testid={`input-cost-${entry.id}`}
-                            />
-
-                            <Input
-                              className="flex-1 min-w-0 h-7 text-xs"
-                              placeholder="Assumptions/License details..."
-                              value={entry.notes ?? ""}
-                              onChange={(e) =>
-                                updateEntry(entry.id, {
-                                  notes: e.target.value || undefined,
-                                })
-                              }
-                              data-testid={`input-notes-${entry.id}`}
-                            />
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="shrink-0 h-7 w-7"
-                              onClick={() => removeEntry(entry.id)}
-                              data-testid={`button-delete-${entry.id}`}
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </Button>
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw.trim() === "") {
+                                    updateEntry(entry.id, { yearlyCost: undefined });
+                                    return;
+                                  }
+                                  const next = Number(raw);
+                                  if (!Number.isFinite(next)) return;
+                                  updateEntry(entry.id, { yearlyCost: next });
+                                }}
+                                data-testid={`input-cost-${entry.id}`}
+                              />
+                              <Input
+                                className="flex-1 min-w-0 h-7 text-xs"
+                                placeholder="Notes"
+                                value={entry.notes ?? ""}
+                                onChange={(e) =>
+                                  updateEntry(entry.id, {
+                                    notes: e.target.value || undefined,
+                                  })
+                                }
+                                data-testid={`input-notes-${entry.id}`}
+                              />
+                            </div>
                           </div>
                         ))}
 
