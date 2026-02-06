@@ -1312,6 +1312,39 @@ export default function TcoBaseline() {
     rows.push(["Mgmt & Security/Endpoint", String(assumptions.mgmtSecurity.costPerEndpointPerYear)]);
     rows.push(["VDI Platform Cost/User", String(assumptions.vdi.platformCostPerVdiUserPerYear)]);
     rows.push(["Overhead %", String(assumptions.overhead.pctOfTotal * 100)]);
+    rows.push([]);
+
+    rows.push(["EUC PILLARS & PLATFORMS", "Sub-Pillar", "Vendor", "Annual Cost", "Notes"]);
+    if (inputs.hexagridEntries.length > 0) {
+      const pillarGroups = inputs.hexagridEntries.reduce((acc, e) => {
+        if (!acc[e.pillar]) acc[e.pillar] = [];
+        acc[e.pillar].push(e);
+        return acc;
+      }, {} as Record<string, typeof inputs.hexagridEntries>);
+      Object.entries(pillarGroups).forEach(([pillar, entries]) => {
+        entries.forEach((e) => {
+          rows.push([pillar, e.subPillar, e.vendorName, String(e.yearlyCost ?? 0), e.notes ?? ""]);
+        });
+      });
+      rows.push(["EUC Pillars Total", "", "", String(derived.hexagridTotal), ""]);
+    } else {
+      rows.push(["(No vendor entries)", "", "", "", ""]);
+    }
+    rows.push([]);
+
+    rows.push(["MANAGED SERVICES"]);
+    rows.push(["Total Annual MSP Spend", inputs.managedServices.totalAnnualSpend !== undefined ? String(inputs.managedServices.totalAnnualSpend) : ""]);
+    rows.push(["Outsourced Endpoint Management", inputs.managedServices.outsourcedEndpointMgmt ? "Yes" : "No"]);
+    rows.push(["Outsourced Security/EDR", inputs.managedServices.outsourcedSecurity ? "Yes" : "No"]);
+    rows.push(["Outsourced Patching", inputs.managedServices.outsourcedPatching ? "Yes" : "No"]);
+    rows.push(["Outsourced Helpdesk/Tier 1", inputs.managedServices.outsourcedHelpdesk ? "Yes" : "No"]);
+    rows.push(["Outsourced Tier 2+ Support", inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"]);
+    rows.push(["Outsourced Other", inputs.managedServices.outsourcedOther ? "Yes" : "No"]);
+    rows.push(["Other Description", inputs.managedServices.otherDescription ?? ""]);
+    rows.push([]);
+
+    rows.push(["OBSERVATIONS"]);
+    rows.push([inputs.observations.notes ?? ""]);
     
     const escapeCSV = (value: string) => {
       if (value.includes(",") || value.includes('"') || value.includes("\n")) {
