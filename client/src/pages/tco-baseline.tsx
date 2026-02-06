@@ -610,30 +610,12 @@ export default function TcoBaseline() {
     const hexCollab = hexPillarCost("Collaboration, AI & Applications");
     const hexagridTotal = hexAccess + hexVdi + hexMgmt + hexSecurity + hexAppMgmt + hexCollab;
 
-    const customToolsSpend = inputs.toolPresence.customTools.reduce((sum, t) => sum + (nonNeg(t.spend) ?? 0), 0);
-    const toolSpendTotal = 
-      (inputs.toolPresence.intunePresent === "yes" ? (nonNeg(inputs.toolPresence.intuneSpend) ?? 0) : 0) +
-      (inputs.toolPresence.sccmPresent === "yes" ? (nonNeg(inputs.toolPresence.sccmSpend) ?? 0) : 0) +
-      (inputs.toolPresence.workspaceOnePresent === "yes" ? (nonNeg(inputs.toolPresence.workspaceOneSpend) ?? 0) : 0) +
-      (inputs.toolPresence.jamfPresent === "yes" ? (nonNeg(inputs.toolPresence.jamfSpend) ?? 0) : 0) +
-      (inputs.toolPresence.controlUpPresent === "yes" ? (nonNeg(inputs.toolPresence.controlUpSpend) ?? 0) : 0) +
-      (inputs.toolPresence.nerdioPresent === "yes" ? (nonNeg(inputs.toolPresence.nerdioSpend) ?? 0) : 0) +
-      customToolsSpend;
-    const mgmtFromHexgrid = hexMgmt + hexSecurity;
-    const hasToolSpend = toolSpendTotal > 0 || mgmtFromHexgrid > 0;
-    const derivedMgmtSecurity = hasToolSpend ? (toolSpendTotal + mgmtFromHexgrid) : (endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear);
+    const mgmtSecurityFromPillars = hexMgmt + hexSecurity;
+    const hasToolSpend = mgmtSecurityFromPillars > 0;
+    const derivedMgmtSecurity = hasToolSpend ? mgmtSecurityFromPillars : (endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear);
 
-    const customPlatformsSpend = inputs.vdiDaas.customPlatforms.reduce((sum, p) => sum + (nonNeg(p.spend) ?? 0), 0);
-    const vdiPlatformSpendTotal =
-      (inputs.vdiDaas.citrixPresent === "yes" ? (nonNeg(inputs.vdiDaas.citrixSpend) ?? 0) : 0) +
-      (inputs.vdiDaas.avdPresent === "yes" ? (nonNeg(inputs.vdiDaas.avdSpend) ?? 0) : 0) +
-      (inputs.vdiDaas.w365Present === "yes" ? (nonNeg(inputs.vdiDaas.w365Spend) ?? 0) : 0) +
-      (inputs.vdiDaas.horizonPresent === "yes" ? (nonNeg(inputs.vdiDaas.horizonSpend) ?? 0) : 0) +
-      (inputs.vdiDaas.parallelsPresent === "yes" ? (nonNeg(inputs.vdiDaas.parallelsSpend) ?? 0) : 0) +
-      customPlatformsSpend;
-    const vdiFromHexgrid = hexVdi;
-    const hasVdiSpend = vdiPlatformSpendTotal > 0 || vdiFromHexgrid > 0;
-    const derivedVdiDaas = hasVdiSpend ? (vdiPlatformSpendTotal + vdiFromHexgrid) : (vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear);
+    const hasVdiSpend = hexVdi > 0;
+    const derivedVdiDaas = hasVdiSpend ? hexVdi : (vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear);
 
     const endUserDevicesValue = nonNeg(inputs.categoryRollups.endUserDevicesAnnual) ?? derivedEndUserDevices;
     const supportOpsValue = nonNeg(inputs.categoryRollups.supportOpsAnnual) ?? derivedSupportOps;
@@ -683,7 +665,7 @@ export default function TcoBaseline() {
       basis: inputs.categoryRollups.mgmtSecurityAnnual !== undefined
         ? `${fmtMoney(mgmtSecurityValue)} (input override)`
         : hasToolSpend
-        ? `${fmtMoney(toolSpendTotal + mgmtFromHexgrid)} (from tool spend${mgmtFromHexgrid > 0 ? ` + ${fmtMoney(mgmtFromHexgrid)} hexgrid` : ""})`
+        ? `${fmtMoney(mgmtSecurityFromPillars)} (from EUC Pillars: Device Mgmt + Security)`
         : `${fmtNumber(endpoints)} endpoints × $${assumptions.mgmtSecurity.costPerEndpointPerYear}/endpoint`,
       isAssumed: !mgmtSecurityFromInput,
     };
@@ -696,7 +678,7 @@ export default function TcoBaseline() {
       basis: inputs.categoryRollups.vdiDaasAnnual !== undefined
         ? `${fmtMoney(vdiDaasValue)} (input override)`
         : hasVdiSpend
-        ? `${fmtMoney(vdiPlatformSpendTotal + vdiFromHexgrid)} (from platform spend${vdiFromHexgrid > 0 ? ` + ${fmtMoney(vdiFromHexgrid)} hexgrid` : ""})`
+        ? `${fmtMoney(hexVdi)} (from EUC Pillars: Virtual Desktops & Applications)`
         : `${fmtNumber(vdiUserCount)} VDI users × $${assumptions.vdi.platformCostPerVdiUserPerYear}/user`,
       isAssumed: !vdiFromInput,
     };
@@ -840,7 +822,7 @@ export default function TcoBaseline() {
           categoryLines: derived.categoryLines,
           managedServicesLines: derived.managedServicesLines,
         },
-        hexagrid: {
+        eucPillars: {
           total: derived.hexagridTotal,
           byPillar: {
             access: derived.hexAccess,
@@ -920,40 +902,7 @@ export default function TcoBaseline() {
     lines.push("");
 
     lines.push("┌" + "─".repeat(68) + "┐");
-    lines.push("│ VDI / DaaS PLATFORM PRESENCE" + " ".repeat(39) + "│");
-    lines.push("└" + "─".repeat(68) + "┘");
-    lines.push(`  Citrix:             ${inputs.vdiDaas.citrixPresent}${inputs.vdiDaas.citrixPresent === "yes" && inputs.vdiDaas.citrixSpend ? ` (${fmtMoney(inputs.vdiDaas.citrixSpend)}/yr)` : ""}`);
-    lines.push(`  Azure Virtual Desktop: ${inputs.vdiDaas.avdPresent}${inputs.vdiDaas.avdPresent === "yes" && inputs.vdiDaas.avdSpend ? ` (${fmtMoney(inputs.vdiDaas.avdSpend)}/yr)` : ""}`);
-    lines.push(`  Windows 365:        ${inputs.vdiDaas.w365Present}${inputs.vdiDaas.w365Present === "yes" && inputs.vdiDaas.w365Spend ? ` (${fmtMoney(inputs.vdiDaas.w365Spend)}/yr)` : ""}`);
-    lines.push(`  VMware Horizon:     ${inputs.vdiDaas.horizonPresent}${inputs.vdiDaas.horizonPresent === "yes" && inputs.vdiDaas.horizonSpend ? ` (${fmtMoney(inputs.vdiDaas.horizonSpend)}/yr)` : ""}`);
-    lines.push(`  Parallels RAS:      ${inputs.vdiDaas.parallelsPresent}${inputs.vdiDaas.parallelsPresent === "yes" && inputs.vdiDaas.parallelsSpend ? ` (${fmtMoney(inputs.vdiDaas.parallelsSpend)}/yr)` : ""}`);
-    if (inputs.vdiDaas.customPlatforms.length > 0) {
-      lines.push("  Custom Platforms:");
-      inputs.vdiDaas.customPlatforms.forEach((p) => {
-        lines.push(`    ${p.name || "(unnamed)"}:  ${p.spend ? fmtMoney(p.spend) + "/yr" : "(no spend)"}`);
-      });
-    }
-    lines.push("");
-
-    lines.push("┌" + "─".repeat(68) + "┐");
-    lines.push("│ ENDPOINT & MANAGEMENT TOOL PRESENCE" + " ".repeat(31) + "│");
-    lines.push("└" + "─".repeat(68) + "┘");
-    lines.push(`  Intune:             ${inputs.toolPresence.intunePresent}${inputs.toolPresence.intunePresent === "yes" && inputs.toolPresence.intuneSpend ? ` (${fmtMoney(inputs.toolPresence.intuneSpend)}/yr)` : ""}`);
-    lines.push(`  SCCM:               ${inputs.toolPresence.sccmPresent}${inputs.toolPresence.sccmPresent === "yes" && inputs.toolPresence.sccmSpend ? ` (${fmtMoney(inputs.toolPresence.sccmSpend)}/yr)` : ""}`);
-    lines.push(`  Workspace ONE:      ${inputs.toolPresence.workspaceOnePresent}${inputs.toolPresence.workspaceOnePresent === "yes" && inputs.toolPresence.workspaceOneSpend ? ` (${fmtMoney(inputs.toolPresence.workspaceOneSpend)}/yr)` : ""}`);
-    lines.push(`  Jamf:               ${inputs.toolPresence.jamfPresent}${inputs.toolPresence.jamfPresent === "yes" && inputs.toolPresence.jamfSpend ? ` (${fmtMoney(inputs.toolPresence.jamfSpend)}/yr)` : ""}`);
-    lines.push(`  ControlUp:          ${inputs.toolPresence.controlUpPresent}${inputs.toolPresence.controlUpPresent === "yes" && inputs.toolPresence.controlUpSpend ? ` (${fmtMoney(inputs.toolPresence.controlUpSpend)}/yr)` : ""}`);
-    lines.push(`  Nerdio:             ${inputs.toolPresence.nerdioPresent}${inputs.toolPresence.nerdioPresent === "yes" && inputs.toolPresence.nerdioSpend ? ` (${fmtMoney(inputs.toolPresence.nerdioSpend)}/yr)` : ""}`);
-    if (inputs.toolPresence.customTools.length > 0) {
-      lines.push("  Custom Tools:");
-      inputs.toolPresence.customTools.forEach((t) => {
-        lines.push(`    ${t.name || "(unnamed)"}:  ${t.spend ? fmtMoney(t.spend) + "/yr" : "(no spend)"}`);
-      });
-    }
-    lines.push("");
-
-    lines.push("┌" + "─".repeat(68) + "┐");
-    lines.push("│ 2025 EUC HEXAGRID VENDOR COSTS" + " ".repeat(37) + "│");
+    lines.push("│ EUC PILLARS & PLATFORMS VENDOR COSTS" + " ".repeat(31) + "│");
     lines.push("└" + "─".repeat(68) + "┘");
     if (inputs.hexagridEntries.length === 0) {
       lines.push("  (No vendor entries)");
@@ -971,7 +920,7 @@ export default function TcoBaseline() {
         });
       });
       lines.push(`  ─────────────────────────────────────────────`);
-      lines.push(`  HEXAGRID TOTAL:     ${fmtMoney(derived.hexagridTotal)}`);
+      lines.push(`  EUC PILLARS TOTAL:  ${fmtMoney(derived.hexagridTotal)}`);
     }
     lines.push("");
 
@@ -2061,20 +2010,20 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
-                    title="Category rollups (optional overrides)"
-                    description="If you know total annual spend for a category, enter it here. Otherwise, the tool calculates from environment data and assumptions."
+                    title="EUC Pillars - Platform Cost Rollups (Optional Overrides)"
+                    description="If you know total annual spend for a category, enter it here to override the calculated value. Otherwise, the tool calculates from environment data, EUC Pillar vendor costs, and assumptions."
                     testId="header-rollups"
                   />
 
                   <div className="mt-6 grid gap-6 lg:grid-cols-2">
                     <div className="space-y-4" data-testid="group-rollups-1">
                       <div className="text-sm font-semibold" data-testid="text-rollups-title">
-                        Cost categories (annual)
+                        Access & Infrastructure
                       </div>
                       <div className="space-y-3">
                         <div className="space-y-2">
                           <Label htmlFor="rollup-devices" data-testid="label-rollup-devices">
-                            End-User Devices
+                            End-User Devices (Access)
                           </Label>
                           <Input
                             id="rollup-devices"
@@ -2112,7 +2061,7 @@ export default function TcoBaseline() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="rollup-licensing" data-testid="label-rollup-licensing">
-                            Licensing
+                            Licensing (Collaboration, AI & Apps)
                           </Label>
                           <Input
                             id="rollup-licensing"
@@ -2134,12 +2083,12 @@ export default function TcoBaseline() {
 
                     <div className="space-y-4" data-testid="group-rollups-2">
                       <div className="text-sm font-semibold" data-testid="text-rollups-title-2">
-                        More categories (annual)
+                        Management, Security & VDI
                       </div>
                       <div className="space-y-3">
                         <div className="space-y-2">
                           <Label htmlFor="rollup-mgmt" data-testid="label-rollup-mgmt">
-                            Management & Security
+                            Device, OS & User Mgmt + Security
                           </Label>
                           <Input
                             id="rollup-mgmt"
@@ -2158,7 +2107,7 @@ export default function TcoBaseline() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="rollup-vdi" data-testid="label-rollup-vdi">
-                            VDI / DaaS
+                            Virtual Desktops & Applications
                           </Label>
                           <Input
                             id="rollup-vdi"
@@ -2198,353 +2147,17 @@ export default function TcoBaseline() {
                     </div>
 
                   </div>
-                </Card>
-
-                <Card className="glass hairline rounded-3xl p-6">
-                  <SectionHeader
-                    icon={<Activity className="h-5 w-5 text-primary" />}
-                    eyebrow="Inputs"
-                    title="VDI / DaaS platforms & tools"
-                    description="Track which VDI platforms and endpoint management tools are in use and their annual spend."
-                    testId="header-vdi-tools"
-                  />
-
-                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <div className="space-y-4" data-testid="group-vdi-platforms">
-                      <div className="text-sm font-semibold" data-testid="text-vdi-platforms-title">
-                        VDI / DaaS platforms
-                      </div>
-                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-vdi-platforms">
-                        <div className="grid gap-4">
-                          {([
-                            { k: "citrixPresent", spendKey: "citrixSpend", label: "Citrix" },
-                            { k: "avdPresent", spendKey: "avdSpend", label: "Azure Virtual Desktop" },
-                            { k: "w365Present", spendKey: "w365Spend", label: "Windows 365" },
-                            { k: "horizonPresent", spendKey: "horizonSpend", label: "VMware Horizon" },
-                            { k: "parallelsPresent", spendKey: "parallelsSpend", label: "Parallels RAS" },
-                          ] as const).map((row) => (
-                            <div
-                              key={row.k}
-                              className="space-y-2"
-                              data-testid={`row-vdi-${row.k}`}
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="text-sm" data-testid={`text-vdi-${row.k}`}>
-                                  {row.label}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {(["yes", "no", "unknown"] as const).map((v) => (
-                                    <Button
-                                      key={v}
-                                      type="button"
-                                      variant={
-                                        inputs.vdiDaas[row.k] === v
-                                          ? "default"
-                                          : "secondary"
-                                      }
-                                      className="h-8 rounded-xl px-3 text-xs"
-                                      onClick={() =>
-                                        setInputs((s) => ({
-                                          ...s,
-                                          vdiDaas: { ...s.vdiDaas, [row.k]: v },
-                                        }))
-                                      }
-                                      data-testid={`button-vdi-${row.k}-${v}`}
-                                    >
-                                      {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                              {inputs.vdiDaas[row.k] === "yes" && (
-                                <div className="ml-4 flex items-center gap-2">
-                                  <span className="text-xs text-muted-foreground">Annual spend:</span>
-                                  <div className="relative flex-1 max-w-[160px]">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                                    <Input
-                                      type="number"
-                                      placeholder="Optional"
-                                      className="h-8 pl-6 text-sm"
-                                      value={inputs.vdiDaas[row.spendKey] ?? ""}
-                                      onChange={(e) =>
-                                        setInputs((s) => ({
-                                          ...s,
-                                          vdiDaas: {
-                                            ...s.vdiDaas,
-                                            [row.spendKey]: e.target.value ? Number(e.target.value) : undefined,
-                                          },
-                                        }))
-                                      }
-                                      data-testid={`input-vdi-${row.spendKey}`}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {inputs.vdiDaas.customPlatforms.map((platform) => (
-                            <div key={platform.id} className="space-y-2" data-testid={`row-custom-platform-${platform.id}`}>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="text"
-                                  placeholder="Platform name"
-                                  className="h-8 text-sm flex-1"
-                                  value={platform.name}
-                                  onChange={(e) =>
-                                    setInputs((s) => ({
-                                      ...s,
-                                      vdiDaas: {
-                                        ...s.vdiDaas,
-                                        customPlatforms: s.vdiDaas.customPlatforms.map((p) =>
-                                          p.id === platform.id ? { ...p, name: e.target.value } : p
-                                        ),
-                                      },
-                                    }))
-                                  }
-                                  data-testid={`input-custom-platform-name-${platform.id}`}
-                                />
-                                <div className="relative w-[140px]">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                                  <Input
-                                    type="number"
-                                    placeholder="Spend"
-                                    className="h-8 pl-6 text-sm"
-                                    value={platform.spend ?? ""}
-                                    onChange={(e) =>
-                                      setInputs((s) => ({
-                                        ...s,
-                                        vdiDaas: {
-                                          ...s.vdiDaas,
-                                          customPlatforms: s.vdiDaas.customPlatforms.map((p) =>
-                                            p.id === platform.id ? { ...p, spend: e.target.value ? Number(e.target.value) : undefined } : p
-                                          ),
-                                        },
-                                      }))
-                                    }
-                                    data-testid={`input-custom-platform-spend-${platform.id}`}
-                                  />
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                                  onClick={() =>
-                                    setInputs((s) => ({
-                                      ...s,
-                                      vdiDaas: {
-                                        ...s.vdiDaas,
-                                        customPlatforms: s.vdiDaas.customPlatforms.filter((p) => p.id !== platform.id),
-                                      },
-                                    }))
-                                  }
-                                  data-testid={`button-remove-platform-${platform.id}`}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full h-8 text-xs"
-                            onClick={() =>
-                              setInputs((s) => ({
-                                ...s,
-                                vdiDaas: {
-                                  ...s.vdiDaas,
-                                  customPlatforms: [
-                                    ...s.vdiDaas.customPlatforms,
-                                    { id: crypto.randomUUID(), name: "", spend: undefined },
-                                  ],
-                                },
-                              }))
-                            }
-                            data-testid="button-add-custom-platform"
-                          >
-                            <Plus className="h-3 w-3 mr-1" /> Add other platform
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4" data-testid="group-tool-presence">
-                      <div className="text-sm font-semibold" data-testid="text-tool-presence-title">
-                        Endpoint & management tools
-                      </div>
-                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-tool-presence">
-                        <div className="grid gap-4">
-                          {([
-                            { k: "intunePresent", spendKey: "intuneSpend", label: "Intune" },
-                            { k: "sccmPresent", spendKey: "sccmSpend", label: "SCCM" },
-                            { k: "workspaceOnePresent", spendKey: "workspaceOneSpend", label: "Workspace ONE" },
-                            { k: "jamfPresent", spendKey: "jamfSpend", label: "Jamf" },
-                            { k: "controlUpPresent", spendKey: "controlUpSpend", label: "ControlUp" },
-                            { k: "nerdioPresent", spendKey: "nerdioSpend", label: "Nerdio" },
-                          ] as const).map((row) => (
-                            <div
-                              key={row.k}
-                              className="space-y-2"
-                              data-testid={`row-tool-${row.k}`}
-                            >
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="text-sm" data-testid={`text-tool-${row.k}`}>
-                                  {row.label}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {(["yes", "no", "unknown"] as const).map((v) => (
-                                    <Button
-                                      key={v}
-                                      type="button"
-                                      variant={
-                                        inputs.toolPresence[row.k] === v
-                                          ? "default"
-                                          : "secondary"
-                                      }
-                                      className="h-8 rounded-xl px-3 text-xs"
-                                      onClick={() =>
-                                        setInputs((s) => ({
-                                          ...s,
-                                          toolPresence: { ...s.toolPresence, [row.k]: v },
-                                        }))
-                                      }
-                                      data-testid={`button-tool-${row.k}-${v}`}
-                                    >
-                                      {v === "yes" ? "Yes" : v === "no" ? "No" : "?"}
-                                    </Button>
-                                  ))}
-                                </div>
-                              </div>
-                              {inputs.toolPresence[row.k] === "yes" && (
-                                <div className="ml-4 flex items-center gap-2">
-                                  <span className="text-xs text-muted-foreground">Annual spend:</span>
-                                  <div className="relative flex-1 max-w-[160px]">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                                    <Input
-                                      type="number"
-                                      placeholder="Optional"
-                                      className="h-8 pl-6 text-sm"
-                                      value={inputs.toolPresence[row.spendKey] ?? ""}
-                                      onChange={(e) =>
-                                        setInputs((s) => ({
-                                          ...s,
-                                          toolPresence: {
-                                            ...s.toolPresence,
-                                            [row.spendKey]: e.target.value ? Number(e.target.value) : undefined,
-                                          },
-                                        }))
-                                      }
-                                      data-testid={`input-tool-${row.spendKey}`}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-
-                          {inputs.toolPresence.customTools.map((tool) => (
-                            <div key={tool.id} className="space-y-2" data-testid={`row-custom-tool-${tool.id}`}>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="text"
-                                  placeholder="Tool name"
-                                  className="h-8 text-sm flex-1"
-                                  value={tool.name}
-                                  onChange={(e) =>
-                                    setInputs((s) => ({
-                                      ...s,
-                                      toolPresence: {
-                                        ...s.toolPresence,
-                                        customTools: s.toolPresence.customTools.map((t) =>
-                                          t.id === tool.id ? { ...t, name: e.target.value } : t
-                                        ),
-                                      },
-                                    }))
-                                  }
-                                  data-testid={`input-custom-tool-name-${tool.id}`}
-                                />
-                                <div className="relative w-[140px]">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
-                                  <Input
-                                    type="number"
-                                    placeholder="Spend"
-                                    className="h-8 pl-6 text-sm"
-                                    value={tool.spend ?? ""}
-                                    onChange={(e) =>
-                                      setInputs((s) => ({
-                                        ...s,
-                                        toolPresence: {
-                                          ...s.toolPresence,
-                                          customTools: s.toolPresence.customTools.map((t) =>
-                                            t.id === tool.id ? { ...t, spend: e.target.value ? Number(e.target.value) : undefined } : t
-                                          ),
-                                        },
-                                      }))
-                                    }
-                                    data-testid={`input-custom-tool-spend-${tool.id}`}
-                                  />
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                                  onClick={() =>
-                                    setInputs((s) => ({
-                                      ...s,
-                                      toolPresence: {
-                                        ...s.toolPresence,
-                                        customTools: s.toolPresence.customTools.filter((t) => t.id !== tool.id),
-                                      },
-                                    }))
-                                  }
-                                  data-testid={`button-remove-tool-${tool.id}`}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="w-full h-8 text-xs"
-                            onClick={() =>
-                              setInputs((s) => ({
-                                ...s,
-                                toolPresence: {
-                                  ...s.toolPresence,
-                                  customTools: [
-                                    ...s.toolPresence.customTools,
-                                    { id: crypto.randomUUID(), name: "", spend: undefined },
-                                  ],
-                                },
-                              }))
-                            }
-                            data-testid="button-add-custom-tool"
-                          >
-                            <Plus className="h-3 w-3 mr-1" /> Add other tool
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
                   <div className="mt-4">
                     <InlineInfo
                       title="How this works"
-                      body="When you enter actual annual spend for a tool, we use your real data instead of assumptions. Leave spend blank to use industry-standard cost estimates."
+                      body="These rollup fields let you override any calculated cost category with a known annual spend. When blank, the tool uses EUC Pillar vendor costs (if entered) or falls back to industry-standard assumptions. Overrides take highest priority, then actual vendor costs from pillars, then calculated assumptions."
                       icon={<BookOpen className="h-4 w-4" />}
-                      testId="info-tool-presence"
+                      testId="info-rollups"
                     />
                   </div>
                 </Card>
+
 
                 <Card className="glass hairline rounded-3xl p-6">
                   <SectionHeader
