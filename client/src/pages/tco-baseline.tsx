@@ -1742,7 +1742,7 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
-                    title="Project information"
+                    title="Project Information"
                     description="Identify the assessment for documentation and traceability."
                     testId="header-project"
                   />
@@ -1823,7 +1823,7 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<ClipboardCheck className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
-                    title="Environment facts"
+                    title="Environment Facts"
                     description="Enter what you know. Leave unknowns blank—assumptions will be explicit and challengeable."
                     testId="header-inputs"
                   />
@@ -1997,7 +1997,7 @@ export default function TcoBaseline() {
 
                     <div className="mt-4">
                       <InlineInfo
-                        title="How this works"
+                        title="How This Works"
                         body="Add vendors under each EUC pillar with their annual cost. Costs from Device Management, Security, and Virtual Desktops pillars replace assumption-based estimates. Leave pillars empty to use industry-standard assumptions."
                         icon={<BookOpen className="h-4 w-4" />}
                         testId="info-hexagrid"
@@ -2163,7 +2163,7 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
-                    title="Managed services & outsourcing"
+                    title="Managed Services & Outsourcing"
                     description="If you pay an MSP or outsource any EUC functions, capture the annual spend and what's covered."
                     testId="header-managed-services"
                   />
@@ -2278,7 +2278,7 @@ export default function TcoBaseline() {
                       </div>
 
                       <InlineInfo
-                        title="Why this matters"
+                        title="Why This Matters"
                         body="Managed services spend is part of your total baseline TCO. Showing what's outsourced helps understand the full cost picture."
                         icon={<BookOpen className="h-4 w-4" />}
                         testId="info-msp"
@@ -2294,7 +2294,7 @@ export default function TcoBaseline() {
                 <SectionHeader
                   icon={<BookOpen className="h-5 w-5 text-primary" />}
                   eyebrow="Assumptions"
-                  title="Explicit, labeled, overrideable"
+                  title="Explicit, Labeled, Overrideable"
                   description="These values are used only when an input is missing. Inputs always override assumptions."
                   testId="header-assumptions"
                   right={
@@ -2609,13 +2609,13 @@ export default function TcoBaseline() {
 
                 <div className="grid gap-4 lg:grid-cols-2">
                   <InlineInfo
-                    title="Assumption application logic"
+                    title="Assumption Application Logic"
                     body="Input present → use input. Input missing → use assumption. Input always overrides assumption."
                     icon={<CheckCircle2 className="h-4 w-4" />}
                     testId="info-logic"
                   />
                   <InlineInfo
-                    title="Frozen engine (mockup)"
+                    title="Frozen Engine (Mockup)"
                     body="This prototype shows the structure and traceability model. Version-locking and audit logs come later."
                     icon={<Lock className="h-4 w-4" />}
                     testId="info-frozen"
@@ -2629,7 +2629,7 @@ export default function TcoBaseline() {
                 <SectionHeader
                   icon={<Sparkles className="h-5 w-5 text-primary" />}
                   eyebrow="Observations & Analysis"
-                  title="Human commentary and trace"
+                  title="Human Commentary and Trace"
                   description="This is the defensibility layer: capture caveats and show the math behind each line item."
                   testId="header-observations"
                 />
@@ -2739,16 +2739,10 @@ export default function TcoBaseline() {
 
                   <div className="space-y-4">
                     <InlineInfo
-                      title="Mirror, not microscope"
-                      body="The tool reflects the current state back to the customer. No optimization hints, no scoring."
-                      icon={<ChevronRight className="h-4 w-4" />}
-                      testId="info-mirror"
-                    />
-                    <InlineInfo
-                      title="No hidden logic"
-                      body="If a line is assumed, it's labeled. If it's input, it's labeled. Nothing silently defaults."
-                      icon={<Shield className="h-4 w-4" />}
-                      testId="info-no-hidden"
+                      title="How this works"
+                      body="Capture notes and caveats to document what you observed during the assessment. The calculation trace shows exactly how each line item was derived — every assumed value is labeled, and every input is traceable. Nothing silently defaults."
+                      icon={<BookOpen className="h-4 w-4" />}
+                      testId="info-observations"
                     />
                     <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-assumed-list">
                       <div className="flex items-center justify-between">
@@ -2788,7 +2782,7 @@ export default function TcoBaseline() {
                 <SectionHeader
                   icon={<CheckCircle2 className="h-5 w-5 text-primary" />}
                   eyebrow="Summary"
-                  title="Baseline snapshot"
+                  title="Baseline Snapshot"
                   description="A client-safe view of the baseline, plus caveats. (No assumptions shown here.)"
                   testId="header-summary"
                 />
