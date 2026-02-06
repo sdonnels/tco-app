@@ -2,7 +2,7 @@
 
 ## Complete Documentation
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Last Updated:** February 2026  
 **Purpose:** Vendor-neutral, current-state Total Cost of Ownership baseline for enterprise End User Computing (EUC) environments
 
@@ -17,10 +17,11 @@
 5. [Input Sections](#input-sections)
 6. [Assumptions Reference](#assumptions-reference)
 7. [Calculations & Derived Metrics](#calculations--derived-metrics)
-8. [Export Options](#export-options)
-9. [Interactive Onboarding Tour](#interactive-onboarding-tour)
-10. [Readiness Tracker](#readiness-tracker)
-11. [Technical Details](#technical-details)
+8. [Visualizations](#visualizations)
+9. [Export Options](#export-options)
+10. [Interactive Onboarding Tour](#interactive-onboarding-tour)
+11. [Readiness Tracker](#readiness-tracker)
+12. [Technical Details](#technical-details)
 
 ---
 
@@ -120,17 +121,20 @@ View and customize all 15 default assumption values with:
 
 ### 4. Summary Tab
 Results dashboard showing:
-- Category-by-category cost breakdown
+- Category-by-category cost breakdown with basis annotations
 - Total annual baseline
 - Per-unit metrics (cost per endpoint, cost per user)
-- VDI premium calculations
-- Visual charts and breakdowns
+- VDI premium calculations (VDI Cost per VDI User, Non-VDI Cost per User, VDI User Premium)
+- Five interactive data visualizations (see [Visualizations](#visualizations) section)
+- Export buttons for all formats
 
 ### 5. Export Tab
 All available export formats:
-- JSON (machine-readable)
-- Audit Trail (human-readable text)
-- Assumption Justifications (detailed rationales)
+- JSON (machine-readable data interchange)
+- CSV (spreadsheet-compatible tabular data)
+- PDF (professional print-ready report with visualizations)
+- Audit Trail (human-readable comprehensive traceability report)
+- Assumption Justifications (detailed rationales for each assumption)
 
 ---
 
@@ -171,10 +175,23 @@ All available export formats:
 - VMware Horizon
 - Parallels RAS
 
+**Conditional Spend Fields:**
+When a platform is set to "Yes", an annual spend input field appears for that platform. This allows users to enter the actual dollar amount spent on each VDI platform.
+
+**Custom Platforms:**
+Users can add unlimited custom VDI/DaaS platforms using the "+Add Custom Platform" button. Each custom entry has:
+- Platform name (free text)
+- Annual spend amount
+
+Custom platform spend is included in total VDI platform spend calculations.
+
 **VDI Gate Logic:**
 VDI costs are only calculated when:
 - VDI Present = "Yes", OR
 - VDI % of Users > 0
+
+**Spend Override Logic:**
+When actual platform spend values are provided (from built-in or custom platforms), the total spend replaces the per-user assumption calculation. If no spend is entered, the tool falls back to `VDI Users × Platform Cost per VDI User/Year`.
 
 ### Tool Presence Inventory
 
@@ -188,6 +205,19 @@ Track presence of endpoint management and monitoring tools:
 | Jamf | Apple device management |
 | ControlUp | VDI/DaaS monitoring |
 | Nerdio | AVD management platform |
+
+**Conditional Spend Fields:**
+When a tool is set to "Yes", an annual spend input field appears for that tool. This allows users to enter the actual dollar amount spent on each management/security tool.
+
+**Custom Tools:**
+Users can add unlimited custom tools using the "+Add Custom Tool" button. Each custom entry has:
+- Tool name (free text)
+- Annual spend amount
+
+Custom tool spend is included in total tool spend calculations.
+
+**Spend Override Logic:**
+When actual tool spend values are provided (from built-in or custom tools), the total spend replaces the per-endpoint assumption calculation for Management & Security. If no spend is entered, the tool falls back to `Endpoints × Cost per Endpoint/Year`.
 
 ### Category Rollup Overrides
 
@@ -307,13 +337,19 @@ Deployment Labor = Endpoints × Hours/Device × Labor Rate ÷ Avg Device Life
 
 #### 4. Management & Security (Annual)
 ```
-= Total Endpoints × Cost per Endpoint per Year
+If actual tool spend is provided (any platform/tool with presence = "Yes" and spend > 0):
+  = Sum of all tool spend values (built-in + custom tools)
+Otherwise:
+  = Total Endpoints × Cost per Endpoint per Year
 ```
 
 #### 5. VDI/DaaS (Annual)
 ```
 VDI Users = User Count × VDI %
-= VDI Users × Platform Cost per VDI User
+If actual platform spend is provided (any platform with presence = "Yes" and spend > 0):
+  = Sum of all platform spend values (built-in + custom platforms)
+Otherwise:
+  = VDI Users × Platform Cost per VDI User
 (Only calculated if VDI is present or VDI% > 0)
 ```
 
@@ -340,6 +376,64 @@ Total Annual Baseline = End-User Devices + Support & Ops + Licensing
 | VDI Cost per VDI User | VDI/DaaS Annual ÷ VDI User Count |
 | Non-VDI Cost per User | (Total - VDI Costs) ÷ (Users - VDI Users) |
 | VDI User Premium | VDI Cost per VDI User - Non-VDI Cost per User |
+
+---
+
+## Visualizations
+
+The Summary tab includes five current-state data visualizations built with Recharts. All charts are grounded in actual input data and assumption-derived values -- no future projections, ROI, or optimization assumptions are displayed.
+
+### 1. Endpoint Mix (Pie Chart)
+
+Displays the distribution of device types across the environment:
+- Laptops (blue)
+- Desktops (purple)
+- Thin Clients (green)
+
+Shows percentage breakdown of each device type. Only displays segments with non-zero values.
+
+### 2. Where Money Goes (Pie Chart)
+
+Visualizes the proportional allocation of annual spend across all cost categories:
+- End-User Devices
+- Licensing
+- Support & Ops
+- VDI/DaaS
+- Management & Security
+- Overhead
+
+Each category displays its percentage of total spend. Zero-value categories are filtered out.
+
+### 3. Cost by Category (Horizontal Bar Chart)
+
+Shows the absolute dollar amount for each cost category as horizontal bars:
+- Devices, Support, Licensing, Mgmt/Sec, VDI/DaaS, Overhead
+
+Provides a clear visual comparison of which categories drive the most cost.
+
+### 4. VDI vs Non-VDI Comparison (Bar Chart)
+
+Compares the annual cost per user between VDI and Non-VDI users:
+- Non-VDI User cost per user (blue)
+- VDI User cost per user (purple)
+
+Only renders when user count and VDI percentage data are available.
+
+### 5. Cost Source (Bar Chart)
+
+Shows how much of the total baseline is derived from actual customer-provided inputs versus assumption-based calculations:
+- "From Inputs" (blue) -- costs based on user-entered spend values or overrides
+- "From Assumptions" (amber) -- costs calculated from default assumption values
+
+Helps stakeholders understand data confidence and identify areas where actual spend data would improve accuracy.
+
+### Chart Design Principles
+
+- **Current-state only**: No future projections or optimization suggestions
+- **Interactive tooltips**: Hover for detailed values
+- **Responsive**: Charts adapt to container width
+- **PDF-compatible**: HTML/CSS equivalents render in PDF export for reliable print output
+- **Dark mode aware**: Charts adapt to light/dark theme
 
 ---
 
@@ -520,9 +614,10 @@ Licensing,200000,Calculated
 1. **Header** - Client name, date, assessment contacts
 2. **Disclaimer** - Baseline-only notice
 3. **Environment Summary** - Users, endpoints, device breakdown
-4. **Annual Cost Breakdown** - Category table with percentages
-5. **Per-Unit Metrics** - Visual metric cards
-6. **Observations** - If captured during assessment
+4. **Annual Cost Breakdown** - Category table with percentages and source indicators
+5. **Visualizations** - HTML/CSS rendered charts (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison) for reliable print output
+6. **Per-Unit Metrics** - Visual metric cards
+7. **Observations** - If captured during assessment
 
 **Print/Save Options:**
 - Print directly to paper
@@ -705,8 +800,10 @@ The readiness tracker provides at-a-glance visibility into assessment completene
 - **State Management:** Local React state (useState)
 - **Styling:** Tailwind CSS with shadcn/ui components
 - **Animations:** Framer Motion
-- **Data Persistence:** Client-side only (localStorage for tour state)
+- **Charts:** Recharts (responsive, interactive data visualizations)
+- **Data Persistence:** Client-side only (localStorage for tour state and theme preference)
 - **Export:** Browser Blob API for file downloads
+- **Dark Mode:** System-aware theme toggle with light/dark support across all UI elements and charts
 
 ### Excel Workbook Alignment
 
@@ -763,6 +860,7 @@ This document synthesizes research and benchmarks from:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.1 | Feb 2026 | Added 5 current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source); conditional spend fields for VDI platforms and tools; custom platform/tool support with +Add buttons; spend override logic (actual spend replaces assumption-based calculations); PDF export with HTML/CSS chart rendering; CSV export format; dark mode toggle; enhanced audit trail with spend values and custom entries |
 | 2.0 | Feb 2026 | Added justification export, onboarding tour, readiness tracker |
 | 1.0 | Jan 2026 | Initial release with full baseline functionality |
 

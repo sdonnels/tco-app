@@ -117,9 +117,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Documentation
 
-Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` which includes:
+Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.1) which includes:
 - Full feature description and tool overview
 - All 15 assumptions with industry-sourced justifications
-- Calculation formulas and derived metrics
-- Export format specifications (JSON, Audit Trail, Justifications)
+- Calculation formulas and derived metrics (including spend override logic)
+- Five current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source)
+- Conditional spend fields and custom platform/tool support
+- Export format specifications (JSON, CSV, PDF, Audit Trail, Justifications)
 - Onboarding tour and readiness tracker details
+- Dark mode toggle documentation
