@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  Download,
   FileDown,
   FileText,
+  ImagePlus,
   Info,
   Lock,
   Plus,
@@ -18,6 +20,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import JSZip from "jszip";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -367,6 +370,9 @@ export default function TcoBaseline() {
     if (saved !== null) return saved === "true";
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
+  const [clientLogo, setClientLogo] = useState<string | null>(() => {
+    return localStorage.getItem("tco-client-logo");
+  });
   const [activeTab, setActiveTab] = useState<
     "home" | "inputs" | "assumptions" | "observations" | "summary"
   >("home");
@@ -514,7 +520,39 @@ export default function TcoBaseline() {
       overhead: { pctOfTotal: 0.07 },
     });
     localStorage.removeItem("tco_tool_master");
+    setClientLogo(null);
+    localStorage.removeItem("tco-client-logo");
     setClearDialogOpen(false);
+  }, []);
+
+  const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const allowedTypes = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please upload a PNG, JPG, SVG, or WebP image.");
+      e.target.value = "";
+      return;
+    }
+    const maxSize = 500 * 1024;
+    if (file.size > maxSize) {
+      alert("Logo file must be under 500 KB. Please resize and try again.");
+      e.target.value = "";
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setClientLogo(dataUrl);
+      try { localStorage.setItem("tco-client-logo", dataUrl); } catch {}
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }, []);
+
+  const removeClientLogo = useCallback(() => {
+    setClientLogo(null);
+    localStorage.removeItem("tco-client-logo");
   }, []);
 
   const { isTourOpen, startTour, closeTour, completeTour, hasCompletedTour } = useTourState();
@@ -791,7 +829,7 @@ export default function TcoBaseline() {
     localStorage.setItem("tco-dark-mode", String(dark));
   }, [dark]);
 
-  const exportJson = () => {
+  const getJsonContent = useCallback(() => {
     const payload = {
       tool: "tco-baseline-micro-assessment",
       version: "0.3-excel-aligned",
@@ -801,6 +839,7 @@ export default function TcoBaseline() {
         assessmentDate: inputs.project.assessmentDate ?? null,
         customerChampion: inputs.project.customerChampion ?? null,
         engineerName: inputs.project.engineerName ?? null,
+        clientLogoIncluded: !!clientLogo,
       },
       inputs,
       assumptions,
@@ -842,9 +881,12 @@ export default function TcoBaseline() {
       },
     };
 
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json",
-    });
+    return JSON.stringify(payload, null, 2);
+  }, [inputs, assumptions, derived, clientLogo]);
+
+  const exportJson = () => {
+    const content = getJsonContent();
+    const blob = new Blob([content], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -871,6 +913,7 @@ export default function TcoBaseline() {
     lines.push(`  Assessment Date:    ${inputs.project.assessmentDate ? new Date(inputs.project.assessmentDate).toLocaleDateString() : "(not provided)"}`);
     lines.push(`  Customer Champion:  ${inputs.project.customerChampion ?? "(not provided)"}`);
     lines.push(`  XenTegra Engineer:  ${inputs.project.engineerName ?? "(not provided)"}`);
+    lines.push(`  Client Logo:        ${clientLogo ? "Included" : "Not provided"}`);
     lines.push("");
 
     lines.push("┌" + "─".repeat(68) + "┐");
@@ -1049,7 +1092,13 @@ export default function TcoBaseline() {
     lines.push("END OF AUDIT TRAIL REPORT");
     lines.push(hr);
 
-    const content = lines.join("\n");
+    return lines.join("\n");
+  };
+
+  const getAuditTrailContent = exportAuditTrail;
+
+  const downloadAuditTrail = () => {
+    const content = getAuditTrailContent();
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1167,7 +1216,13 @@ export default function TcoBaseline() {
     lines.push("");
     lines.push(hr);
 
-    const content = lines.join("\n");
+    return lines.join("\n");
+  };
+
+  const getJustificationContent = exportJustificationReport;
+
+  const downloadJustificationReport = () => {
+    const content = getJustificationContent();
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1189,6 +1244,7 @@ export default function TcoBaseline() {
     rows.push(["Assessment Date", inputs.project.assessmentDate ?? ""]);
     rows.push(["Customer Champion", inputs.project.customerChampion ?? ""]);
     rows.push(["XenTegra Engineer", inputs.project.engineerName ?? ""]);
+    rows.push(["Client Logo", clientLogo ? "Included" : "Not provided"]);
     rows.push([]);
     
     rows.push(["ENVIRONMENT"]);
@@ -1244,7 +1300,13 @@ export default function TcoBaseline() {
       return value;
     };
     
-    const csvContent = rows.map(row => row.map(escapeCSV).join(",")).join("\n");
+    return rows.map(row => row.map(escapeCSV).join(",")).join("\n");
+  };
+
+  const getCsvContent = exportCSV;
+
+  const downloadCSV = () => {
+    const csvContent = getCsvContent();
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1255,7 +1317,24 @@ export default function TcoBaseline() {
     URL.revokeObjectURL(url);
   };
 
-  const exportPDF = () => {
+  const imgToBase64 = useCallback(async (src: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve("");
+      img.src = src;
+    });
+  }, []);
+
+  const exportPDF = async () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert("Please allow popups to generate PDF");
@@ -1264,6 +1343,7 @@ export default function TcoBaseline() {
 
     const clientName = inputs.project.clientName ?? "TCO Baseline";
     const date = new Date().toLocaleDateString();
+    const xentegraB64 = await imgToBase64(xentegraLogoBlack);
 
     const html = `
 <!DOCTYPE html>
@@ -1284,6 +1364,8 @@ export default function TcoBaseline() {
     h2 { font-size: 18px; margin: 24px 0 12px; color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
     h3 { font-size: 14px; margin: 16px 0 8px; color: #475569; }
     .header { border-bottom: 3px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+    .header-logos { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .header-logos img { max-height: 40px; max-width: 160px; object-fit: contain; }
     .subtitle { color: #64748b; font-size: 14px; }
     .meta { display: flex; gap: 32px; margin-top: 12px; font-size: 12px; color: #64748b; }
     table { width: 100%; border-collapse: collapse; margin: 12px 0; }
@@ -1326,11 +1408,15 @@ export default function TcoBaseline() {
 </head>
 <body>
   <div class="header">
+    <div class="header-logos">
+      ${clientLogo ? `<img src="${clientLogo}" alt="Client logo" />` : `<div></div>`}
+      ${xentegraB64 ? `<img src="${xentegraB64}" alt="XenTegra" />` : ``}
+    </div>
     <h1>TCO Baseline Report</h1>
     <p class="subtitle">End User Computing Total Cost of Ownership Assessment</p>
     <div class="meta">
       <span><strong>Client:</strong> ${clientName}</span>
-      <span><strong>Date:</strong> ${date}</span>
+      <span><strong>Assessment Date:</strong> ${inputs.project.assessmentDate ? new Date(inputs.project.assessmentDate + "T00:00:00").toLocaleDateString() : date}</span>
       ${inputs.project.customerChampion ? `<span><strong>Champion:</strong> ${inputs.project.customerChampion}</span>` : ""}
     </div>
   </div>
@@ -1551,7 +1637,11 @@ export default function TcoBaseline() {
   </div>
 
   <div class="footer">
-    <p>TCO Baseline Micro-Assessment Tool | Generated ${new Date().toLocaleString()}</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+      ${clientLogo ? `<img src="${clientLogo}" alt="Client" style="max-height: 24px; max-width: 100px; object-fit: contain;" />` : `<div></div>`}
+      ${xentegraB64 ? `<img src="${xentegraB64}" alt="XenTegra" style="max-height: 24px; max-width: 100px; object-fit: contain;" />` : ``}
+    </div>
+    <p>TCO Baseline Micro-Assessment Tool | Assessment Date: ${inputs.project.assessmentDate ? new Date(inputs.project.assessmentDate + "T00:00:00").toLocaleDateString() : date}</p>
     <p style="margin-top: 4px;">This is a vendor-neutral, current-state baseline assessment.</p>
   </div>
 
@@ -1565,6 +1655,28 @@ export default function TcoBaseline() {
 
     printWindow.document.write(html);
     printWindow.document.close();
+  };
+
+  const downloadAllExports = async () => {
+    const zip = new JSZip();
+    const dateStr = inputs.project.assessmentDate
+      ? new Date(inputs.project.assessmentDate + "T00:00:00").toISOString().slice(0, 10)
+      : new Date().toISOString().slice(0, 10);
+    const clientSlug = (inputs.project.clientName ?? "Baseline").replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_");
+    const folderName = `${dateStr}_${clientSlug}_TCO Micro-Assessment_Export`;
+
+    zip.file(`${folderName}/tco-baseline.json`, getJsonContent());
+    zip.file(`${folderName}/tco-baseline.csv`, getCsvContent());
+    zip.file(`${folderName}/tco-audit-trail.txt`, getAuditTrailContent());
+    zip.file(`${folderName}/tco-assumption-justifications.txt`, getJustificationContent());
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${folderName}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -1820,6 +1932,50 @@ export default function TcoBaseline() {
                         }
                         data-testid="input-engineer"
                       />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-start gap-4" data-testid="logo-upload-section">
+                    <div className="flex-1 space-y-2">
+                      <Label data-testid="label-client-logo">Client logo (optional)</Label>
+                      <div className="flex items-center gap-3">
+                        {clientLogo ? (
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={clientLogo}
+                              alt="Client logo"
+                              className="h-10 max-w-[120px] object-contain rounded border border-border bg-white p-1"
+                              data-testid="img-client-logo-preview"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={removeClientLogo}
+                              className="text-muted-foreground hover:text-destructive"
+                              data-testid="button-remove-logo"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept=".png,.jpg,.jpeg,.svg,.webp"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                              data-testid="input-client-logo"
+                            />
+                            <div className="inline-flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                              <ImagePlus className="h-4 w-4" />
+                              Upload logo
+                            </div>
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG, SVG, or WebP — max 500 KB. Best at 200 × 60 px or similar wide format.
+                      </p>
                     </div>
                   </div>
                 </Card>
@@ -2306,7 +2462,7 @@ export default function TcoBaseline() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={exportJustificationReport}
+                      onClick={downloadJustificationReport}
                       className="flex items-center gap-2"
                       data-testid="btn-export-justifications"
                     >
@@ -2675,7 +2831,7 @@ export default function TcoBaseline() {
                           variant="outline"
                           size="sm"
                           className="gap-2"
-                          onClick={exportAuditTrail}
+                          onClick={downloadAuditTrail}
                           data-testid="button-export-audit"
                         >
                           <FileDown className="h-4 w-4" /> Export audit trail
@@ -3028,7 +3184,7 @@ export default function TcoBaseline() {
                         <Button
                           variant="outline"
                           className="w-full gap-2 justify-start"
-                          onClick={exportCSV}
+                          onClick={downloadCSV}
                           data-testid="button-export-csv"
                         >
                           <Table className="h-4 w-4" /> CSV (spreadsheet)
@@ -3044,10 +3200,18 @@ export default function TcoBaseline() {
                         <Button
                           variant="outline"
                           className="w-full gap-2 justify-start"
-                          onClick={exportAuditTrail}
+                          onClick={downloadAuditTrail}
                           data-testid="button-export-audit"
                         >
                           <FileText className="h-4 w-4" /> Audit Trail (full traceability)
+                        </Button>
+                        <Separator className="my-1" />
+                        <Button
+                          className="w-full gap-2 justify-start"
+                          onClick={downloadAllExports}
+                          data-testid="button-export-all"
+                        >
+                          <Download className="h-4 w-4" /> Download All (.zip)
                         </Button>
                       </div>
                     </div>
@@ -3061,15 +3225,29 @@ export default function TcoBaseline() {
         <footer className="mt-10" data-testid="section-footer">
           <div className="glass hairline rounded-3xl px-6 py-4">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-muted-foreground" data-testid="text-footer-date">
-                {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+              {clientLogo ? (
+                <img
+                  src={clientLogo}
+                  alt="Client logo"
+                  className="h-8 max-w-[120px] object-contain"
+                  data-testid="img-footer-client-logo"
+                />
+              ) : (
+                <div />
+              )}
+              <div className="flex flex-col items-end gap-1">
+                <img
+                  src={dark ? xentegraLogoWhite : xentegraLogoBlack}
+                  alt="XenTegra"
+                  className="h-6 object-contain"
+                  data-testid="img-footer-logo"
+                />
+                <div className="text-xs text-muted-foreground" data-testid="text-footer-date">
+                  Assessment Date: {inputs.project.assessmentDate
+                    ? new Date(inputs.project.assessmentDate + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+                    : new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                </div>
               </div>
-              <img
-                src={dark ? xentegraLogoWhite : xentegraLogoBlack}
-                alt="XenTegra"
-                className="h-6 object-contain"
-                data-testid="img-footer-logo"
-              />
             </div>
           </div>
         </footer>
