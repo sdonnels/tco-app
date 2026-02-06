@@ -10,15 +10,21 @@ import {
   Download,
   FileDown,
   FileText,
+  FileUp,
+  HelpCircle,
   ImagePlus,
   Info,
   Lock,
+  Mail,
   Plus,
   Printer,
+  Settings,
   Shield,
   Sparkles,
   Table,
   Trash2,
+  Upload,
+  Wrench,
   X,
 } from "lucide-react";
 import JSZip from "jszip";
@@ -56,6 +62,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type YesNo = "yes" | "no" | "unknown";
 
@@ -447,6 +460,10 @@ export default function TcoBaseline() {
   });
 
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
+  const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
+  const [helpIssue, setHelpIssue] = useState("");
+  const [helpSent, setHelpSent] = useState(false);
 
   useEffect(() => {
     try {
@@ -1702,6 +1719,178 @@ export default function TcoBaseline() {
     URL.revokeObjectURL(url);
   };
 
+  const generateIntakeForm = useCallback(() => {
+    const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const form = {
+      _formType: "tco-intake-form",
+      _version: "1.0",
+      _generatedAt: new Date().toISOString(),
+      _instructions: "Please complete as many fields as possible before the assessment meeting. Leave blank any items you are unsure of. Save this file and send it to your XenTegra engineer, or use 'Import Intake Data' in the tool to load it directly.",
+      project: {
+        clientName: "",
+        assessmentDate: "",
+        customerChampion: "",
+        engineerName: "",
+      },
+      environment: {
+        userCount: null as number | null,
+        laptopCount: null as number | null,
+        desktopCount: null as number | null,
+        thinClientCount: null as number | null,
+      },
+      vdiDaas: {
+        vdiPresent: "unknown",
+        vdiPctOfUsers: null as number | null,
+        notes: "",
+      },
+      eucPillars: {
+        _instructions: "For each category, list the vendors/platforms in use and their approximate annual cost. If you don't know the cost, leave it blank.",
+        access: {
+          workspacePortals: { vendors: "", annualCost: null as number | null },
+          identitySSO: { vendors: "", annualCost: null as number | null },
+          mfaZeroTrust: { vendors: "", annualCost: null as number | null },
+        },
+        virtualDesktopsAndApplications: {
+          vdiPlatforms: { vendors: "", annualCost: null as number | null },
+          daas: { vendors: "", annualCost: null as number | null },
+          appVirtualization: { vendors: "", annualCost: null as number | null },
+        },
+        deviceOsUserManagement: {
+          uemMdm: { vendors: "", annualCost: null as number | null },
+          osDeployment: { vendors: "", annualCost: null as number | null },
+          patchManagement: { vendors: "", annualCost: null as number | null },
+        },
+        security: {
+          endpointProtection: { vendors: "", annualCost: null as number | null },
+          edrXdr: { vendors: "", annualCost: null as number | null },
+          dlp: { vendors: "", annualCost: null as number | null },
+        },
+        appManagement: {
+          appPackaging: { vendors: "", annualCost: null as number | null },
+          appLifecycle: { vendors: "", annualCost: null as number | null },
+          appCompatibility: { vendors: "", annualCost: null as number | null },
+        },
+        collaborationAiApplications: {
+          productivitySuites: { vendors: "", annualCost: null as number | null },
+          ucaas: { vendors: "", annualCost: null as number | null },
+          aiCopilots: { vendors: "", annualCost: null as number | null },
+        },
+      },
+      costOverrides: {
+        _instructions: "If you know the total annual spend for any of these categories, enter them here. These will take priority over individual vendor costs.",
+        endUserDevicesAnnual: null as number | null,
+        supportOpsAnnual: null as number | null,
+        licensingAnnual: null as number | null,
+        mgmtSecurityAnnual: null as number | null,
+        vdiDaasAnnual: null as number | null,
+        overheadAnnual: null as number | null,
+      },
+      additionalNotes: "",
+    };
+    const content = JSON.stringify(form, null, 2);
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const clientSlug = (inputs.project.clientName ?? "Client").replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_");
+    a.download = `${dateStr.replace(/[, ]+/g, "_")}_${clientSlug}_TCO_Intake_Form.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [inputs.project.clientName]);
+
+  const importIntakeData = useCallback(() => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = ".json";
+    fileInput.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result as string);
+          if (data._formType !== "tco-intake-form") {
+            alert("This doesn't appear to be a valid TCO Intake Form. Please select the correct JSON file.");
+            return;
+          }
+          setInputs((prev) => {
+            const updated = { ...prev };
+            if (data.project) {
+              updated.project = {
+                ...updated.project,
+                ...(data.project.clientName && { clientName: data.project.clientName }),
+                ...(data.project.assessmentDate && { assessmentDate: data.project.assessmentDate }),
+                ...(data.project.customerChampion && { customerChampion: data.project.customerChampion }),
+                ...(data.project.engineerName && { engineerName: data.project.engineerName }),
+              };
+            }
+            if (data.environment) {
+              updated.environment = {
+                ...updated.environment,
+                ...(data.environment.userCount != null && { userCount: data.environment.userCount }),
+                ...(data.environment.laptopCount != null && { laptopCount: data.environment.laptopCount }),
+                ...(data.environment.desktopCount != null && { desktopCount: data.environment.desktopCount }),
+                ...(data.environment.thinClientCount != null && { thinClientCount: data.environment.thinClientCount }),
+              };
+            }
+            if (data.costOverrides) {
+              updated.categoryRollups = {
+                ...updated.categoryRollups,
+                ...(data.costOverrides.endUserDevicesAnnual != null && { endUserDevicesAnnual: data.costOverrides.endUserDevicesAnnual }),
+                ...(data.costOverrides.supportOpsAnnual != null && { supportOpsAnnual: data.costOverrides.supportOpsAnnual }),
+                ...(data.costOverrides.licensingAnnual != null && { licensingAnnual: data.costOverrides.licensingAnnual }),
+                ...(data.costOverrides.mgmtSecurityAnnual != null && { mgmtSecurityAnnual: data.costOverrides.mgmtSecurityAnnual }),
+                ...(data.costOverrides.vdiDaasAnnual != null && { vdiDaasAnnual: data.costOverrides.vdiDaasAnnual }),
+                ...(data.costOverrides.overheadAnnual != null && { overheadAnnual: data.costOverrides.overheadAnnual }),
+              };
+            }
+            if (data.vdiDaas) {
+              if (data.vdiDaas.vdiPresent === "yes" || data.vdiDaas.vdiPresent === "no") {
+                updated.vdiDaas = { ...updated.vdiDaas, vdiPresent: data.vdiDaas.vdiPresent };
+              }
+              if (data.vdiDaas.vdiPctOfUsers != null) {
+                updated.vdiDaas = { ...updated.vdiDaas, vdiPctOfUsers: data.vdiDaas.vdiPctOfUsers };
+              }
+            }
+            if (data.additionalNotes) {
+              updated.observations = { ...updated.observations, notes: data.additionalNotes };
+            }
+            return updated;
+          });
+          setActiveTab("inputs");
+          alert("Intake data imported successfully! Review the Inputs tab to verify the imported values.");
+        } catch {
+          alert("Could not read the file. Please make sure it's a valid JSON intake form.");
+        }
+      };
+      reader.readAsText(file);
+    };
+    fileInput.click();
+  }, []);
+
+  const sendHelpEmail = useCallback(() => {
+    const subject = encodeURIComponent("TCO Baseline Tool - Support Request");
+    const body = encodeURIComponent(
+      `Support Request\n` +
+      `────────────────\n` +
+      `Tool: TCO Baseline Micro-Assessment Tool\n` +
+      `Version: 0.4.0\n` +
+      `Date: ${new Date().toLocaleString()}\n` +
+      `Client: ${inputs.project.clientName || "(not set)"}\n` +
+      `Engineer: ${inputs.project.engineerName || "(not set)"}\n\n` +
+      `Issue Description:\n${helpIssue}\n\n` +
+      `────────────────\n` +
+      `Browser: ${navigator.userAgent}\n`
+    );
+    window.location.href = `mailto:support@xentegra.com?subject=${subject}&body=${body}`;
+    setHelpSent(true);
+    setTimeout(() => {
+      setHelpSent(false);
+      setHelpIssue("");
+      setHelpDialogOpen(false);
+    }, 2000);
+  }, [helpIssue, inputs.project.clientName, inputs.project.engineerName]);
+
   return (
     <div className="app-shell grain min-h-screen">
       <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
@@ -1752,32 +1941,57 @@ export default function TcoBaseline() {
                 </div>
 
                 {activeTab !== "home" && (
-                  <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="secondary"
-                        data-testid="button-clear-all"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" /> Clear All
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Clear all data?</DialogTitle>
-                        <DialogDescription>
-                          This will reset all inputs, assumptions, and vendor selections to their defaults. This action cannot be undone.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setClearDialogOpen(false)} data-testid="button-clear-cancel">
-                          Cancel
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" data-testid="button-tools">
+                          <Wrench className="h-4 w-4 mr-1" /> Tools
                         </Button>
-                        <Button variant="destructive" onClick={clearAll} data-testid="button-clear-confirm">
-                          Clear everything
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={generateIntakeForm} data-testid="menu-generate-intake">
+                          <FileDown className="h-4 w-4 mr-2" /> Generate Intake Form
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={importIntakeData} data-testid="menu-import-intake">
+                          <FileUp className="h-4 w-4 mr-2" /> Import Intake Data
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setHelpDialogOpen(true)} data-testid="menu-help">
+                          <HelpCircle className="h-4 w-4 mr-2" /> Help
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setAboutDialogOpen(true)} data-testid="menu-about">
+                          <Info className="h-4 w-4 mr-2" /> About
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          data-testid="button-clear-all"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" /> Clear All
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Clear all data?</DialogTitle>
+                          <DialogDescription>
+                            This will reset all inputs, assumptions, and vendor selections to their defaults. This action cannot be undone.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setClearDialogOpen(false)} data-testid="button-clear-cancel">
+                            Cancel
+                          </Button>
+                          <Button variant="destructive" onClick={clearAll} data-testid="button-clear-confirm">
+                            Clear everything
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 )}
 
               </div>
@@ -3466,6 +3680,112 @@ export default function TcoBaseline() {
         onClose={closeTour}
         onComplete={completeTour}
       />
+
+      <Dialog open={helpDialogOpen} onOpenChange={(open) => { setHelpDialogOpen(open); if (!open) { setHelpSent(false); setHelpIssue(""); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" /> Get Help
+            </DialogTitle>
+            <DialogDescription>
+              Describe the issue you're experiencing and we'll generate a support email for you.
+            </DialogDescription>
+          </DialogHeader>
+          {helpSent ? (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <CheckCircle2 className="h-10 w-10 text-green-500" />
+              <p className="text-sm font-medium">Email client opened! Send the pre-filled email to complete your request.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="helpIssue" data-testid="label-help-issue">Describe your issue</Label>
+                <Textarea
+                  id="helpIssue"
+                  placeholder="Please describe what happened, what you expected, and any steps to reproduce the issue..."
+                  value={helpIssue}
+                  onChange={(e) => setHelpIssue(e.target.value)}
+                  className="min-h-[120px]"
+                  data-testid="textarea-help-issue"
+                />
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+                <p><strong>The following will be included automatically:</strong></p>
+                <p>Tool version, browser info, client name, and engineer name</p>
+                <p>Email will be sent to: <span className="font-mono">support@xentegra.com</span></p>
+              </div>
+            </div>
+          )}
+          {!helpSent && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setHelpDialogOpen(false)} data-testid="button-help-cancel">
+                Cancel
+              </Button>
+              <Button onClick={sendHelpEmail} disabled={!helpIssue.trim()} className="gap-2" data-testid="button-help-send">
+                <Mail className="h-4 w-4" /> Open Email
+              </Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={aboutDialogOpen} onOpenChange={setAboutDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg" data-testid="text-about-title">About TCO Baseline Tool</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <img
+                src={dark ? xentegraLogoWhite : xentegraLogoBlack}
+                alt="XenTegra"
+                className="h-10 object-contain mt-1"
+                data-testid="img-about-logo"
+              />
+              <div className="space-y-1">
+                <h3 className="font-semibold text-base" data-testid="text-about-name">TCO Baseline Micro-Assessment Tool</h3>
+                <p className="text-sm text-muted-foreground" data-testid="text-about-version">Version 0.4.0 (Build 2026.02)</p>
+                <p className="text-sm text-muted-foreground">EUC Workbook Alignment: v2.0</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Product Information</h4>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>A vendor-neutral, solution-agnostic Total Cost of Ownership baseline tool for enterprise End User Computing environments.</p>
+                <p>Designed for XenTegra engineers and their customers to establish credible, defensible cost baselines.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Technical Details</h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span>Framework</span><span className="font-mono">React 18 + TypeScript</span>
+                <span>UI Library</span><span className="font-mono">shadcn/ui + Radix</span>
+                <span>Charts</span><span className="font-mono">Recharts</span>
+                <span>Data Storage</span><span className="font-mono">Client-side (localStorage)</span>
+                <span>Export Formats</span><span className="font-mono">JSON, CSV, PDF, Audit Trail</span>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground space-y-2">
+              <p className="font-semibold text-foreground">XenTegra, Inc.</p>
+              <p>Copyright &copy; 2026 XenTegra, Inc. All rights reserved.</p>
+              <p>This tool is provided by XenTegra for use in EUC assessment engagements. All data entered remains entirely within the user's browser. No data is transmitted to any server. The tool is provided "as is" without warranty of any kind, express or implied.</p>
+              <p>XenTegra and the XenTegra logo are trademarks of XenTegra, Inc. All other trademarks are the property of their respective owners.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAboutDialogOpen(false)} data-testid="button-about-close">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

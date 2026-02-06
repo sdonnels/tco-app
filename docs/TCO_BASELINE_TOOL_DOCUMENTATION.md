@@ -2,7 +2,7 @@
 
 ## Complete Documentation
 
-**Version:** 2.2  
+**Version:** 2.3  
 **Last Updated:** February 2026  
 **Purpose:** Vendor-neutral, current-state Total Cost of Ownership baseline for enterprise End User Computing (EUC) environments
 
@@ -19,9 +19,11 @@
 7. [Calculations & Derived Metrics](#calculations--derived-metrics)
 8. [Visualizations](#visualizations)
 9. [Export Options](#export-options)
-10. [Interactive Onboarding Tour](#interactive-onboarding-tour)
-11. [Readiness Tracker](#readiness-tracker)
-12. [Technical Details](#technical-details)
+10. [Tools Menu](#tools-menu)
+11. [ReadMe Tab](#readme-tab)
+12. [Interactive Onboarding Tour](#interactive-onboarding-tour)
+13. [Readiness Tracker](#readiness-tracker)
+14. [Technical Details](#technical-details)
 
 ---
 
@@ -480,7 +482,7 @@ Helps stakeholders understand data confidence and identify areas where actual sp
 
 ## Export Options
 
-The tool provides five distinct export formats, each serving a different purpose. Most exports are available with a single click from the Summary tab, with some also accessible from other relevant tabs.
+The tool provides six distinct export formats plus a bundled download option, each serving a different purpose. Most exports are available with a single click from the Summary tab, with some also accessible from other relevant tabs.
 
 ### 1. JSON Export
 
@@ -750,8 +752,97 @@ used in the TCO baseline calculation.
 | PDF | .pdf | Presentations, print | Summary tab |
 | Audit Trail | .txt | Full traceability, compliance | Summary tab, Inputs tab |
 | Justifications | .txt | Assumption defense | Assumptions tab |
+| Download All | .zip | Complete archive of all exports | Summary tab |
 
-**Note:** The JSON export button also appears in the header area for quick access from any tab. The Audit Trail export is available on both the Inputs and Summary tabs. Assumption Justifications can only be exported from the Assumptions tab where the values are displayed.
+**Note:** The JSON export button also appears in the header area for quick access from any tab. The Audit Trail export is available on both the Inputs and Summary tabs. Assumption Justifications can only be exported from the Assumptions tab where the values are displayed. Download All generates a .zip archive containing JSON, CSV, PDF, Audit Trail, and Justifications exports in a single download.
+
+---
+
+## Tools Menu
+
+The **Tools** dropdown button appears in the header alongside "Clear All" when navigating any tab beyond Home. It provides quick access to utility features and serves as a central location for future tool additions.
+
+### 1. Generate Intake Form
+
+**Purpose:** Create a structured JSON questionnaire to collect customer environment information before an assessment meeting.
+
+**How It Works:**
+- Click **Tools > Generate Intake Form** to download a pre-formatted JSON file
+- The form includes sections for project information, environment facts, VDI/DaaS details, all 6 EUC Pillars with sub-pillars, cost overrides, and additional notes
+- Send the form to the customer ahead of the meeting so they can pre-fill known values
+- Fields left blank are treated as "unknown" and will use assumption defaults
+
+**Filename Pattern:** `{Date}_{ClientName}_TCO_Intake_Form.json`
+
+### 2. Import Intake Data
+
+**Purpose:** Load a completed intake form directly into the tool to pre-populate fields.
+
+**How It Works:**
+- Click **Tools > Import Intake Data** and select a completed intake form JSON file
+- The tool validates the file format (must have `_formType: "tco-intake-form"`)
+- Populated fields are merged into the current session without overwriting existing data
+- After import, the tool switches to the Inputs tab for review
+- A confirmation message indicates successful import
+
+**Supported Fields:**
+- Project information (client name, date, champion, engineer)
+- Environment facts (user count, device counts)
+- VDI/DaaS presence and percentage
+- Cost category overrides
+- Additional notes (imported into Observations)
+
+### 3. Help
+
+**Purpose:** Generate a pre-filled support email with issue details and diagnostic information.
+
+**How It Works:**
+- Click **Tools > Help** to open the Help dialog
+- Enter a description of the issue
+- Click "Open Email" to launch your email client with a pre-filled support request
+- The email automatically includes tool version, browser info, client name, and engineer name
+- Support email address: `support@xentegra.com` (placeholder)
+
+### 4. About
+
+**Purpose:** Display version information, technical details, and legal notices.
+
+**Contents:**
+- XenTegra logo and product name
+- Version number and build date
+- EUC Workbook alignment version
+- Product description
+- Technical details (framework, UI library, charts, data storage, export formats)
+- Copyright notice and legal disclaimer
+- Trademark attribution
+
+---
+
+## ReadMe Tab
+
+The **ReadMe** tab provides in-app documentation and guidance, accessible from the tab bar alongside Inputs, Assumptions, Observations, and Summary.
+
+### Documentation & Resources
+
+Two download cards provide offline access to reference materials:
+
+1. **Full Documentation** — Downloads `TCO_Baseline_Tool_Documentation.md`, the complete reference covering all features, calculations, EUC Pillars framework, export formats, and technical details.
+
+2. **Frequently Asked Questions** — Downloads `TCO_Baseline_FAQ.md` with common questions about general usage, inputs, EUC Pillars, assumptions, results, export formats, and troubleshooting.
+
+### Quick Start Guide
+
+A 9-step walkthrough covers the entire assessment workflow:
+
+1. **Start on the Home Tab** — Launch the assessment or take the interactive tour
+2. **Fill in Project Information** — Client name, date, champion, engineer, and optional logo upload
+3. **Enter Environment Facts** — User count and device counts
+4. **Map Your EUC Pillars & Platforms** — Select vendors across 6 pillars and enter annual costs
+5. **Override Cost Categories** — Optionally enter known total spend per category
+6. **Review Assumptions** — View and adjust 15 industry-sourced default values
+7. **Add Notes & Observations** — Document context, caveats, and review calculation traces
+8. **Review the Summary** — View metrics, charts, and use export options
+9. **Track Your Progress** — Monitor assessment completeness via the Readiness bar
 
 ---
 
@@ -910,6 +1001,7 @@ This document synthesizes research and benchmarks from:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.3 | Feb 2026 | Added Tools dropdown menu with Generate Intake Form, Import Intake Data, Help (support email generator), and About dialog (version info, legal); added ReadMe tab with Documentation/FAQ download links and 9-step Quick Start Guide; client logo upload with MIME type validation and logo references in all export formats (JSON, CSV, Audit Trail); Download All (.zip) export; pie chart labels moved inside slices with legends below; vendor row layout refactored (cost/notes fields on separate line); dark mode initializes from system preference |
 | 2.2 | Feb 2026 | Replaced VDI/DaaS Configuration and Tool Presence Inventory with unified EUC Pillars & Platforms section (6 pillars, 17 sub-pillars, 60+ vendors); 2-column grid layout with collapsible pillar cards; calculation priority chain (Override > EUC Pillar costs > Assumptions); Category Rollups renamed to "EUC Pillars - Platform Cost Rollups (Optional Overrides)" with pillar-aligned labels; "How This Works" info boxes on all major sections; audit trail shows "EUC PILLARS & PLATFORMS VENDOR COSTS"; JSON export uses `eucPillars` key; all data persists via localStorage; Title Case headings throughout; readiness tracker updated for EUC Pillars |
 | 2.1 | Feb 2026 | Added 5 current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source); conditional spend fields for VDI platforms and tools; custom platform/tool support with +Add buttons; spend override logic (actual spend replaces assumption-based calculations); PDF export with HTML/CSS chart rendering; CSV export format; dark mode toggle; enhanced audit trail with spend values and custom entries |
 | 2.0 | Feb 2026 | Added justification export, onboarding tour, readiness tracker |
