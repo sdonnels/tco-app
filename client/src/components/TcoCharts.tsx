@@ -67,7 +67,7 @@ export function EndpointMixChart({ data }: { data: EndpointMixData }) {
   const total = data.laptops + data.desktops + data.thinClients;
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
         Enter device counts to see distribution
       </div>
     );
@@ -81,14 +81,14 @@ export function EndpointMixChart({ data }: { data: EndpointMixData }) {
 
   return (
     <div className="w-full" data-testid="chart-endpoint-mix">
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={312}>
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={45}
-            outerRadius={75}
+            innerRadius={58}
+            outerRadius={98}
             paddingAngle={2}
             dataKey="value"
             label={({ name, percent }) => `${name} ${fmtPct(percent * 100)}`}
@@ -120,7 +120,7 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
         No cost data available
       </div>
     );
@@ -128,7 +128,7 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
 
   return (
     <div className="w-full" data-testid="chart-cost-category">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={286}>
         <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
           <XAxis type="number" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
           <YAxis type="category" dataKey="name" width={60} tick={{ fontSize: 11 }} />
@@ -147,7 +147,7 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
 export function VdiComparisonChart({ data }: { data: VdiComparisonData }) {
   if (data.vdiCostPerUser === 0 && data.nonVdiCostPerUser === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
         Enter user count and VDI % to see comparison
       </div>
     );
@@ -160,7 +160,7 @@ export function VdiComparisonChart({ data }: { data: VdiComparisonData }) {
 
   return (
     <div className="w-full" data-testid="chart-vdi-comparison">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={286}>
         <BarChart data={chartData} margin={{ left: 0, right: 20 }}>
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} />
@@ -180,7 +180,7 @@ export function CostSourceChart({ data }: { data: CostSourceData }) {
   const total = data.derived + data.assumed;
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
         No cost data available
       </div>
     );
@@ -193,7 +193,7 @@ export function CostSourceChart({ data }: { data: CostSourceData }) {
 
   return (
     <div className="w-full" data-testid="chart-cost-source">
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={286}>
         <BarChart data={chartData} margin={{ left: 0, right: 20 }}>
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
@@ -213,7 +213,7 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[260px] text-muted-foreground text-sm">
         No cost data available
       </div>
     );
@@ -230,14 +230,14 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
 
   return (
     <div className="w-full" data-testid="chart-where-money-goes">
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height={338}>
         <PieChart>
           <Pie
             data={chartData}
             cx="35%"
             cy="50%"
-            innerRadius={50}
-            outerRadius={80}
+            innerRadius={65}
+            outerRadius={104}
             paddingAngle={2}
             dataKey="value"
             label={({ percent }) => percent > 0.05 ? `${fmtPct(percent * 100)}` : ""}
@@ -280,7 +280,7 @@ export function ChartCard({
       {description && (
         <div className="text-xs text-muted-foreground mt-1">{description}</div>
       )}
-      <div className="mt-3 min-h-[240px]">{children}</div>
+      <div className="mt-3 min-h-[312px]">{children}</div>
     </div>
   );
 }
