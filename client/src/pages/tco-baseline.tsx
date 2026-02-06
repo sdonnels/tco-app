@@ -15,6 +15,7 @@ import {
   Shield,
   Sparkles,
   Table,
+  Trash2,
   X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -39,6 +40,16 @@ import {
   WhereMoneyGoesChart,
   ChartCard,
 } from "@/components/TcoCharts";
+import { HexagridSection, type HexagridEntry } from "@/components/HexagridSection";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 type YesNo = "yes" | "no" | "unknown";
 
@@ -106,6 +117,7 @@ type Inputs = {
   observations: {
     notes?: string;
   };
+  hexagridEntries: HexagridEntry[];
 };
 
 type Assumptions = {
@@ -386,6 +398,7 @@ export default function TcoBaseline() {
       outsourcedOther: false,
     },
     observations: {},
+    hexagridEntries: [],
   });
 
   const [assumptions, setAssumptions] = useState<Assumptions>({
@@ -419,6 +432,86 @@ export default function TcoBaseline() {
       pctOfTotal: 0.07,
     },
   });
+
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("tco_tool_master");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.inputs) {
+          setInputs((prev) => ({
+            ...prev,
+            ...parsed.inputs,
+            hexagridEntries: parsed.inputs.hexagridEntries ?? [],
+          }));
+        }
+        if (parsed.assumptions) setAssumptions(parsed.assumptions);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "tco_tool_master",
+        JSON.stringify({ inputs, assumptions }),
+      );
+    } catch {}
+  }, [inputs, assumptions]);
+
+  const clearAll = useCallback(() => {
+    setInputs({
+      project: {},
+      environment: {},
+      categoryRollups: {},
+      vdiDaas: {
+        vdiPresent: "unknown",
+        citrixPresent: "unknown",
+        avdPresent: "unknown",
+        w365Present: "unknown",
+        horizonPresent: "unknown",
+        parallelsPresent: "unknown",
+        customPlatforms: [],
+      },
+      toolPresence: {
+        intunePresent: "unknown",
+        sccmPresent: "unknown",
+        workspaceOnePresent: "unknown",
+        jamfPresent: "unknown",
+        controlUpPresent: "unknown",
+        nerdioPresent: "unknown",
+        customTools: [],
+      },
+      managedServices: {
+        outsourcedEndpointMgmt: false,
+        outsourcedSecurity: false,
+        outsourcedPatching: false,
+        outsourcedHelpdesk: false,
+        outsourcedTier2Plus: false,
+        outsourcedOther: false,
+      },
+      observations: {},
+      hexagridEntries: [],
+    });
+    setAssumptions({
+      deviceRefreshYears: { laptop: 3, desktop: 3, thinClient: 5 },
+      deviceUnitCost: { laptop: 1200, desktop: 1100, thinClient: 600 },
+      supportOps: {
+        avgTicketHandlingHours: 0.5,
+        deploymentHoursPerDevice: 1.5,
+        blendedLaborRateHourly: 50,
+        ticketsPerEndpointPerYear: 2,
+      },
+      licensing: { avgCostPerUserPerYear: 400, coveragePct: 1.0 },
+      mgmtSecurity: { costPerEndpointPerYear: 200 },
+      vdi: { platformCostPerVdiUserPerYear: 800 },
+      overhead: { pctOfTotal: 0.07 },
+    });
+    localStorage.removeItem("tco_tool_master");
+    setClearDialogOpen(false);
+  }, []);
 
   const { isTourOpen, startTour, closeTour, completeTour, hasCompletedTour } = useTourState();
 
@@ -504,6 +597,19 @@ export default function TcoBaseline() {
 
     const derivedLicensing = userCount * assumptions.licensing.avgCostPerUserPerYear * assumptions.licensing.coveragePct;
 
+    const hexPillarCost = (pillar: string) =>
+      inputs.hexagridEntries
+        .filter((e) => e.pillar === pillar)
+        .reduce((sum, e) => sum + (e.yearlyCost ?? 0), 0);
+
+    const hexAccess = hexPillarCost("Access");
+    const hexVdi = hexPillarCost("Virtual Desktops & Apps");
+    const hexMgmt = hexPillarCost("Device, OS & User Management");
+    const hexSecurity = hexPillarCost("Security");
+    const hexAppMgmt = hexPillarCost("App Management");
+    const hexCollab = hexPillarCost("Collaboration & AI");
+    const hexagridTotal = hexAccess + hexVdi + hexMgmt + hexSecurity + hexAppMgmt + hexCollab;
+
     const customToolsSpend = inputs.toolPresence.customTools.reduce((sum, t) => sum + (nonNeg(t.spend) ?? 0), 0);
     const toolSpendTotal = 
       (inputs.toolPresence.intunePresent === "yes" ? (nonNeg(inputs.toolPresence.intuneSpend) ?? 0) : 0) +
@@ -513,8 +619,9 @@ export default function TcoBaseline() {
       (inputs.toolPresence.controlUpPresent === "yes" ? (nonNeg(inputs.toolPresence.controlUpSpend) ?? 0) : 0) +
       (inputs.toolPresence.nerdioPresent === "yes" ? (nonNeg(inputs.toolPresence.nerdioSpend) ?? 0) : 0) +
       customToolsSpend;
-    const hasToolSpend = toolSpendTotal > 0;
-    const derivedMgmtSecurity = hasToolSpend ? toolSpendTotal : (endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear);
+    const mgmtFromHexgrid = hexMgmt + hexSecurity;
+    const hasToolSpend = toolSpendTotal > 0 || mgmtFromHexgrid > 0;
+    const derivedMgmtSecurity = hasToolSpend ? (toolSpendTotal + mgmtFromHexgrid) : (endpoints * assumptions.mgmtSecurity.costPerEndpointPerYear);
 
     const customPlatformsSpend = inputs.vdiDaas.customPlatforms.reduce((sum, p) => sum + (nonNeg(p.spend) ?? 0), 0);
     const vdiPlatformSpendTotal =
@@ -524,8 +631,9 @@ export default function TcoBaseline() {
       (inputs.vdiDaas.horizonPresent === "yes" ? (nonNeg(inputs.vdiDaas.horizonSpend) ?? 0) : 0) +
       (inputs.vdiDaas.parallelsPresent === "yes" ? (nonNeg(inputs.vdiDaas.parallelsSpend) ?? 0) : 0) +
       customPlatformsSpend;
-    const hasVdiSpend = vdiPlatformSpendTotal > 0;
-    const derivedVdiDaas = hasVdiSpend ? vdiPlatformSpendTotal : (vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear);
+    const vdiFromHexgrid = hexVdi;
+    const hasVdiSpend = vdiPlatformSpendTotal > 0 || vdiFromHexgrid > 0;
+    const derivedVdiDaas = hasVdiSpend ? (vdiPlatformSpendTotal + vdiFromHexgrid) : (vdiUserCount * assumptions.vdi.platformCostPerVdiUserPerYear);
 
     const endUserDevicesValue = nonNeg(inputs.categoryRollups.endUserDevicesAnnual) ?? derivedEndUserDevices;
     const supportOpsValue = nonNeg(inputs.categoryRollups.supportOpsAnnual) ?? derivedSupportOps;
@@ -575,7 +683,7 @@ export default function TcoBaseline() {
       basis: inputs.categoryRollups.mgmtSecurityAnnual !== undefined
         ? `${fmtMoney(mgmtSecurityValue)} (input override)`
         : hasToolSpend
-        ? `${fmtMoney(toolSpendTotal)} (from tool spend inputs)`
+        ? `${fmtMoney(toolSpendTotal + mgmtFromHexgrid)} (from tool spend${mgmtFromHexgrid > 0 ? ` + ${fmtMoney(mgmtFromHexgrid)} hexgrid` : ""})`
         : `${fmtNumber(endpoints)} endpoints × $${assumptions.mgmtSecurity.costPerEndpointPerYear}/endpoint`,
       isAssumed: !mgmtSecurityFromInput,
     };
@@ -588,7 +696,7 @@ export default function TcoBaseline() {
       basis: inputs.categoryRollups.vdiDaasAnnual !== undefined
         ? `${fmtMoney(vdiDaasValue)} (input override)`
         : hasVdiSpend
-        ? `${fmtMoney(vdiPlatformSpendTotal)} (from platform spend inputs)`
+        ? `${fmtMoney(vdiPlatformSpendTotal + vdiFromHexgrid)} (from platform spend${vdiFromHexgrid > 0 ? ` + ${fmtMoney(vdiFromHexgrid)} hexgrid` : ""})`
         : `${fmtNumber(vdiUserCount)} VDI users × $${assumptions.vdi.platformCostPerVdiUserPerYear}/user`,
       isAssumed: !vdiFromInput,
     };
@@ -680,6 +788,13 @@ export default function TcoBaseline() {
       readinessScore,
       costFromInputs,
       costFromAssumptions,
+      hexagridTotal,
+      hexAccess,
+      hexVdi,
+      hexMgmt,
+      hexSecurity,
+      hexAppMgmt,
+      hexCollab,
     };
   }, [inputs, assumptions]);
 
@@ -724,6 +839,18 @@ export default function TcoBaseline() {
         trace: {
           categoryLines: derived.categoryLines,
           managedServicesLines: derived.managedServicesLines,
+        },
+        hexagrid: {
+          total: derived.hexagridTotal,
+          byPillar: {
+            access: derived.hexAccess,
+            virtualDesktops: derived.hexVdi,
+            deviceManagement: derived.hexMgmt,
+            security: derived.hexSecurity,
+            appManagement: derived.hexAppMgmt,
+            collaborationAi: derived.hexCollab,
+          },
+          entries: inputs.hexagridEntries,
         },
       },
     };
@@ -822,6 +949,29 @@ export default function TcoBaseline() {
       inputs.toolPresence.customTools.forEach((t) => {
         lines.push(`    ${t.name || "(unnamed)"}:  ${t.spend ? fmtMoney(t.spend) + "/yr" : "(no spend)"}`);
       });
+    }
+    lines.push("");
+
+    lines.push("┌" + "─".repeat(68) + "┐");
+    lines.push("│ 2025 EUC HEXAGRID VENDOR COSTS" + " ".repeat(37) + "│");
+    lines.push("└" + "─".repeat(68) + "┘");
+    if (inputs.hexagridEntries.length === 0) {
+      lines.push("  (No vendor entries)");
+    } else {
+      const pillarGroups = inputs.hexagridEntries.reduce((acc, e) => {
+        if (!acc[e.pillar]) acc[e.pillar] = [];
+        acc[e.pillar].push(e);
+        return acc;
+      }, {} as Record<string, typeof inputs.hexagridEntries>);
+      Object.entries(pillarGroups).forEach(([pillar, entries]) => {
+        const pillarTotal = entries.reduce((s, e) => s + (e.yearlyCost ?? 0), 0);
+        lines.push(`  ${pillar}: ${fmtMoney(pillarTotal)}`);
+        entries.forEach((e) => {
+          lines.push(`    ${e.vendorName} (${e.subPillar}): ${e.yearlyCost ? fmtMoney(e.yearlyCost) + "/yr" : "(no cost)"}${e.notes ? ` — ${e.notes}` : ""}`);
+        });
+      });
+      lines.push(`  ─────────────────────────────────────────────`);
+      lines.push(`  HEXAGRID TOTAL:     ${fmtMoney(derived.hexagridTotal)}`);
     }
     lines.push("");
 
@@ -1513,46 +1663,32 @@ export default function TcoBaseline() {
                 </div>
 
                 {activeTab !== "home" && (
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setInputs({
-                        project: {},
-                        environment: {},
-                        categoryRollups: {},
-                        vdiDaas: {
-                          vdiPresent: "unknown",
-                          citrixPresent: "unknown",
-                          avdPresent: "unknown",
-                          w365Present: "unknown",
-                          horizonPresent: "unknown",
-                          parallelsPresent: "unknown",
-                          customPlatforms: [],
-                        },
-                        toolPresence: {
-                          intunePresent: "unknown",
-                          sccmPresent: "unknown",
-                          workspaceOnePresent: "unknown",
-                          jamfPresent: "unknown",
-                          controlUpPresent: "unknown",
-                          nerdioPresent: "unknown",
-                          customTools: [],
-                        },
-                        managedServices: {
-                          outsourcedEndpointMgmt: false,
-                          outsourcedSecurity: false,
-                          outsourcedPatching: false,
-                          outsourcedHelpdesk: false,
-                          outsourcedTier2Plus: false,
-                          outsourcedOther: false,
-                        },
-                        observations: {},
-                      });
-                    }}
-                    data-testid="button-reset"
-                  >
-                    Reset
-                  </Button>
+                  <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        data-testid="button-clear-all"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Clear All
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Clear all data?</DialogTitle>
+                        <DialogDescription>
+                          This will reset all inputs, assumptions, and vendor selections to their defaults. This action cannot be undone.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setClearDialogOpen(false)} data-testid="button-clear-cancel">
+                          Cancel
+                        </Button>
+                        <Button variant="destructive" onClick={clearAll} data-testid="button-clear-confirm">
+                          Clear everything
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 )}
 
               </div>
@@ -1886,6 +2022,45 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
+                    title="2025 EUC Hexagrid"
+                    description="Capture vendor costs organized by EUC domain. Costs flow into the TCO baseline, replacing assumptions with real spend data."
+                    testId="header-hexagrid"
+                  />
+
+                  <div className="mt-6">
+                    <HexagridSection
+                      entries={inputs.hexagridEntries}
+                      onChange={(entries) =>
+                        setInputs((s) => ({ ...s, hexagridEntries: entries }))
+                      }
+                    />
+
+                    {derived.hexagridTotal > 0 && (
+                      <div className="mt-4 rounded-2xl border bg-card/60 p-4" data-testid="panel-hexgrid-total">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold">Hexagrid vendor spend total</span>
+                          <Badge variant="secondary" className="rounded-full text-sm" data-testid="badge-hexgrid-total">
+                            {fmtMoney(derived.hexagridTotal)}
+                          </Badge>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-4">
+                      <InlineInfo
+                        title="How this works"
+                        body="Add vendors under each EUC pillar with their annual cost. Costs from Management, Security, and VDI pillars replace assumption-based estimates. Leave pillars empty to use industry-standard assumptions."
+                        icon={<BookOpen className="h-4 w-4" />}
+                        testId="info-hexagrid"
+                      />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<Activity className="h-5 w-5 text-primary" />}
+                    eyebrow="Inputs"
                     title="Category rollups (optional overrides)"
                     description="If you know total annual spend for a category, enter it here. Otherwise, the tool calculates from environment data and assumptions."
                     testId="header-rollups"
@@ -2023,6 +2198,16 @@ export default function TcoBaseline() {
                     </div>
 
                   </div>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<Activity className="h-5 w-5 text-primary" />}
+                    eyebrow="Inputs"
+                    title="VDI / DaaS platforms & tools"
+                    description="Track which VDI platforms and endpoint management tools are in use and their annual spend."
+                    testId="header-vdi-tools"
+                  />
 
                   <div className="mt-6 grid gap-6 lg:grid-cols-2">
                     <div className="space-y-4" data-testid="group-vdi-platforms">
