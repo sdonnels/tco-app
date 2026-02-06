@@ -603,11 +603,11 @@ export default function TcoBaseline() {
         .reduce((sum, e) => sum + (e.yearlyCost ?? 0), 0);
 
     const hexAccess = hexPillarCost("Access");
-    const hexVdi = hexPillarCost("Virtual Desktops & Apps");
+    const hexVdi = hexPillarCost("Virtual Desktops & Applications");
     const hexMgmt = hexPillarCost("Device, OS & User Management");
     const hexSecurity = hexPillarCost("Security");
     const hexAppMgmt = hexPillarCost("App Management");
-    const hexCollab = hexPillarCost("Collaboration & AI");
+    const hexCollab = hexPillarCost("Collaboration, AI & Applications");
     const hexagridTotal = hexAccess + hexVdi + hexMgmt + hexSecurity + hexAppMgmt + hexCollab;
 
     const customToolsSpend = inputs.toolPresence.customTools.reduce((sum, t) => sum + (nonNeg(t.spend) ?? 0), 0);
@@ -2022,9 +2022,9 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
-                    title="2025 EUC Hexagrid"
+                    title="EUC Pillars & Platforms"
                     description="Capture vendor costs organized by EUC domain. Costs flow into the TCO baseline, replacing assumptions with real spend data."
-                    testId="header-hexagrid"
+                    testId="header-euc-pillars"
                   />
 
                   <div className="mt-6">
@@ -2038,7 +2038,7 @@ export default function TcoBaseline() {
                     {derived.hexagridTotal > 0 && (
                       <div className="mt-4 rounded-2xl border bg-card/60 p-4" data-testid="panel-hexgrid-total">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold">Hexagrid vendor spend total</span>
+                          <span className="text-sm font-semibold">EUC Pillars vendor spend total</span>
                           <Badge variant="secondary" className="rounded-full text-sm" data-testid="badge-hexgrid-total">
                             {fmtMoney(derived.hexagridTotal)}
                           </Badge>
@@ -2049,7 +2049,7 @@ export default function TcoBaseline() {
                     <div className="mt-4">
                       <InlineInfo
                         title="How this works"
-                        body="Add vendors under each EUC pillar with their annual cost. Costs from Management, Security, and VDI pillars replace assumption-based estimates. Leave pillars empty to use industry-standard assumptions."
+                        body="Add vendors under each EUC pillar with their annual cost. Costs from Device Management, Security, and Virtual Desktops pillars replace assumption-based estimates. Leave pillars empty to use industry-standard assumptions."
                         icon={<BookOpen className="h-4 w-4" />}
                         testId="info-hexagrid"
                       />
