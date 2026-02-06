@@ -63,11 +63,47 @@ const fmtMoney = (n: number) =>
 
 const fmtPct = (n: number) => `${Math.round(n)}%`;
 
+const renderPieLabel = ({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  percent,
+}: {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+}) => {
+  if (percent < 0.05) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#fff"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight={600}
+    >
+      {fmtPct(percent * 100)}
+    </text>
+  );
+};
+
 export function EndpointMixChart({ data }: { data: EndpointMixData }) {
   const total = data.laptops + data.desktops + data.thinClients;
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[340px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
         Enter device counts to see distribution
       </div>
     );
@@ -80,19 +116,19 @@ export function EndpointMixChart({ data }: { data: EndpointMixData }) {
   ].filter((d) => d.value > 0);
 
   return (
-    <div className="w-full overflow-visible" data-testid="chart-endpoint-mix">
-      <ResponsiveContainer width="100%" height={380}>
-        <PieChart margin={{ top: 30, right: 30, bottom: 30, left: 30 }}>
+    <div className="w-full" data-testid="chart-endpoint-mix">
+      <ResponsiveContainer width="100%" height={320}>
+        <PieChart>
           <Pie
             data={chartData}
             cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={90}
+            cy="45%"
+            innerRadius={60}
+            outerRadius={100}
             paddingAngle={2}
             dataKey="value"
-            label={({ name, percent }) => `${name} ${fmtPct(percent * 100)}`}
-            labelLine={true}
+            label={renderPieLabel}
+            labelLine={false}
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -100,6 +136,17 @@ export function EndpointMixChart({ data }: { data: EndpointMixData }) {
           </Pie>
           <Tooltip
             formatter={(value: number) => [value.toLocaleString(), "Devices"]}
+          />
+          <Legend
+            layout="horizontal"
+            align="center"
+            verticalAlign="bottom"
+            wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+            formatter={(value: string, entry: { payload?: { value?: number } }) => {
+              const count = entry?.payload?.value ?? 0;
+              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+              return `${value} ${pct}%`;
+            }}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -120,7 +167,7 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[340px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
         No cost data available
       </div>
     );
@@ -128,8 +175,8 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
 
   return (
     <div className="w-full" data-testid="chart-cost-category">
-      <ResponsiveContainer width="100%" height={340}>
-        <BarChart data={chartData} layout="vertical" margin={{ top: 10, right: 30, bottom: 10, left: 20 }}>
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 10 }}>
           <XAxis type="number" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
           <YAxis type="category" dataKey="name" width={65} tick={{ fontSize: 11 }} />
           <Tooltip formatter={(value: number) => [fmtMoney(value), "Annual"]} />
@@ -147,7 +194,7 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
 export function VdiComparisonChart({ data }: { data: VdiComparisonData }) {
   if (data.vdiCostPerUser === 0 && data.nonVdiCostPerUser === 0) {
     return (
-      <div className="flex items-center justify-center h-[340px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
         Enter user count and VDI % to see comparison
       </div>
     );
@@ -160,10 +207,10 @@ export function VdiComparisonChart({ data }: { data: VdiComparisonData }) {
 
   return (
     <div className="w-full" data-testid="chart-vdi-comparison">
-      <ResponsiveContainer width="100%" height={340}>
-        <BarChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-          <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} width={70} />
+          <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} width={75} />
           <Tooltip formatter={(value: number) => [fmtMoney(value), "Per User/Year"]} />
           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, index) => (
@@ -180,7 +227,7 @@ export function CostSourceChart({ data }: { data: CostSourceData }) {
   const total = data.derived + data.assumed;
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[340px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
         No cost data available
       </div>
     );
@@ -193,10 +240,10 @@ export function CostSourceChart({ data }: { data: CostSourceData }) {
 
   return (
     <div className="w-full" data-testid="chart-cost-source">
-      <ResponsiveContainer width="100%" height={340}>
-        <BarChart data={chartData} margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-          <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={70} />
+          <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={75} />
           <Tooltip formatter={(value: number) => [fmtMoney(value), "Annual"]} />
           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, index) => (
@@ -213,7 +260,7 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-[340px] text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
         No cost data available
       </div>
     );
@@ -229,19 +276,19 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
   ].filter((d) => d.value > 0);
 
   return (
-    <div className="w-full overflow-visible" data-testid="chart-where-money-goes">
-      <ResponsiveContainer width="100%" height={400}>
-        <PieChart margin={{ top: 30, right: 10, bottom: 30, left: 10 }}>
+    <div className="w-full" data-testid="chart-where-money-goes">
+      <ResponsiveContainer width="100%" height={320}>
+        <PieChart>
           <Pie
             data={chartData}
-            cx="35%"
-            cy="50%"
+            cx="50%"
+            cy="45%"
             innerRadius={55}
-            outerRadius={90}
+            outerRadius={95}
             paddingAngle={2}
             dataKey="value"
-            label={({ percent }) => percent > 0.05 ? `${fmtPct(percent * 100)}` : ""}
-            labelLine={true}
+            label={renderPieLabel}
+            labelLine={false}
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -249,10 +296,10 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
           </Pie>
           <Tooltip formatter={(value: number) => [fmtMoney(value), "Annual"]} />
           <Legend
-            layout="vertical"
-            align="right"
-            verticalAlign="middle"
-            wrapperStyle={{ fontSize: 11, paddingLeft: 10 }}
+            layout="horizontal"
+            align="center"
+            verticalAlign="bottom"
+            wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -273,14 +320,14 @@ export function ChartCard({
 }) {
   return (
     <div
-      className="rounded-2xl border bg-card/60 p-4 overflow-visible"
+      className="rounded-2xl border bg-card/60 p-4"
       data-testid={testId}
     >
       <div className="text-sm font-semibold">{title}</div>
       {description && (
         <div className="text-xs text-muted-foreground mt-1">{description}</div>
       )}
-      <div className="mt-3 overflow-visible">{children}</div>
+      <div className="mt-3">{children}</div>
     </div>
   );
 }
