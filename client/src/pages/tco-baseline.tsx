@@ -362,7 +362,11 @@ function InlineInfo(props: {
 }
 
 export default function TcoBaseline() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("tco-dark-mode");
+    if (saved !== null) return saved === "true";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
   const [activeTab, setActiveTab] = useState<
     "home" | "inputs" | "assumptions" | "observations" | "summary"
   >("home");
@@ -525,14 +529,14 @@ export default function TcoBaseline() {
     {
       target: "[data-testid='tab-inputs']",
       title: "Input Your Environment",
-      content: "Enter your user counts, device counts, and any known spending. The tool will derive costs from what you provide.",
+      content: "Enter your user counts, device counts, and EUC vendor costs across 6 pillars — Access, Virtual Desktops, Device Management, Security, App Management, and Collaboration.",
       placement: "bottom" as const,
       action: () => setActiveTab("inputs"),
     },
     {
       target: "[data-testid='readiness-panel']",
       title: "Track Your Readiness",
-      content: "This panel shows how complete your assessment is. Hit 100% when you have endpoints and some spending captured.",
+      content: "This panel shows how complete your assessment is. Fill in environment details and add vendor costs in the EUC Pillars section to reach 100%.",
       placement: "bottom" as const,
     },
     {
@@ -784,6 +788,7 @@ export default function TcoBaseline() {
     const root = document.documentElement;
     if (dark) root.classList.add("dark");
     else root.classList.remove("dark");
+    localStorage.setItem("tco-dark-mode", String(dark));
   }, [dark]);
 
   const exportJson = () => {
