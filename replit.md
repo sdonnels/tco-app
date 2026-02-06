@@ -16,10 +16,9 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 
 ### Input Structure
 - **Project Info**: Client Name, Assessment Date, Customer Champion, XenTegra Engineer
-- **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count
-- **VDI/DaaS**: VDI % of Users, Platform Presence (Citrix, AVD, Windows 365, Horizon, Parallels)
-- **Tool Presence**: Intune, SCCM, Workspace ONE, Jamf, ControlUp, Nerdio
-- **Category Roll-ups**: Optional overrides for total spend per category
+- **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count, VDI % of Users
+- **EUC Pillars & Platforms**: 6 pillars (Access, Virtual Desktops & Applications, Device OS & User Management, Security, App Management, Collaboration AI & Applications) with vendor selection and annual cost tracking
+- **EUC Pillars - Platform Cost Rollups (Optional Overrides)**: Override calculated cost categories with known annual spend
 
 ### Assumptions (15 values matching Excel)
 - Device Refresh Years: Laptop=3, Desktop=3, Thin Client=5
