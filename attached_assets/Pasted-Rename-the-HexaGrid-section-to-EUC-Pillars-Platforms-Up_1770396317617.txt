@@ -1,0 +1,220 @@
+Rename the HexaGrid section to EUC Pillars & Platforms
+
+Update the Pillars section with this info.  These are the pillars, then sub-pillars, then the vendor/platform
+
+### **Pillar: Access**
+
+- **Sub-Pillar: PC, AI, Mobile Hardware**
+    
+    - **Apple**
+        - MacBook / iPad / iPhone
+    - **Dell**
+        - Latitude / Precision / OptiPlex
+    - **HP**
+        - EliteBook / ZBook / ProBook
+    - **Lenovo**
+        - ThinkPad / ThinkCentre
+
+- **Sub-Pillar: Endpoint OS**
+    
+    - **IGEL**
+        - IGEL OS (Cosmos)
+    - **Stratodesk**
+        - NoTouch OS
+    - **Unicon**
+        - eLux / Scout
+    - **Microsoft**
+        - Windows 11 / Windows 10 IoT
+
+- **Sub-Pillar: Secure Enterprise Browser**
+    
+    - **Dizzion**
+        - Halo (Secure Every Browser)
+    - **Island**
+        - Island Enterprise Browser
+    - **Talon (Palo Alto Networks)**
+        - Talon Enterprise Browser
+    - **Surf**
+        - Surf Security Browser
+
+### **Pillar: Virtual Desktops & Applications**
+
+- **Sub-Pillar: DaaS (Cloud PC)**
+    
+    - **Microsoft**
+        - Windows 365
+    - **Dizzion**
+        - Dizzion Cloud PC
+    - **Kasm Technologies**
+        - Kasm Workspaces
+
+- **Sub-Pillar: DaaS (Service Provider)**
+    
+    - **Dizzion**
+        - Dizzion Frame
+        - Dizzion Managed DaaS
+    - **AWS**
+        - Amazon WorkSpaces / AppStream 2.0
+    - **Workspot**
+        - Workspot Managed Services
+- **Sub-Pillar: VDI**
+    - **Omnissa**
+        - Horizon 8
+    - **Citrix**
+        - Citrix Virtual Apps and Desktops
+    - **Microsoft**
+        - Azure Virtual Desktop (AVD)
+    - **Dizzion**
+        - Dizzion Frame
+    - **Apporto**
+        - Apporto VDI
+    - **Parallels**
+        - Parallels RAS
+            
+
+### **Pillar: Device, OS & User Management**
+
+- **Sub-Pillar: Unified Endpoint Mgmt (UEM)**
+    
+    - **Microsoft**
+        - Microsoft Intune
+    - **Omnissa**
+        - Workspace ONE UEM
+    - **Ivanti**
+        - Ivanti Neurons for UEM
+    - **Recast Software**
+        - Application Workspace
+    - **Tanium**
+        - Tanium Converged Endpoint Management (XEM)
+    - **PDQ**
+        - PDQ Connect
+    - **JAMF**
+        - Jamf Pro
+    - **Kaseya**
+        - Kaseya VSA / Datto RMM
+
+- **Sub-Pillar: Digital Employee Experience (DEX)**
+    
+    - **ControlUp**
+        - Edge DX / ControlUp One
+    - **Nexthink**
+        - Nexthink Infinity
+    - **Omnissa**
+        - Workspace ONE Experience Management
+    - **Lakeside Software**
+        - SysTrack
+    - **Citrix**
+        - Workspace Environment Management (WEM)
+    - **Liquidware**
+        - Stratosphere UX
+
+### **Pillar: Security**
+
+- **Sub-Pillar: Endpoint Security**
+    
+    - **Microsoft**
+        - Microsoft Defender
+    - **CrowdStrike**
+        - Falcon Platform
+    - **SentinelOne**
+        - Singularity
+
+- **Sub-Pillar: Identity & Access Mgmt (IAM)**
+    
+    - **Microsoft**
+        - Microsoft Entra ID
+    - **Okta**
+        - Okta Workforce Identity
+    - **Ping Identity**
+        - PingOne
+
+- **Sub-Pillar: Secure Access Service Edge (SASE)**
+    
+    - **Cato Networks**
+        - Cato SASE Cloud
+    - **Zscaler**
+        - Zscaler Private Access (ZTNA)
+    - **Netskope**
+        - Intelligent SSE
+
+### **Pillar: App Management**
+
+- **Sub-Pillar: App Layering & Streaming**
+    
+    - **Omnissa**
+        - App Volumes
+    - **Liquidware**
+        - FlexApp
+    - **Citrix**
+        - Citrix App Layering
+
+- **Sub-Pillar: Application Readiness & Packaging**
+    
+    - **Flexera**
+        - AdminStudio
+    - **Rimo3**
+        - Rimo3 Cloud
+
+- **Sub-Pillar: Apps Config & Asset Management**
+    
+    - **Recast Software**
+        - Application Workspace
+    - **Microsoft**
+        - Microsoft Intune
+        - Configuration Manager (SCCM)
+    - **ManageEngine**
+        - AssetExplorer
+        - Endpoint Central
+    - **Nexthink**
+        - Application Experience
+
+### **Pillar: Collaboration, AI & Applications**
+
+- **Sub-Pillar: Workspace AI**
+    
+    - **Microsoft**
+        - Microsoft 365 Copilot
+    - **Google**
+        - Gemini for Google Workspace
+        - NotebookLM
+
+    - **OpenAI**
+        - ChatGPT
+    - **Anthropic**
+        - Claude
+    - **Perplexity**
+        - Perplexity Pro / Comet
+
+- **Sub-Pillar: Unified Comms & Collab**
+    
+    - **Microsoft**
+        - Microsoft Teams
+    - **Zoom**
+        - Zoom Workplace
+    - **Slack**
+        - Slack Enterprise Grid
+
+
+
+The VDI Platforms & Tools section can be removed in favor of the hexagrid section.  Please make sure all the calculations are transferred over to this new section and audit everything.
+
+Rename the Category Rollups (Optional Overrides) Section to EUC Pillars - Platform Cost Rollups (Optional Overrides)
+
+Change the sections names to match the EUC Pillars
+
+Make sure the calculations for the rollups and the Platforms are all tied together properly
+
+Make the Pillar boxes/sections half the size and utilize a format of two columns.  
+
+Box  |  Box
+Box  |  Box
+
+Does that make sense?
+
+We need to make sure the input boxes are named correctly so when a platform is chosen, change the blank box description from "Optional" to "Annual Cost (Optional)"
+
+Make sure the "Annual Cost (Optional)" box and the Assumptions/License details box are aligned with any other solutions in these categories so it looks more refined in the Gui:
+
+![[{DFB424A5-551D-4899-AEDB-BF2582438DFC}.png]]
+
+Add a "How this works" box for the Category Rollups section
