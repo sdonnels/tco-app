@@ -10,16 +10,18 @@ This is a vendor-neutral, current-state Total Cost of Ownership (TCO) baseline t
 - Enable informed conversations without sales narratives
 - Every number must be traceable and defensible
 
-## Excel Workbook Alignment (v2.0)
+## Excel Workbook Alignment (v2.1)
 
 The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workbook_v2_0_FROZEN.xlsx`:
 
 ### Input Structure
 - **Project Info**: Client Name, Assessment Date, Customer Champion, XenTegra Engineer
 - **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count
-- **VDI/DaaS**: VDI % of Users, Platform Presence (Citrix, AVD, Windows 365, Horizon, Parallels)
-- **Tool Presence**: Intune, SCCM, Workspace ONE, Jamf, ControlUp, Nerdio
+- **VDI/DaaS**: VDI % of Users, Platform Presence (Citrix, AVD, Windows 365, Horizon, Parallels) with conditional spend fields and custom platform support
+- **Tool Presence**: Intune, SCCM, Workspace ONE, Jamf, ControlUp, Nerdio with conditional spend fields and custom tool support
 - **Category Roll-ups**: Optional overrides for total spend per category
+- **Managed Services**: Total annual MSP spend with outsourced function checkboxes
+- **Observations**: Free-form notes field
 
 ### Assumptions (15 values matching Excel)
 - Device Refresh Years: Laptop=3, Desktop=3, Thin Client=5
@@ -34,13 +36,33 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 - End-User Devices = Σ(device count × unit cost ÷ refresh years)
 - Support & Ops = ticket labor + deployment labor
 - Licensing = users × cost/user × coverage %
-- Management & Security = endpoints × cost/endpoint
-- VDI/DaaS = VDI users × platform cost (gated on VDI presence)
+- Management & Security = actual tool spend (if provided) OR endpoints × cost/endpoint
+- VDI/DaaS = actual platform spend (if provided) OR VDI users × platform cost (gated on VDI presence)
 - Overhead = subtotal × overhead %
+
+### Spend Override Logic
+- When actual spend values are entered for VDI platforms or management tools, those totals replace the assumption-based calculations
+- Spend fields only counted when the corresponding presence flag is "yes" to prevent stale data
+- Category rollup overrides replace the entire category calculation when provided
+- Custom platforms and tools are always included in spend totals
 
 ### Summary Metrics
 - Total Annual Baseline, Cost per Endpoint, Cost per User
 - VDI Cost per VDI User, Non-VDI Cost per User, VDI User Premium
+
+### Visualizations (5 current-state charts)
+- Endpoint Mix (pie) - device type distribution
+- Where Money Goes (pie) - spend allocation by category
+- Cost by Category (horizontal bar) - absolute dollar comparison
+- VDI vs Non-VDI Comparison (bar) - per-user cost comparison
+- Cost Source (bar) - input-derived vs assumption-based costs
+
+### Export Formats (5 types)
+- JSON - machine-readable data interchange
+- CSV - spreadsheet-compatible tabular data
+- PDF - professional print-ready report with HTML/CSS chart rendering
+- Audit Trail - comprehensive human-readable traceability report
+- Assumption Justifications - industry-sourced rationales for each assumption
 
 ## User Preferences
 
@@ -51,10 +73,12 @@ Preferred communication style: Simple, everyday language.
 ### Frontend Architecture
 - **Framework:** React 18 with TypeScript
 - **Routing:** Wouter (lightweight React router)
-- **State Management:** TanStack React Query for server state
+- **State Management:** TanStack React Query for server state; local React state (useState) for assessment data
 - **UI Components:** shadcn/ui component library built on Radix UI primitives
 - **Styling:** Tailwind CSS with CSS variables for theming
 - **Animations:** Framer Motion for page transitions and micro-interactions
+- **Charts:** Recharts for interactive data visualizations
+- **Dark Mode:** System-aware theme toggle with localStorage persistence
 - **Build Tool:** Vite with custom plugins for Replit integration
 
 ### Backend Architecture
@@ -70,20 +94,30 @@ Preferred communication style: Simple, everyday language.
 - **Validation:** Zod schemas with drizzle-zod integration
 - **Storage Abstraction:** Interface-based storage pattern (`IStorage`) allowing memory or database backends
 - **Current Implementation:** In-memory storage (`MemStorage`) with database schema ready for PostgreSQL
+- **Client-Side Data:** Assessment data is entirely client-side (no server storage); exports download directly to the user's device
 
 ### Project Structure
 ```
-├── client/src/          # React frontend application
-│   ├── components/ui/   # shadcn/ui components
-│   ├── pages/           # Route components
-│   ├── hooks/           # Custom React hooks
-│   └── lib/             # Utilities and query client
-├── server/              # Express backend
-│   ├── routes.ts        # API route definitions
-│   ├── storage.ts       # Data access layer
-│   └── vite.ts          # Development server setup
-├── shared/              # Shared types and schemas
-└── attached_assets/     # Documentation and reference materials
+├── client/src/              # React frontend application
+│   ├── components/          # Application components
+│   │   ├── ui/              # shadcn/ui base components
+│   │   ├── TcoCharts.tsx    # 5 Recharts visualizations + ChartCard wrapper
+│   │   └── OnboardingTour.tsx # Guided tour overlay
+│   ├── pages/               # Route components
+│   │   └── tco-baseline.tsx # Main TCO tool (inputs, assumptions, summary, exports)
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utilities and query client
+│   └── assets/              # Static assets (logos, images)
+├── server/                  # Express backend
+│   ├── routes.ts            # API route definitions
+│   ├── storage.ts           # Data access layer
+│   └── vite.ts              # Development server setup
+├── shared/                  # Shared types and schemas
+├── docs/                    # Documentation
+│   └── TCO_BASELINE_TOOL_DOCUMENTATION.md  # Complete tool docs (v2.1)
+├── scripts/                 # Utility scripts
+│   └── tco-validation-test.js  # 20-test calculation validation suite
+└── attached_assets/         # Reference materials and Excel workbook
 ```
 
 ### Build System
