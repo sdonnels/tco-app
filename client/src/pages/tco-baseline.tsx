@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
+  BookMarked,
   BookOpen,
   CheckCircle2,
   ChevronRight,
@@ -44,6 +45,8 @@ import {
   ChartCard,
 } from "@/components/TcoCharts";
 import { HexagridSection, type HexagridEntry } from "@/components/HexagridSection";
+import documentationMd from "@/../../docs/TCO_BASELINE_TOOL_DOCUMENTATION.md?raw";
+import faqMd from "@/../../docs/TCO_BASELINE_FAQ.md?raw";
 import {
   Dialog,
   DialogContent,
@@ -374,7 +377,7 @@ export default function TcoBaseline() {
     return localStorage.getItem("tco-client-logo");
   });
   const [activeTab, setActiveTab] = useState<
-    "home" | "inputs" | "assumptions" | "observations" | "summary"
+    "home" | "inputs" | "assumptions" | "observations" | "summary" | "readme"
   >("home");
 
   const [inputs, setInputs] = useState<Inputs>({
@@ -1679,6 +1682,26 @@ export default function TcoBaseline() {
     URL.revokeObjectURL(url);
   };
 
+  const downloadDocumentation = () => {
+    const blob = new Blob([documentationMd], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "TCO_Baseline_Tool_Documentation.md";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadFaq = () => {
+    const blob = new Blob([faqMd], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "TCO_Baseline_FAQ.md";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="app-shell grain min-h-screen">
       <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
@@ -1812,6 +1835,9 @@ export default function TcoBaseline() {
                   </TabsTrigger>
                   <TabsTrigger value="summary" data-testid="tab-summary">
                     Summary
+                  </TabsTrigger>
+                  <TabsTrigger value="readme" data-testid="tab-readme">
+                    ReadMe
                   </TabsTrigger>
                 </TabsList>
               )}
@@ -3218,6 +3244,187 @@ export default function TcoBaseline() {
                   </div>
                 </div>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="readme" className="mt-5" data-testid="panel-readme">
+              <div className="grid gap-6">
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<BookMarked className="h-5 w-5 text-primary" />}
+                    eyebrow="ReadMe"
+                    title="Documentation & Resources"
+                    description="Download reference materials and learn how to use the tool."
+                    testId="header-readme"
+                  />
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">Full Documentation</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Complete reference covering all features, calculations, EUC Pillars framework, export formats, and technical details.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={downloadDocumentation}
+                        data-testid="button-download-docs"
+                      >
+                        <Download className="h-4 w-4" /> Download Documentation
+                      </Button>
+                    </div>
+
+                    <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">Frequently Asked Questions</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Common questions about the tool, inputs, assumptions, exports, and troubleshooting tips.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={downloadFaq}
+                        data-testid="button-download-faq"
+                      >
+                        <Download className="h-4 w-4" /> Download FAQ
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<ChevronRight className="h-5 w-5 text-primary" />}
+                    eyebrow="Quick Start"
+                    title="How to Use This Tool"
+                    description="A step-by-step walkthrough of each section and what to expect."
+                    testId="header-quickstart"
+                  />
+
+                  <div className="mt-6 space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">1</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step1-title">Start on the Home Tab</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step1-desc">
+                            The Home tab is your landing page. From here you can launch the <strong>Free Baseline Assessment</strong> (a 10–15 minute guided assessment) or take the <strong>Interactive Tour</strong> to familiarize yourself with the interface before entering data. The Home tab also shows an overview of what the tool does and its core principles.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">2</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step2-title">Fill in Project Information (Inputs Tab)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step2-desc">
+                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can also upload a <strong>Client Logo</strong> (PNG, JPG, SVG, or WebP, max 500 KB) which will appear in the footer and in PDF exports alongside the XenTegra branding.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">3</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step3-title">Enter Environment Facts (Inputs Tab)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step3-desc">
+                            Provide your <strong>User Count</strong> and device counts (<strong>Laptops</strong>, <strong>Desktops</strong>, <strong>Thin Clients</strong>). These numbers drive the cost calculations. The total endpoint count is calculated automatically.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">4</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step4-title">Map Your EUC Pillars & Platforms (Inputs Tab)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step4-desc">
+                            This is the core of the assessment. Your EUC environment is organized into <strong>6 pillars</strong> (Access, Virtual Desktops & Applications, Device/OS/User Management, Security, App Management, and Collaboration/AI/Applications) with <strong>17 sub-pillars</strong> and <strong>60+ vendors</strong>. For each pillar, select the vendors you use and enter their annual cost. If you don't know a cost, leave it blank — the tool will use an assumption instead.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">5</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step5-title">Override Cost Categories (Inputs Tab, Optional)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step5-desc">
+                            If you know your total annual spend for an entire category (e.g., total Security spend), you can enter it as a <strong>Platform Cost Rollup Override</strong>. The priority chain is: <strong>Override &gt; EUC Pillar costs &gt; Assumptions</strong>. This gives you maximum flexibility in how you supply cost data.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">6</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step6-title">Review Assumptions (Assumptions Tab)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step6-desc">
+                            The tool uses <strong>15 industry-sourced default values</strong> covering device refresh cycles, unit costs, support operations, licensing, management, VDI platform costs, and overhead. Every assumption is transparent, labeled, and fully editable. Modified values are highlighted. You can download a <strong>Justification Report</strong> showing the source for every default.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">7</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step7-title">Add Notes & Observations (Observations Tab)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step7-desc">
+                            This is the defensibility layer. Add <strong>Notes & Caveats</strong> to document context, known gaps, or special circumstances. The tab also shows a <strong>Calculation Trace</strong> — a line-by-line breakdown of how every cost was derived — so every number is fully auditable.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">8</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step8-title">Review the Summary (Summary Tab)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step8-desc">
+                            The Summary tab presents your <strong>Total Annual Baseline</strong>, <strong>Cost per Endpoint</strong>, <strong>Cost per User</strong>, and VDI-specific metrics. Five interactive charts visualize your data: Endpoint Mix, Where Money Goes, Cost by Category, VDI vs. Non-VDI Comparison, and Cost Source Composition. Use the export options to download your results as JSON, CSV, PDF, Audit Trail, or a bundled zip file.
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="flex items-start gap-3">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-sm">9</div>
+                        <div>
+                          <h4 className="font-semibold text-sm" data-testid="text-qs-step9-title">Track Your Progress (Readiness Bar)</h4>
+                          <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step9-desc">
+                            The <strong>Readiness Tracker</strong> in the tab header shows your assessment completeness as a percentage. It turns green at 100% when all key fields are populated. This helps ensure you haven't missed any important inputs before exporting your baseline.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                      <div className="flex items-start gap-2">
+                        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Tip:</strong> All data stays entirely in your browser — nothing is sent to a server. Use the <strong>Download All (.zip)</strong> button on the Summary tab to export everything at once, or use individual export buttons for specific formats.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </main>

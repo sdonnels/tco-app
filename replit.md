@@ -125,3 +125,14 @@ Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATIO
 - Export format specifications (JSON, CSV, PDF, Audit Trail, Justifications)
 - Onboarding tour and readiness tracker details
 - Dark mode toggle documentation
+
+FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions about:
+- General usage, data privacy, assessment timing
+- Inputs, EUC Pillars, overrides, and readiness tracker
+- Assumptions, defaults, and justification sources
+- Results, export formats, and troubleshooting
+
+### ReadMe Tab (in-app)
+- **Documentation & Resources** card with download buttons for Documentation and FAQ markdown files
+- **Quick Start Guide** with 9-step walkthrough covering: Home tab, Project Information, Environment Facts, EUC Pillars, Overrides, Assumptions, Observations, Summary, and Readiness Tracker
+- Files imported via Vite `?raw` suffix for client-side download generation
