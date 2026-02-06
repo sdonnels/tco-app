@@ -1653,12 +1653,12 @@ export default function TcoBaseline() {
       <div class="comparison-bars">
         <div class="comparison-bar">
           <div class="comparison-bar-value">${fmtMoney(derived.nonVdiCostPerUser)}</div>
-          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.nonVdiCostPerUser / Math.max(derived.nonVdiCostPerUser, derived.vdiCostPerVdiUser)) * 100)}px; background: #3b82f6;"></div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.nonVdiCostPerUser / Math.max(derived.nonVdiCostPerUser, derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser)) * 100)}px; background: #3b82f6;"></div>
           <div class="comparison-bar-label">Non-VDI User</div>
         </div>
         <div class="comparison-bar">
-          <div class="comparison-bar-value">${fmtMoney(derived.vdiCostPerVdiUser)}</div>
-          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.vdiCostPerVdiUser / Math.max(derived.nonVdiCostPerUser, derived.vdiCostPerVdiUser)) * 100)}px; background: #8b5cf6;"></div>
+          <div class="comparison-bar-value">${fmtMoney(derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser)}</div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, ((derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser) / Math.max(derived.nonVdiCostPerUser, derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser)) * 100)}px; background: #8b5cf6;"></div>
           <div class="comparison-bar-label">VDI User</div>
         </div>
       </div>
@@ -3421,7 +3421,7 @@ export default function TcoBaseline() {
                       >
                         <VdiComparisonChart
                           data={{
-                            vdiCostPerUser: derived.vdiCostPerVdiUser,
+                            vdiCostPerUser: derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser,
                             nonVdiCostPerUser: derived.nonVdiCostPerUser,
                           }}
                         />
