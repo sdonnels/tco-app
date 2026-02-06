@@ -1,0 +1,114 @@
+[
+  {
+    "pillar": "Access",
+    "description": "The ability to access applications and information from anywhere, using any device. It focuses on workplace independence and mobility.",
+    "sub_pillars": [
+      {
+        "name": "Thin Clients & Endpoint OS",
+        "description": "Secure, lightweight operating systems (like IGEL) designed to extend hardware lifecycles and reduce the local attack surface.",
+        "vendors": [
+          {"name": "IGEL - IGEL OS (Cosmos)", "url": "https://kb.igel.com/"},
+          {"name": "Stratodesk - NoTouch OS", "url": "https://kb.stratodesk.com/"},
+          {"name": "10ZiG - PeakOS", "url": "https://www.10zig.com/resources/documentation"},
+          {"name": "HP - ThinPro", "url": "https://support.hp.com/"}
+        ]
+      },
+      {
+        "name": "Enterprise Browsers",
+        "description": "A secure workspace layer within the browser to manage SaaS and web apps without full VDI/DaaS.",
+        "vendors": [
+          {"name": "Island - The Enterprise Browser", "url": "https://www.island.io/resources"},
+          {"name": "Talon (Palo Alto) - Talon Browser", "url": "https://docs.paloaltonetworks.com/"}
+        ]
+      }
+    ]
+  },
+  {
+    "pillar": "Virtual Desktops & Apps",
+    "description": "Solutions that deliver virtualized desktops and applications to simplify management and provide secure access to workloads.",
+    "sub_pillars": [
+      {
+        "name": "VDI & DaaS Platforms",
+        "description": "Engines used to orchestrate and automate the delivery of desktops and apps from on-prem or cloud.",
+        "vendors": [
+          {"name": "Microsoft - Windows 365 / AVD", "url": "https://learn.microsoft.com/en-us/azure/virtual-desktop/"},
+          {"name": "Citrix - Citrix DaaS", "url": "https://docs.citrix.com/"},
+          {"name": "Omnissa - VMware Horizon", "url": "https://docs.omnissa.com/"}
+        ]
+      }
+    ]
+  },
+  {
+    "pillar": "Device, OS & User Management",
+    "description": "Modernizing physical endpoint management with a focus on Digital Employee Experience (DEX).",
+    "sub_pillars": [
+      {
+        "name": "UEM & Management",
+        "description": "Unified tools for managing the lifecycle of mobile and desktop operating systems.",
+        "vendors": [
+          {"name": "Microsoft - Intune", "url": "https://learn.microsoft.com/en-us/mem/intune/"},
+          {"name": "Omnissa - Workspace ONE", "url": "https://docs.omnissa.com/"},
+          {"name": "Nerdio - Manager for Enterprise", "url": "https://getnerdio.com/academy/"}
+        ]
+      },
+      {
+        "name": "DEX (Digital Employee Experience)",
+        "description": "Monitoring and real-time remediation tools to improve user productivity and reduce support tickets.",
+        "vendors": [
+          {"name": "ControlUp - Edge DX", "url": "https://support.controlup.com/"},
+          {"name": "Lakeside - Systrack", "url": "https://www.lakesidesoftware.com/resources/"}
+        ]
+      }
+    ]
+  },
+  {
+    "pillar": "Security",
+    "description": "The foundation for safe access to apps and data, focusing on zero-trust principles.",
+    "sub_pillars": [
+      {
+        "name": "Identity & MFA (IAM)",
+        "description": "Verifying user identity as the first line of defense in the digital workspace.",
+        "vendors": [
+          {"name": "Okta - Workforce Identity", "url": "https://help.okta.com/"},
+          {"name": "Microsoft - Entra ID", "url": "https://learn.microsoft.com/en-us/entra/"}
+        ]
+      },
+      {
+        "name": "Endpoint Security (EDR/XDR)",
+        "description": "Advanced threat detection and response at the device level.",
+        "vendors": [
+          {"name": "CrowdStrike - Falcon", "url": "https://www.crowdstrike.com/resources/"},
+          {"name": "Microsoft - Defender for Endpoint", "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/"}
+        ]
+      }
+    ]
+  },
+  {
+    "pillar": "App Management",
+    "description": "Decoupling applications from the OS through modern packaging and layering.",
+    "sub_pillars": [
+      {
+        "name": "App Delivery & Layering",
+        "description": "Tools that package and deliver apps dynamically to users without permanent installation.",
+        "vendors": [
+          {"name": "Liquit - Workspace", "url": "https://docs.liquit.com/"},
+          {"name": "Liquidware - FlexApp", "url": "https://docs.liquidware.com/"}
+        ]
+      }
+    ]
+  },
+  {
+    "pillar": "Collaboration & AI",
+    "description": "Enhancing productivity through Unified Communications and Workspace AI.",
+    "sub_pillars": [
+      {
+        "name": "Workspace AI & Copilots",
+        "description": "Generative AI assistants integrated into the workspace to automate workflows.",
+        "vendors": [
+          {"name": "Microsoft - Teams & M365 Copilot", "url": "https://learn.microsoft.com/en-us/microsoft-365/"},
+          {"name": "Google - Workspace / Gemini", "url": "https://support.google.com/a/"}
+        ]
+      }
+    ]
+  }
+]
