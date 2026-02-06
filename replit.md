@@ -116,12 +116,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Documentation
 
-Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.1) which includes:
+Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.2) which includes:
 - Full feature description and tool overview
+- EUC Pillars & Platforms framework (6 pillars, 17 sub-pillars, 60+ vendors)
 - All 15 assumptions with industry-sourced justifications
-- Calculation formulas and derived metrics (including spend override logic)
+- Calculation formulas and derived metrics (Override > EUC Pillar costs > Assumptions priority chain)
 - Five current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source)
-- Conditional spend fields and custom platform/tool support
 - Export format specifications (JSON, CSV, PDF, Audit Trail, Justifications)
 - Onboarding tour and readiness tracker details
 - Dark mode toggle documentation

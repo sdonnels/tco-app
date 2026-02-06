@@ -2,7 +2,7 @@
 
 ## Complete Documentation
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Last Updated:** February 2026  
 **Purpose:** Vendor-neutral, current-state Total Cost of Ownership baseline for enterprise End User Computing (EUC) environments
 
@@ -107,10 +107,10 @@ The tool is organized into five main tabs:
 ### 2. Inputs Tab
 The primary data collection interface with sections for:
 - Project Information
-- Environment Details
-- VDI/DaaS Configuration
-- Tool Presence Inventory
-- Managed Services
+- Environment Facts
+- EUC Pillars & Platforms
+- EUC Pillars - Platform Cost Rollups (Optional Overrides)
+- Managed Services & Outsourcing
 - Observations & Notes
 
 ### 3. Assumptions Tab
@@ -140,6 +140,8 @@ All available export formats:
 
 ## Input Sections
 
+All section headings use Title Case consistently throughout the tool. Each major section includes a "How This Works" info box explaining its purpose.
+
 ### Project Information
 
 | Field | Description | Example |
@@ -149,7 +151,7 @@ All available export formats:
 | Customer Champion | Primary customer contact | "Jane Smith, IT Director" |
 | XenTegra Engineer | Conducting engineer name | "John Doe" |
 
-### Environment Details
+### Environment Facts
 
 | Field | Description | Default |
 |-------|-------------|---------|
@@ -161,80 +163,98 @@ All available export formats:
 **Derived Values:**
 - Total Endpoints = Laptop Count + Desktop Count + Thin Client Count
 
-### VDI/DaaS Configuration
+### EUC Pillars & Platforms
 
-| Field | Description | Options |
-|-------|-------------|---------|
-| VDI Present | Does the environment include VDI? | Yes/No/Unknown |
-| VDI % of Users | Percentage of users on VDI | 0-100% |
+The EUC Pillars & Platforms section organizes vendor costs across 6 pillars of the End User Computing ecosystem. It replaces the previous VDI/DaaS Configuration and Tool Presence Inventory sections, providing a comprehensive, unified view of all EUC-related vendor spend.
 
-**Platform Presence (Yes/No/Unknown for each):**
-- Citrix Virtual Apps & Desktops
-- Azure Virtual Desktop (AVD)
-- Windows 365
-- VMware Horizon
-- Parallels RAS
+**Layout:** 2-column grid of compact pillar cards, each collapsible via ChevronDown/ChevronRight icons.
 
-**Conditional Spend Fields:**
-When a platform is set to "Yes", an annual spend input field appears for that platform. This allows users to enter the actual dollar amount spent on each VDI platform.
+**Vendor Entry Fields:**
+Each vendor entry supports:
+- Annual Cost (Optional)
+- Assumptions/License details notes field
 
-**Custom Platforms:**
-Users can add unlimited custom VDI/DaaS platforms using the "+Add Custom Platform" button. Each custom entry has:
-- Platform name (free text)
-- Annual spend amount
+Users can add custom vendors to any sub-pillar via the "Other..." option. Pillar subtotals are displayed when costs are entered.
 
-Custom platform spend is included in total VDI platform spend calculations.
+#### Pillar 1: Access
 
-**VDI Gate Logic:**
-VDI costs are only calculated when:
-- VDI Present = "Yes", OR
-- VDI % of Users > 0
+The ability to access applications and information from anywhere, using any device. Focuses on workplace independence and mobility.
 
-**Spend Override Logic:**
-When actual platform spend values are provided (from built-in or custom platforms), the total spend replaces the per-user assumption calculation. If no spend is entered, the tool falls back to `VDI Users × Platform Cost per VDI User/Year`.
+| Sub-Pillar | Vendors |
+|------------|---------|
+| PC, AI, Mobile Hardware | Apple (MacBook/iPad/iPhone), Dell (Latitude/Precision/OptiPlex), HP (EliteBook/ZBook/ProBook), Lenovo (ThinkPad/ThinkCentre) |
+| Endpoint OS | IGEL (IGEL OS/Cosmos), Stratodesk (NoTouch OS), Unicon (eLux/Scout), Microsoft (Windows 11/Windows 10 IoT) |
+| Secure Enterprise Browser | Dizzion (Halo), Island (Enterprise Browser), Talon/Palo Alto Networks (Talon Enterprise Browser), Surf (Surf Security Browser) |
 
-### Tool Presence Inventory
+#### Pillar 2: Virtual Desktops & Applications
 
-Track presence of endpoint management and monitoring tools:
+Solutions that deliver virtualized desktops and applications to simplify management and provide secure access to workloads.
 
-| Tool | Description |
-|------|-------------|
-| Microsoft Intune | Cloud-based endpoint management |
-| SCCM | System Center Configuration Manager |
-| Workspace ONE | VMware UEM solution |
-| Jamf | Apple device management |
-| ControlUp | VDI/DaaS monitoring |
-| Nerdio | AVD management platform |
+| Sub-Pillar | Vendors |
+|------------|---------|
+| DaaS (Cloud PC) | Microsoft (Windows 365), Dizzion (Cloud PC), Kasm Technologies (Kasm Workspaces) |
+| DaaS (Service Provider) | Dizzion (Frame/Managed DaaS), AWS (WorkSpaces/AppStream 2.0), Workspot (Managed Services) |
+| VDI | Omnissa (Horizon 8), Citrix (Virtual Apps and Desktops), Microsoft (Azure Virtual Desktop), Dizzion (Frame), Apporto (VDI), Parallels (RAS) |
 
-**Conditional Spend Fields:**
-When a tool is set to "Yes", an annual spend input field appears for that tool. This allows users to enter the actual dollar amount spent on each management/security tool.
+#### Pillar 3: Device, OS & User Management
 
-**Custom Tools:**
-Users can add unlimited custom tools using the "+Add Custom Tool" button. Each custom entry has:
-- Tool name (free text)
-- Annual spend amount
+Modernizing physical endpoint management with a focus on Digital Employee Experience (DEX).
 
-Custom tool spend is included in total tool spend calculations.
+| Sub-Pillar | Vendors |
+|------------|---------|
+| Unified Endpoint Mgmt (UEM) | Microsoft (Intune), Omnissa (Workspace ONE UEM), Ivanti (Neurons for UEM), Recast Software (Application Workspace), Tanium (XEM), PDQ (Connect), JAMF (Jamf Pro), Kaseya (VSA/Datto RMM) |
+| Digital Employee Experience (DEX) | ControlUp (Edge DX/ControlUp One), Nexthink (Infinity), Omnissa (Workspace ONE Experience Management), Lakeside Software (SysTrack), Citrix (Workspace Environment Management), Liquidware (Stratosphere UX) |
 
-**Spend Override Logic:**
-When actual tool spend values are provided (from built-in or custom tools), the total spend replaces the per-endpoint assumption calculation for Management & Security. If no spend is entered, the tool falls back to `Endpoints × Cost per Endpoint/Year`.
+#### Pillar 4: Security
 
-### Category Rollup Overrides
+The foundation for safe access to apps and data, focusing on zero-trust principles.
 
-Optional manual overrides for total annual spend per category:
+| Sub-Pillar | Vendors |
+|------------|---------|
+| Endpoint Security | Microsoft (Defender), CrowdStrike (Falcon Platform), SentinelOne (Singularity) |
+| Identity & Access Mgmt (IAM) | Microsoft (Entra ID), Okta (Workforce Identity Cloud), Ping Identity (PingOne) |
+| Secure Access Service Edge (SASE) | Cato Networks (Cato SASE Cloud), Zscaler (Zero Trust Exchange), Netskope (Intelligent SSE) |
+
+#### Pillar 5: App Management
+
+Ensuring application readiness, delivery, and lifecycle management across the EUC estate.
+
+| Sub-Pillar | Vendors |
+|------------|---------|
+| App Layering & Streaming | Omnissa (App Volumes), Liquidware (FlexApp), Citrix (App Layering) |
+| Application Readiness & Packaging | Flexera (AdminStudio), Rimo3 (Cloud), Recast Software (Application Workspace) |
+| Apps Config & Asset Management | Microsoft (SCCM/Intune), ManageEngine (Endpoint Central), Nexthink (Infinity) |
+
+#### Pillar 6: Collaboration, AI & Applications
+
+Modern productivity, AI, and communication platforms that define the digital employee experience.
+
+| Sub-Pillar | Vendors |
+|------------|---------|
+| Workspace AI | Microsoft (Copilot), Google (Gemini for Workspace), OpenAI (ChatGPT Enterprise), Anthropic (Claude for Business), Perplexity (Perplexity Enterprise) |
+| Unified Comms & Collab | Microsoft (Teams), Zoom (Workplace), Slack (Enterprise Grid) |
+
+### EUC Pillars - Platform Cost Rollups (Optional Overrides)
+
+Optional manual overrides for total annual spend per category. When provided, overrides replace both EUC Pillar vendor costs and calculated assumption values entirely. The rollup labels align with the EUC Pillar names.
+
+**Access & Infrastructure Group:**
 
 | Category | Description |
 |----------|-------------|
-| End-User Devices | Hardware lifecycle costs |
+| End-User Devices (Access) | Hardware lifecycle costs |
 | Support & Ops | Labor and support costs |
-| Licensing | Software license costs |
-| Management & Security | UEM and security tool costs |
-| VDI/DaaS | Virtual desktop platform costs |
+| Licensing (Collaboration, AI & Apps) | Software license costs |
+
+**Management, Security & VDI Group:**
+
+| Category | Description |
+|----------|-------------|
+| Device, OS & User Mgmt + Security | UEM, DEX, and security tool costs |
+| Virtual Desktops & Applications | Virtual desktop platform costs |
 | Overhead | Administrative overhead costs |
 
-When provided, overrides replace calculated values entirely.
-
-### Managed Services
+### Managed Services & Outsourcing
 
 | Field | Description |
 |-------|-------------|
@@ -253,6 +273,10 @@ Free-form text area for capturing qualitative observations:
 - Customer pain points
 - Special circumstances
 - Follow-up items
+
+### "How This Works" Info Boxes
+
+Each major section in the tool includes a "How This Works" info box that explains the section's purpose and how data is used in the calculations. On the Human Commentary and Trace tab, a single consolidated "How This Works" box replaces the previous separate "Mirror, not microscope" and "No hidden logic" guidance boxes.
 
 ---
 
@@ -314,6 +338,16 @@ The tool uses 15 explicit, labeled, overrideable assumptions. All values can be 
 
 ## Calculations & Derived Metrics
 
+### Priority Chain
+
+All cost categories follow a consistent priority chain for determining values:
+
+```
+1. Category Rollup Overrides (highest priority) — user-entered override replaces everything
+2. EUC Pillar vendor costs — summed from vendor entries in the relevant pillars
+3. Calculated assumptions (lowest priority) — derived from assumptions when no other data exists
+```
+
 ### Category Calculations
 
 #### 1. End-User Devices (Annual)
@@ -337,19 +371,26 @@ Deployment Labor = Endpoints × Hours/Device × Labor Rate ÷ Avg Device Life
 
 #### 4. Management & Security (Annual)
 ```
-If actual tool spend is provided (any platform/tool with presence = "Yes" and spend > 0):
-  = Sum of all tool spend values (built-in + custom tools)
-Otherwise:
-  = Total Endpoints × Cost per Endpoint per Year
+Priority chain:
+  1. If Category Rollup Override provided:
+       = Override value
+  2. If EUC Pillar costs exist (Device, OS & User Management + Security pillars):
+       = Sum of vendor costs from Pillar 3 (Device, OS & User Management) 
+         + Sum of vendor costs from Pillar 4 (Security)
+  3. Otherwise (assumption fallback):
+       = Total Endpoints × $200/endpoint/year
 ```
 
 #### 5. VDI/DaaS (Annual)
 ```
 VDI Users = User Count × VDI %
-If actual platform spend is provided (any platform with presence = "Yes" and spend > 0):
-  = Sum of all platform spend values (built-in + custom platforms)
-Otherwise:
-  = VDI Users × Platform Cost per VDI User
+Priority chain:
+  1. If Category Rollup Override provided:
+       = Override value
+  2. If EUC Pillar costs exist (Virtual Desktops & Applications pillar):
+       = Sum of vendor costs from Pillar 2 (Virtual Desktops & Applications)
+  3. Otherwise (assumption fallback):
+       = VDI Users × $800/VDI user/year
 (Only calculated if VDI is present or VDI% > 0)
 ```
 
@@ -422,7 +463,7 @@ Only renders when user count and VDI percentage data are available.
 ### 5. Cost Source (Bar Chart)
 
 Shows how much of the total baseline is derived from actual customer-provided inputs versus assumption-based calculations:
-- "From Inputs" (blue) -- costs based on user-entered spend values or overrides
+- "From Inputs" (blue) -- costs based on user-entered spend values, EUC Pillar vendor costs, or overrides
 - "From Assumptions" (amber) -- costs calculated from default assumption values
 
 Helps stakeholders understand data confidence and identify areas where actual spend data would improve accuracy.
@@ -455,6 +496,7 @@ The tool provides five distinct export formats, each serving a different purpose
   "exportDate": "2026-02-02T...",
   "project": { ... },
   "inputs": { ... },
+  "eucPillars": [ ... ],
   "assumptions": { ... },
   "derived": {
     "endpoints": 500,
@@ -472,6 +514,8 @@ The tool provides five distinct export formats, each serving a different purpose
   }
 }
 ```
+
+**Key:** The JSON export uses the `eucPillars` key for EUC Pillar vendor cost data.
 
 **Use Cases:**
 - Import into other tools or dashboards
@@ -497,38 +541,37 @@ The tool provides five distinct export formats, each serving a different purpose
    - All user-provided values
    - Derived endpoint counts
 
-4. **Category Rollup Overrides**
+4. **EUC Pillars - Platform Cost Rollups (Optional Overrides)**
    - Shows which values are overridden vs. derived
 
-5. **VDI/DaaS Platform Presence**
-   - Status of each VDI platform
+5. **EUC Pillars & Platforms Vendor Costs**
+   - All vendor entries organized by pillar and sub-pillar
+   - Annual costs and notes for each vendor
 
-6. **Endpoint & Management Tool Presence**
-   - Inventory of management tools
-
-7. **Managed Services**
+6. **Managed Services**
    - MSP spend and outsourced functions
 
-8. **Assumptions Reference Table**
+7. **Assumptions Reference Table**
    - All 15 assumption values
 
-9. **Calculation Wiring**
+8. **Calculation Wiring**
    - Step-by-step derivation of each category
-   - Shows source (INPUT vs. DERIVED)
+   - Shows source (INPUT vs. DERIVED vs. EUC PILLAR)
    - Shows basis/formula used
+   - Reflects priority chain (Override > EUC Pillar > Assumption)
 
-10. **Summary Totals**
-    - Category breakdown
-    - Total annual baseline
+9. **Summary Totals**
+   - Category breakdown
+   - Total annual baseline
 
-11. **Per-Unit Metrics**
+10. **Per-Unit Metrics**
     - Cost per endpoint, cost per user
     - VDI premium calculations
 
-12. **Assumptions Used**
+11. **Assumptions Used**
     - List of assumptions that were applied
 
-13. **Observations & Notes**
+12. **Observations & Notes**
     - Free-form observations
 
 **Sample Output:**
@@ -548,6 +591,18 @@ It does not include ROI projections, savings estimates, or solution recommendati
   Assessment Date:    2/2/2026
   Customer Champion:  Jane Smith
   XenTegra Engineer:  John Doe
+
+┌────────────────────────────────────────────────────────────────────┐
+│ EUC PILLARS & PLATFORMS VENDOR COSTS                               │
+└────────────────────────────────────────────────────────────────────┘
+  Pillar: Access
+    Sub-Pillar: PC, AI, Mobile Hardware
+      Dell - Latitude / Precision / OptiPlex    $120,000/yr
+    Sub-Pillar: Endpoint OS
+      IGEL - IGEL OS (Cosmos)                   $45,000/yr
+  Pillar: Virtual Desktops & Applications
+    Sub-Pillar: VDI
+      Citrix - Virtual Apps and Desktops        $200,000/yr
 ...
 ```
 
@@ -775,17 +830,12 @@ The readiness tracker provides at-a-glance visibility into assessment completene
    - Amber: User count provided but no endpoints
    - Green: User count + at least one endpoint type
 
-2. **VDI/DaaS**
-   - Red: VDI presence unknown
-   - Amber: VDI presence set but no platforms selected
-   - Green: Full VDI configuration
+2. **EUC Pillars**
+   - Red: No vendor entries added across any pillar
+   - Amber: Some pillars have vendor entries but not all relevant pillars
+   - Green: Vendor entries present with costs in key pillars
 
-3. **Tools**
-   - Red: No tools marked
-   - Amber: Some tools marked unknown
-   - Green: All tools marked yes/no
-
-4. **MSP (Managed Services)**
+3. **MSP (Managed Services)**
    - Red: No MSP information
    - Amber: Partial outsourcing info
    - Green: MSP spend or full outsourcing details
@@ -801,7 +851,7 @@ The readiness tracker provides at-a-glance visibility into assessment completene
 - **Styling:** Tailwind CSS with shadcn/ui components
 - **Animations:** Framer Motion
 - **Charts:** Recharts (responsive, interactive data visualizations)
-- **Data Persistence:** Client-side only (localStorage for tour state and theme preference)
+- **Data Persistence:** All data (inputs, assumptions, EUC Pillar entries) persists via localStorage
 - **Export:** Browser Blob API for file downloads
 - **Dark Mode:** System-aware theme toggle with light/dark support across all UI elements and charts
 
@@ -826,7 +876,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 - **No server storage**: All data remains in the browser
 - **No tracking**: No analytics or user tracking
 - **Local exports**: Files download directly to user's device
-- **Session-only**: Data cleared on browser close (except tour state)
+- **Persistent locally**: All inputs, assumptions, and EUC Pillar entries persist in localStorage across sessions
 
 ---
 
@@ -860,6 +910,7 @@ This document synthesizes research and benchmarks from:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.2 | Feb 2026 | Replaced VDI/DaaS Configuration and Tool Presence Inventory with unified EUC Pillars & Platforms section (6 pillars, 17 sub-pillars, 60+ vendors); 2-column grid layout with collapsible pillar cards; calculation priority chain (Override > EUC Pillar costs > Assumptions); Category Rollups renamed to "EUC Pillars - Platform Cost Rollups (Optional Overrides)" with pillar-aligned labels; "How This Works" info boxes on all major sections; audit trail shows "EUC PILLARS & PLATFORMS VENDOR COSTS"; JSON export uses `eucPillars` key; all data persists via localStorage; Title Case headings throughout; readiness tracker updated for EUC Pillars |
 | 2.1 | Feb 2026 | Added 5 current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source); conditional spend fields for VDI platforms and tools; custom platform/tool support with +Add buttons; spend override logic (actual spend replaces assumption-based calculations); PDF export with HTML/CSS chart rendering; CSV export format; dark mode toggle; enhanced audit trail with spend values and custom entries |
 | 2.0 | Feb 2026 | Added justification export, onboarding tour, readiness tracker |
 | 1.0 | Jan 2026 | Initial release with full baseline functionality |
