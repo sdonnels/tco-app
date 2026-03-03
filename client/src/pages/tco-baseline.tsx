@@ -3789,7 +3789,7 @@ export default function TcoBaseline() {
                         <div>
                           <h4 className="font-semibold text-sm" data-testid="text-qs-step2-title">Fill in Project Information (Inputs Tab)</h4>
                           <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step2-desc">
-                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can also upload a <strong>Client Logo</strong> (PNG, JPG, SVG, or WebP, max 500 KB) which will appear in the footer and in PDF exports alongside the XenTegra branding.
+                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can also upload a <strong>Client Logo</strong> (PNG, JPG, SVG, or WebP, max 500 KB) which will appear in exported reports and PDF visualizations alongside the XenTegra branding.
                           </p>
                         </div>
                       </div>
@@ -3896,17 +3896,7 @@ export default function TcoBaseline() {
 
         <footer className="mt-10" data-testid="section-footer">
           <div className="glass hairline rounded-3xl px-6 py-4">
-            <div className="flex items-center justify-between">
-              {clientLogo ? (
-                <img
-                  src={clientLogo}
-                  alt="Client logo"
-                  className="h-8 max-w-[120px] object-contain"
-                  data-testid="img-footer-client-logo"
-                />
-              ) : (
-                <div />
-              )}
+            <div className="flex items-center justify-end">
               <div className="flex flex-col items-end gap-1">
                 <img
                   src={dark ? xentegraLogoWhite : xentegraLogoBlack}
