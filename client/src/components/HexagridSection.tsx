@@ -116,7 +116,6 @@ const VDI_SUBPILLARS = ["DaaS (Cloud PC / Hosted Desktop)", "VDI (On-Premises)"]
 
 const LICENSE_EXCLUDED_SUBPILLARS = new Set([
   "PC and Mobile Devices",
-  "Endpoint OS",
 ]);
 
 export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCountsChange }: HexagridSectionProps) {
@@ -125,6 +124,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
   const [pendingVendor, setPendingVendor] = useState<string>("");
   const [pendingPlatform, setPendingPlatform] = useState<string>("");
   const [pendingVersion, setPendingVersion] = useState<string>("");
+  const [pendingCustomPlatform, setPendingCustomPlatform] = useState<string>("");
   const [pendingCustomVersion, setPendingCustomVersion] = useState<string>("");
 
   const typedData = vendorsData as PillarDef[];
@@ -139,6 +139,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
     setPendingVendor("");
     setPendingPlatform("");
     setPendingVersion("");
+    setPendingCustomPlatform("");
     setPendingCustomVersion("");
   };
 
@@ -478,6 +479,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 onValueChange={(val) => {
                                   setPendingPlatform(val);
                                   setPendingVersion("");
+                                  if (val !== "__other__") setPendingCustomPlatform("");
                                 }}
                               >
                                 <SelectTrigger className="h-7 text-xs" data-testid={`select-platform-${aKey}`}>
@@ -489,11 +491,23 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                       {p.name}
                                     </SelectItem>
                                   ))}
+                                  <SelectItem value="__other__">Other</SelectItem>
                                 </SelectContent>
                               </Select>
                             )}
 
-                            {pendingPlatform && hasVersions && (
+                            {pendingPlatform === "__other__" && (
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder="Product / Platform name..."
+                                value={pendingCustomPlatform}
+                                onChange={(e) => setPendingCustomPlatform(e.target.value)}
+                                autoFocus
+                                data-testid={`input-custom-platform-${aKey}`}
+                              />
+                            )}
+
+                            {pendingPlatform && pendingPlatform !== "__other__" && hasVersions && (
                               <Select
                                 value={pendingVersion}
                                 onValueChange={(val) => {
@@ -537,11 +551,13 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 disabled={
                                   !pendingVendor ||
                                   (hasPlatforms && !pendingPlatform) ||
-                                  (hasVersions && !pendingVersion) ||
+                                  (pendingPlatform === "__other__" && !pendingCustomPlatform.trim()) ||
+                                  (hasVersions && pendingPlatform !== "__other__" && !pendingVersion) ||
                                   (pendingVersion === "__other__" && !pendingCustomVersion.trim())
                                 }
                                 onClick={() => {
                                   const vDef = sp.vendors.find((v) => v.name === pendingVendor);
+                                  const resolvedPlatform = pendingPlatform === "__other__" ? pendingCustomPlatform.trim() : pendingPlatform;
                                   const pDef = vDef?.platforms.find((p) => p.name === pendingPlatform);
                                   const resolvedVersion = pendingVersion === "__other__" ? pendingCustomVersion.trim() : pendingVersion;
                                   const verDef = pDef?.versions?.find((v) => v.name === pendingVersion);
@@ -550,7 +566,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                     pillarData.pillar,
                                     sp.name,
                                     pendingVendor,
-                                    pendingPlatform || undefined,
+                                    resolvedPlatform || undefined,
                                     resolvedVersion || undefined,
                                     flag,
                                     vDef?.url,

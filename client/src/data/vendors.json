@@ -11,7 +11,7 @@
             "name": "Apple",
             "url": "https://www.apple.com/business/",
             "platforms": [
-              {"name": "MacBook"},
+              {"name": "macOS"},
               {"name": "iPad"},
               {"name": "iPhone"}
             ]
@@ -48,6 +48,15 @@
         "name": "Endpoint OS",
         "description": "Secure, lightweight operating systems designed to extend hardware lifecycles and reduce the local attack surface.",
         "vendors": [
+          {
+            "name": "Apple",
+            "url": "https://www.apple.com/business/",
+            "platforms": [
+              {"name": "iOS"},
+              {"name": "iPadOS"},
+              {"name": "macOS"}
+            ]
+          },
           {
             "name": "IGEL",
             "url": "https://kb.igel.com/",

@@ -138,6 +138,9 @@ type Inputs = {
     outsourcedTier2Plus: boolean;
     outsourcedOther: boolean;
     otherDescription?: string;
+    mspXentegra: boolean;
+    mspOther: boolean;
+    mspOtherProviders: string[];
   };
   observations: {
     notes?: string;
@@ -432,6 +435,9 @@ export default function TcoBaseline() {
       outsourcedHelpdesk: false,
       outsourcedTier2Plus: false,
       outsourcedOther: false,
+      mspXentegra: false,
+      mspOther: false,
+      mspOtherProviders: [],
     },
     observations: {},
     hexagridEntries: [],
@@ -536,6 +542,9 @@ export default function TcoBaseline() {
         outsourcedHelpdesk: false,
         outsourcedTier2Plus: false,
         outsourcedOther: false,
+        mspXentegra: false,
+        mspOther: false,
+        mspOtherProviders: [],
       },
       observations: {},
       hexagridEntries: [],
@@ -809,6 +818,14 @@ export default function TcoBaseline() {
     if (inputs.managedServices.outsourcedTier2Plus) outsourcedServices.push("Tier 2+ Support");
     if (inputs.managedServices.outsourcedOther) outsourcedServices.push(inputs.managedServices.otherDescription || "Other");
 
+    const mspProviders: string[] = [];
+    if (inputs.managedServices.mspXentegra) mspProviders.push("XenTegra");
+    if (inputs.managedServices.mspOther) {
+      const others = inputs.managedServices.mspOtherProviders.filter(p => p.trim());
+      if (others.length > 0) mspProviders.push(...others);
+      else mspProviders.push("Other");
+    }
+
     const managedServicesLines: CalcLine[] = [
       {
         key: "msp-total",
@@ -816,7 +833,7 @@ export default function TcoBaseline() {
         value: mspSpend,
         basis:
           inputs.managedServices.totalAnnualSpend !== undefined
-            ? `${fmtMoney(mspSpend)} (input)${outsourcedServices.length > 0 ? ` — covers: ${outsourcedServices.join(", ")}` : ""}`
+            ? `${fmtMoney(mspSpend)} (input)${outsourcedServices.length > 0 ? ` — covers: ${outsourcedServices.join(", ")}` : ""}${mspProviders.length > 0 ? ` — provider(s): ${mspProviders.join(", ")}` : ""}`
             : "Not provided (0 in baseline until known)",
         isAssumed: false,
       },
@@ -1049,6 +1066,12 @@ export default function TcoBaseline() {
     lines.push(`    Tier 2+ Support:  ${inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"}`);
     lines.push(`    Other:            ${inputs.managedServices.outsourcedOther ? "Yes" : "No"}`);
     lines.push(`    Other Description: ${inputs.managedServices.otherDescription ?? "(none)"}`);
+    lines.push("  MSP Providers:");
+    lines.push(`    XenTegra:         ${inputs.managedServices.mspXentegra ? "Yes" : "No"}`);
+    lines.push(`    Other:            ${inputs.managedServices.mspOther ? "Yes" : "No"}`);
+    if (inputs.managedServices.mspOther && inputs.managedServices.mspOtherProviders.length > 0) {
+      lines.push(`    Other Providers:  ${inputs.managedServices.mspOtherProviders.filter(p => p.trim()).join(", ") || "(none)"}`);
+    }
     lines.push("");
 
     lines.push("┌" + "─".repeat(68) + "┐");
@@ -1387,6 +1410,11 @@ export default function TcoBaseline() {
     rows.push(["Outsourced Tier 2+ Support", inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"]);
     rows.push(["Outsourced Other", inputs.managedServices.outsourcedOther ? "Yes" : "No"]);
     rows.push(["Other Description", inputs.managedServices.otherDescription ?? ""]);
+    rows.push(["MSP Provider: XenTegra", inputs.managedServices.mspXentegra ? "Yes" : "No"]);
+    rows.push(["MSP Provider: Other", inputs.managedServices.mspOther ? "Yes" : "No"]);
+    if (inputs.managedServices.mspOther && inputs.managedServices.mspOtherProviders.length > 0) {
+      rows.push(["MSP Other Providers", inputs.managedServices.mspOtherProviders.filter(p => p.trim()).join(", ")]);
+    }
     rows.push([]);
 
     rows.push(["OBSERVATIONS"]);
@@ -2289,48 +2317,47 @@ export default function TcoBaseline() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-start gap-4" data-testid="logo-upload-section">
-                    <div className="flex-1 space-y-2">
-                      <Label data-testid="label-client-logo">Client logo (optional)</Label>
-                      <div className="flex items-center gap-3">
-                        {clientLogo ? (
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={clientLogo}
-                              alt="Client logo"
-                              className="h-10 max-w-[120px] object-contain rounded border border-border bg-white p-1"
-                              data-testid="img-client-logo-preview"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={removeClientLogo}
-                              className="text-muted-foreground hover:text-destructive"
-                              data-testid="button-remove-logo"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-4" data-testid="logo-upload-section">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      <ImagePlus className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium">Client Logo</span>
+                      {clientLogo ? (
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={clientLogo}
+                            alt="Client logo"
+                            className="h-8 max-w-[100px] object-contain rounded border border-border bg-white p-0.5"
+                            data-testid="img-client-logo-preview"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={removeClientLogo}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            data-testid="button-remove-logo"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.svg,.webp"
+                            onChange={handleLogoUpload}
+                            className="hidden"
+                            data-testid="input-client-logo"
+                          />
+                          <div className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                            Upload
                           </div>
-                        ) : (
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              accept=".png,.jpg,.jpeg,.svg,.webp"
-                              onChange={handleLogoUpload}
-                              className="hidden"
-                              data-testid="input-client-logo"
-                            />
-                            <div className="inline-flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                              <ImagePlus className="h-4 w-4" />
-                              Upload logo
-                            </div>
-                          </label>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        PNG, JPG, SVG, or WebP — max 500 KB. Best at 200 × 60 px or similar wide format.
-                      </p>
+                        </label>
+                      )}
                     </div>
+                    <span className="text-[11px] text-muted-foreground">PNG, JPG, SVG, WebP — max 500 KB</span>
                   </div>
                 </Card>
 
@@ -2490,6 +2517,245 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
+                    title="Outsourced Services & MSP"
+                    description="Capture any outsourced EUC functions, MSP providers, and annual managed-services spend."
+                    testId="header-managed-services"
+                  />
+
+                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                    <div className="space-y-4" data-testid="group-msp-spend">
+                      <div className="text-sm font-semibold">Annual spend</div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="msp-total">Total MSP / managed services</Label>
+                          <Input
+                            id="msp-total"
+                            placeholder="e.g., 250000"
+                            {...numberField(inputs.managedServices.totalAnnualSpend, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                managedServices: {
+                                  ...s.managedServices,
+                                  totalAnnualSpend: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-msp-total"
+                          />
+                        </div>
+                      </div>
+
+                      {(inputs.managedServices.totalAnnualSpend ?? 0) > 0 && (
+                        <div className="rounded-2xl border bg-card/60 p-4">
+                          <div className="text-sm font-semibold">Derived cost metrics</div>
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <div className="rounded-xl border bg-card px-3 py-2">
+                              <div className="text-xs text-muted-foreground">Per device</div>
+                              <div className="text-sm font-semibold">
+                                {derived.endpoints > 0 ? fmtMoney(derived.mspCostPerDevice) : "—"}
+                              </div>
+                              {derived.endpoints === 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">Enter device counts above</div>
+                              )}
+                            </div>
+                            <div className="rounded-xl border bg-card px-3 py-2">
+                              <div className="text-xs text-muted-foreground">Per user</div>
+                              <div className="text-sm font-semibold">
+                                {derived.userCount > 0 ? fmtMoney(derived.mspCostPerUser) : "—"}
+                              </div>
+                              {derived.userCount === 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">Enter user count above</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4" data-testid="group-msp-services">
+                      <div className="text-sm font-semibold">What's outsourced?</div>
+                      <div className="rounded-2xl border bg-card/60 p-4">
+                        <div className="grid gap-3">
+                          {([
+                            { k: "outsourcedEndpointMgmt", label: "Endpoint management (UEM, imaging, lifecycle)" },
+                            { k: "outsourcedSecurity", label: "Security / EDR / SOC" },
+                            { k: "outsourcedPatching", label: "Patching & updates" },
+                            { k: "outsourcedHelpdesk", label: "Helpdesk / Tier 1 support" },
+                            { k: "outsourcedTier2Plus", label: "Tier 2+ support / engineering" },
+                            { k: "outsourcedOther", label: "Other" },
+                          ] as const).map((row) => (
+                            <div
+                              key={row.k}
+                              className="flex items-center gap-3"
+                              data-testid={`row-msp-${row.k}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={row.k}
+                                checked={Boolean(inputs.managedServices[row.k as keyof typeof inputs.managedServices])}
+                                onChange={(e) =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    managedServices: {
+                                      ...s.managedServices,
+                                      [row.k]: e.target.checked,
+                                    },
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-gray-300 accent-primary"
+                                data-testid={`checkbox-${row.k}`}
+                              />
+                              <Label htmlFor={row.k} className="cursor-pointer text-sm">
+                                {row.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        {inputs.managedServices.outsourcedOther && (
+                          <div className="mt-3">
+                            <Input
+                              placeholder="Describe other outsourced services"
+                              value={inputs.managedServices.otherDescription ?? ""}
+                              onChange={(e) =>
+                                setInputs((s) => ({
+                                  ...s,
+                                  managedServices: {
+                                    ...s.managedServices,
+                                    otherDescription: e.target.value,
+                                  },
+                                }))
+                              }
+                              data-testid="input-msp-other-desc"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-3 mt-4">
+                        <div className="text-sm font-semibold">MSP Provider</div>
+                        <div className="rounded-2xl border bg-card/60 p-4">
+                          <div className="grid gap-3">
+                            <div className="flex items-center gap-3" data-testid="row-msp-xentegra">
+                              <input
+                                type="checkbox"
+                                id="msp-xentegra"
+                                checked={inputs.managedServices.mspXentegra}
+                                onChange={(e) =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    managedServices: {
+                                      ...s.managedServices,
+                                      mspXentegra: e.target.checked,
+                                    },
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-gray-300 accent-primary"
+                                data-testid="checkbox-msp-xentegra"
+                              />
+                              <Label htmlFor="msp-xentegra" className="cursor-pointer text-sm">
+                                XenTegra
+                              </Label>
+                            </div>
+                            <div className="flex items-center gap-3" data-testid="row-msp-other">
+                              <input
+                                type="checkbox"
+                                id="msp-other-provider"
+                                checked={inputs.managedServices.mspOther}
+                                onChange={(e) =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    managedServices: {
+                                      ...s.managedServices,
+                                      mspOther: e.target.checked,
+                                      mspOtherProviders: e.target.checked ? s.managedServices.mspOtherProviders : [],
+                                    },
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-gray-300 accent-primary"
+                                data-testid="checkbox-msp-other"
+                              />
+                              <Label htmlFor="msp-other-provider" className="cursor-pointer text-sm">
+                                Other
+                              </Label>
+                            </div>
+                          </div>
+                          {inputs.managedServices.mspOther && (
+                            <div className="mt-3 space-y-2">
+                              {inputs.managedServices.mspOtherProviders.map((prov, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Input
+                                    className="h-7 text-xs flex-1"
+                                    placeholder="Provider name..."
+                                    value={prov}
+                                    onChange={(e) =>
+                                      setInputs((s) => {
+                                        const updated = [...s.managedServices.mspOtherProviders];
+                                        updated[idx] = e.target.value;
+                                        return {
+                                          ...s,
+                                          managedServices: { ...s.managedServices, mspOtherProviders: updated },
+                                        };
+                                      })
+                                    }
+                                    data-testid={`input-msp-provider-${idx}`}
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() =>
+                                      setInputs((s) => ({
+                                        ...s,
+                                        managedServices: {
+                                          ...s.managedServices,
+                                          mspOtherProviders: s.managedServices.mspOtherProviders.filter((_, i) => i !== idx),
+                                        },
+                                      }))
+                                    }
+                                    data-testid={`button-remove-provider-${idx}`}
+                                  >
+                                    ×
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    managedServices: {
+                                      ...s.managedServices,
+                                      mspOtherProviders: [...s.managedServices.mspOtherProviders, ""],
+                                    },
+                                  }))
+                                }
+                                data-testid="button-add-provider"
+                              >
+                                + Add provider
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <InlineInfo
+                      title="How this works"
+                      body="Managed services spend is part of your total baseline TCO. Identify which functions are outsourced and to which providers so the cost picture is complete and traceable."
+                      icon={<BookOpen className="h-4 w-4" />}
+                      testId="info-msp"
+                    />
+                  </div>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<Activity className="h-5 w-5 text-primary" />}
+                    eyebrow="Inputs"
                     title="EUC Pillars - Platform Cost Rollups (Optional Overrides)"
                     description="If you know total annual spend for a category, enter it here to override the calculated value. Otherwise, the tool calculates from environment data, EUC Pillar vendor costs, and assumptions."
                     testId="header-rollups"
@@ -2635,135 +2901,6 @@ export default function TcoBaseline() {
                       icon={<BookOpen className="h-4 w-4" />}
                       testId="info-rollups"
                     />
-                  </div>
-                </Card>
-
-
-                <Card className="glass hairline rounded-3xl p-6">
-                  <SectionHeader
-                    icon={<Activity className="h-5 w-5 text-primary" />}
-                    eyebrow="Inputs"
-                    title="Managed Services & Outsourcing"
-                    description="If you pay an MSP or outsource any EUC functions, capture the annual spend and what's covered."
-                    testId="header-managed-services"
-                  />
-
-                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <div className="space-y-4" data-testid="group-msp-spend">
-                      <div className="text-sm font-semibold">Annual spend</div>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="msp-total">Total MSP / managed services</Label>
-                          <Input
-                            id="msp-total"
-                            placeholder="e.g., 250000"
-                            {...numberField(inputs.managedServices.totalAnnualSpend, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                managedServices: {
-                                  ...s.managedServices,
-                                  totalAnnualSpend: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-msp-total"
-                          />
-                        </div>
-                      </div>
-
-                      {(inputs.managedServices.totalAnnualSpend ?? 0) > 0 && (
-                        <div className="rounded-2xl border bg-card/60 p-4">
-                          <div className="text-sm font-semibold">Derived cost metrics</div>
-                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                            <div className="rounded-xl border bg-card px-3 py-2">
-                              <div className="text-xs text-muted-foreground">Per device</div>
-                              <div className="text-sm font-semibold">
-                                {derived.endpoints > 0 ? fmtMoney(derived.mspCostPerDevice) : "—"}
-                              </div>
-                              {derived.endpoints === 0 && (
-                                <div className="text-xs text-muted-foreground mt-1">Enter device counts above</div>
-                              )}
-                            </div>
-                            <div className="rounded-xl border bg-card px-3 py-2">
-                              <div className="text-xs text-muted-foreground">Per user</div>
-                              <div className="text-sm font-semibold">
-                                {derived.userCount > 0 ? fmtMoney(derived.mspCostPerUser) : "—"}
-                              </div>
-                              {derived.userCount === 0 && (
-                                <div className="text-xs text-muted-foreground mt-1">Enter user count above</div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-4" data-testid="group-msp-services">
-                      <div className="text-sm font-semibold">What's outsourced?</div>
-                      <div className="rounded-2xl border bg-card/60 p-4">
-                        <div className="grid gap-3">
-                          {([
-                            { k: "outsourcedEndpointMgmt", label: "Endpoint management (UEM, imaging, lifecycle)" },
-                            { k: "outsourcedSecurity", label: "Security / EDR / SOC" },
-                            { k: "outsourcedPatching", label: "Patching & updates" },
-                            { k: "outsourcedHelpdesk", label: "Helpdesk / Tier 1 support" },
-                            { k: "outsourcedTier2Plus", label: "Tier 2+ support / engineering" },
-                            { k: "outsourcedOther", label: "Other" },
-                          ] as const).map((row) => (
-                            <div
-                              key={row.k}
-                              className="flex items-center gap-3"
-                              data-testid={`row-msp-${row.k}`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={row.k}
-                                checked={Boolean(inputs.managedServices[row.k as keyof typeof inputs.managedServices])}
-                                onChange={(e) =>
-                                  setInputs((s) => ({
-                                    ...s,
-                                    managedServices: {
-                                      ...s.managedServices,
-                                      [row.k]: e.target.checked,
-                                    },
-                                  }))
-                                }
-                                className="h-4 w-4 rounded border-gray-300 accent-primary"
-                                data-testid={`checkbox-${row.k}`}
-                              />
-                              <Label htmlFor={row.k} className="cursor-pointer text-sm">
-                                {row.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                        {inputs.managedServices.outsourcedOther && (
-                          <div className="mt-3">
-                            <Input
-                              placeholder="Describe other outsourced services"
-                              value={inputs.managedServices.otherDescription ?? ""}
-                              onChange={(e) =>
-                                setInputs((s) => ({
-                                  ...s,
-                                  managedServices: {
-                                    ...s.managedServices,
-                                    otherDescription: e.target.value,
-                                  },
-                                }))
-                              }
-                              data-testid="input-msp-other-desc"
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      <InlineInfo
-                        title="Why This Matters"
-                        body="Managed services spend is part of your total baseline TCO. Showing what's outsourced helps understand the full cost picture."
-                        icon={<BookOpen className="h-4 w-4" />}
-                        testId="info-msp"
-                      />
-                    </div>
                   </div>
                 </Card>
               </div>
@@ -3617,7 +3754,7 @@ export default function TcoBaseline() {
                         <div>
                           <h4 className="font-semibold text-sm" data-testid="text-qs-step2-title">Fill in Project Information (Inputs Tab)</h4>
                           <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step2-desc">
-                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can also upload a <strong>Client Logo</strong> (PNG, JPG, SVG, or WebP, max 500 KB) which will appear in the footer and in PDF exports alongside the XenTegra branding.
+                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can upload a <strong>Client Logo</strong> on the Inputs page (above Environment Facts) — PNG, JPG, SVG, or WebP, max 500 KB — which appears in the footer and PDF exports alongside the XenTegra branding.
                           </p>
                         </div>
                       </div>
