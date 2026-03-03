@@ -4,7 +4,7 @@ export type DraftMeta = {
   projectName: string;
   pack: string;
   lastModified: number;
-  status: "draft";
+  status: "draft" | "intake received";
 };
 
 const INDEX_KEY = "tco_drafts_index";
@@ -25,20 +25,29 @@ function saveDraftIndex(index: DraftMeta[]) {
   localStorage.setItem(INDEX_KEY, JSON.stringify(index));
 }
 
-export function createDraft(): string {
+export function createDraft(opts?: { clientName?: string; projectName?: string; status?: DraftMeta["status"] }): string {
   const id = crypto.randomUUID();
   const meta: DraftMeta = {
     id,
-    clientName: "",
-    projectName: "",
+    clientName: opts?.clientName ?? "",
+    projectName: opts?.projectName ?? "",
     pack: "Baseline TCO",
     lastModified: Date.now(),
-    status: "draft",
+    status: opts?.status ?? "draft",
   };
   const index = getDraftIndex();
   index.unshift(meta);
   saveDraftIndex(index);
   return id;
+}
+
+export function updateDraftStatus(id: string, status: DraftMeta["status"]) {
+  const index = getDraftIndex();
+  const entry = index.find((d) => d.id === id);
+  if (entry) {
+    entry.status = status;
+    saveDraftIndex(index);
+  }
 }
 
 export function saveDraftData(id: string, data: unknown, clientName?: string, projectName?: string) {

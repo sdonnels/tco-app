@@ -40,7 +40,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, migrateLegacyDraft, type DraftMeta } from "@/lib/drafts";
+import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, migrateLegacyDraft, updateDraftStatus, type DraftMeta } from "@/lib/drafts";
+import type { ImportResult } from "@/lib/intake-excel";
 import TcoHome from "@/pages/tco-home";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
 import xentegraLogoWhite from "@/assets/xentegra-white.webp";
@@ -507,6 +508,11 @@ export default function TcoBaseline() {
         inputs.project.clientName ?? "",
         inputs.project.engineerName ?? "",
       );
+      const idx = getDraftIndex();
+      const entry = idx.find((d) => d.id === currentDraftId);
+      if (entry && entry.status === "intake received") {
+        updateDraftStatus(currentDraftId, "draft");
+      }
       setDrafts(getDraftIndex());
     } catch {}
   }, [inputs, assumptions, currentDraftId, activeTab]);
@@ -2231,6 +2237,41 @@ export default function TcoBaseline() {
                   if (currentDraftId === id) {
                     setCurrentDraftId(null);
                   }
+                }}
+                onImportIntake={(result: ImportResult) => {
+                  const id = createDraft({
+                    clientName: result.clientName,
+                    projectName: result.projectName,
+                    status: "intake received",
+                  });
+                  const intakeInputs: Partial<Inputs> = {
+                    project: {
+                      clientName: result.clientName || undefined,
+                    },
+                  };
+                  const raw = result.inputs as Record<string, unknown>;
+                  if (raw.userCount !== undefined) intakeInputs.userCount = raw.userCount as number;
+                  if (raw.laptopCount !== undefined) intakeInputs.laptopCount = raw.laptopCount as number;
+                  if (raw.desktopCount !== undefined) intakeInputs.desktopCount = raw.desktopCount as number;
+                  if (raw.thinClientCount !== undefined) intakeInputs.thinClientCount = raw.thinClientCount as number;
+                  if (raw.categoryRollups) {
+                    intakeInputs.categoryRollups = {
+                      ...inputs.categoryRollups,
+                      ...(raw.categoryRollups as Partial<Inputs["categoryRollups"]>),
+                    };
+                  }
+                  if (raw.managedServices) intakeInputs.managedServices = {
+                    ...inputs.managedServices,
+                    ...(raw.managedServices as Partial<Inputs["managedServices"]>),
+                  };
+                  if (raw.hexagridEntries) intakeInputs.hexagridEntries = raw.hexagridEntries as Inputs["hexagridEntries"];
+                  if (raw.vdiUserCounts) intakeInputs.vdiUserCounts = raw.vdiUserCounts as Inputs["vdiUserCounts"];
+
+                  saveDraftData(id, { inputs: intakeInputs }, result.clientName, result.projectName);
+                  setDrafts(getDraftIndex());
+                  setInputs((prev) => ({ ...prev, ...intakeInputs }));
+                  setCurrentDraftId(id);
+                  setActiveTab("inputs");
                 }}
               />
             </TabsContent>

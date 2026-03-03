@@ -138,6 +138,21 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - **Quick Start Guide** with 9-step walkthrough covering: Home tab, Project Information, Environment Facts, EUC Pillars, Overrides, Assumptions, Observations, Summary, and Readiness Tracker
 - Files imported via Vite `?raw` suffix for client-side download generation
 
+### Excel Intake Form (Home Tab)
+- **Export Intake Form** — Generates a structured .xlsx workbook to send to customers for pre-meeting data collection
+  - Setup dialog collects Client Name (required), Project Name (optional), and section toggles
+  - Generates Cover Sheet with branding + instructions, plus one tab per selected section
+  - Sections: Environment Facts, Platform Cost Overrides, EUC Pillars, Managed Services
+  - EUC Pillars tab lists all vendors/platforms with prefixed cascading options
+  - Column C (Your Response) is highlighted for customer entry
+  - Filename: `TCO_Intake_[ClientName]_[Date].xlsx`
+  - Implementation: `client/src/lib/intake-excel.ts`
+- **Import Intake Responses** — Uploads completed .xlsx, parses responses, creates a pre-filled draft
+  - Summary/review dialog shows mapped fields (green), blank count, and errors (red)
+  - Creates draft with "intake received" status (blue badge in Recent Activity)
+  - Status auto-transitions to "draft" when consultant makes any edit
+  - Handles numeric parsing (strips $, commas), boolean fields, vendor/platform matching
+
 ### Tools Menu
 - **Generate Intake Form** — Downloads a structured JSON questionnaire for pre-meeting customer data collection
 - **Import Intake Data** — Uploads completed intake form JSON to auto-populate tool fields
@@ -156,6 +171,7 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - Multiple assessment drafts stored in localStorage (`tco_drafts_index` for metadata, `tco_draft_{id}` for data)
 - Draft management utilities in `client/src/lib/drafts.ts`
 - Recent Activity table on Home tab shows all drafts with columns: Client/Project, Pack, Last Modified, Status, Action
+- Draft statuses: "draft" (default), "intake received" (from Excel import, blue badge)
 - Resume button loads saved draft data back into the assessment
 - Delete button removes individual drafts
 - Auto-migrates legacy `tco_tool_master` localStorage data to new draft format
