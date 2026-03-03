@@ -2340,8 +2340,8 @@ export default function TcoBaseline() {
                     testId="header-inputs"
                   />
 
-                  <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2 space-y-5" data-testid="group-devices">
+                  <div className="mt-6 space-y-5">
+                    <div className="space-y-5" data-testid="group-devices">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-sm font-semibold" data-testid="text-devices-title">
@@ -2361,7 +2361,7 @@ export default function TcoBaseline() {
                           </Badge>
                         )}
                       </div>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="space-y-2">
                           <Label htmlFor="userCount" data-testid="label-usercount">
                             Total users
@@ -2427,28 +2427,14 @@ export default function TcoBaseline() {
                           />
                         </div>
                       </div>
-
                     </div>
 
-                    <div className="space-y-3" data-testid="group-how-this-works">
-                      <div className="rounded-2xl border bg-muted/30 p-4">
-                        <div className="text-sm font-semibold mb-2" data-testid="text-how-title">How This Works</div>
-                        <ul className="space-y-2 text-xs text-muted-foreground">
-                          <li className="flex gap-2">
-                            <span className="text-primary font-bold shrink-0">1.</span>
-                            <span>Enter device counts here — they drive annualized hardware cost via Assumptions.</span>
-                          </li>
-                          <li className="flex gap-2">
-                            <span className="text-primary font-bold shrink-0">2.</span>
-                            <span>Add vendors & costs in EUC Pillars below — those become your real spend data.</span>
-                          </li>
-                          <li className="flex gap-2">
-                            <span className="text-primary font-bold shrink-0">3.</span>
-                            <span>Use Overrides if you have known annual spend that should replace derived calculations.</span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
+                    <InlineInfo
+                      title="How This Works"
+                      body="Enter device counts here — they drive annualized hardware cost via Assumptions. Add vendors & costs in EUC Pillars below — those become your real spend data. Use Overrides if you have known annual spend that should replace derived calculations."
+                      icon={<BookOpen className="h-4 w-4" />}
+                      testId="info-environment"
+                    />
                   </div>
                 </Card>
 
