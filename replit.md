@@ -17,7 +17,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 ### Input Structure
 - **Project Info**: Client Name, Assessment Date, Customer Champion, XenTegra Engineer
 - **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count, VDI % of Users
-- **EUC Pillars & Platforms**: 6 pillars (Access, Virtual Desktops & Applications, Device OS & User Management, Security, App Management, Collaboration AI & Applications) with vendor selection and annual cost tracking
+- **EUC Pillars & Platforms**: 6 pillars with cascading Vendor → Platform → Version dropdowns, scoring flags (Critical Risk, Aging/Risk, Legacy), and "Other" free-text with SWOT override for Secure Enterprise Browser. Sub-pillars: Access (PC/AI/Mobile Hardware, Endpoint OS, Secure Enterprise Browser), Virtual Desktops & Applications (DaaS Cloud PC/Hosted Desktop, VDI On-Premises), Device/OS/User Management (UEM, DEX), Security (Endpoint Security, IAM, SASE), App Management (App Layering, App Readiness, Apps Config), Collaboration/AI/Applications (Workspace AI, Unified Comms & Collab)
 - **EUC Pillars - Platform Cost Rollups (Optional Overrides)**: Override calculated cost categories with known annual spend
 
 ### Assumptions (15 values matching Excel)
@@ -143,3 +143,11 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - **Import Intake Data** — Uploads completed intake form JSON to auto-populate tool fields
 - **Help** — Generates pre-filled support email with issue description and diagnostic info
 - **About** — Version info (0.4.0), technical details, XenTegra copyright and legal notices
+
+### Restart Assessment
+- **Restart Assessment** button appears in toolbar when any data has been entered
+- Hidden when assessment is in initial empty state
+- Confirmation modal with destructive "Restart" action and "Cancel" option
+- Clears all inputs, assumptions, vendor selections, scoring flags, and logo
+- Scrolls to top of page after reset (no page reload)
+- Removes saved draft from localStorage

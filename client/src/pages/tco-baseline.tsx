@@ -26,6 +26,7 @@ import {
   Upload,
   Wrench,
   X,
+  RotateCcw,
 } from "lucide-react";
 import JSZip from "jszip";
 import { Card } from "@/components/ui/card";
@@ -459,7 +460,7 @@ export default function TcoBaseline() {
     },
   });
 
-  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [restartDialogOpen, setRestartDialogOpen] = useState(false);
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [helpIssue, setHelpIssue] = useState("");
@@ -542,8 +543,20 @@ export default function TcoBaseline() {
     localStorage.removeItem("tco_tool_master");
     setClientLogo(null);
     localStorage.removeItem("tco-client-logo");
-    setClearDialogOpen(false);
+    setRestartDialogOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  const hasAnyData = useMemo(() => {
+    const p = inputs.project;
+    const e = inputs.environment;
+    const hasProject = !!(p.clientName || p.assessmentDate || p.customerChampion || p.xentegraEngineer);
+    const hasEnv = !!(e.userCount || e.laptopCount || e.desktopCount || e.thinClientCount || e.vdiPctOfUsers);
+    const hasHex = inputs.hexagridEntries.length > 0;
+    const hasOverrides = Object.values(inputs.categoryRollups ?? {}).some((v) => v !== undefined && v !== 0);
+    const hasObs = !!(inputs.observations as Record<string, unknown>)?.strengths || !!(inputs.observations as Record<string, unknown>)?.weaknesses || !!(inputs.observations as Record<string, unknown>)?.opportunities || !!(inputs.observations as Record<string, unknown>)?.threats;
+    return hasProject || hasEnv || hasHex || hasOverrides || hasObs;
+  }, [inputs]);
 
   const handleLogoUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2001,28 +2014,29 @@ export default function TcoBaseline() {
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          data-testid="button-clear-all"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Clear All
-                        </Button>
-                      </DialogTrigger>
+                    {hasAnyData && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setRestartDialogOpen(true)}
+                        data-testid="button-restart-assessment"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-1" /> Restart Assessment
+                      </Button>
+                    )}
+                    <Dialog open={restartDialogOpen} onOpenChange={setRestartDialogOpen}>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Clear all data?</DialogTitle>
-                          <DialogDescription>
-                            This will reset all inputs, assumptions, and vendor selections to their defaults. This action cannot be undone.
+                          <DialogTitle data-testid="text-restart-title">Restart Assessment?</DialogTitle>
+                          <DialogDescription data-testid="text-restart-description">
+                            This will clear all of your current selections and progress. This action cannot be undone.
                           </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setClearDialogOpen(false)} data-testid="button-clear-cancel">
+                          <Button variant="outline" onClick={() => setRestartDialogOpen(false)} data-testid="button-restart-cancel">
                             Cancel
                           </Button>
-                          <Button variant="destructive" onClick={clearAll} data-testid="button-clear-confirm">
-                            Clear everything
+                          <Button variant="destructive" onClick={clearAll} data-testid="button-restart-confirm">
+                            Restart
                           </Button>
                         </DialogFooter>
                       </DialogContent>
