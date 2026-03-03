@@ -71,13 +71,23 @@ export default function TcoHome({
               </div>
             </div>
 
-            <Button
-              className="mt-5 w-full gap-2"
-              onClick={onStartBaseline}
-              data-testid="button-start-baseline"
-            >
-              Start Free Assessment <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="mt-5 flex flex-col gap-2">
+              <Button
+                className="w-full gap-2"
+                onClick={onStartBaseline}
+                data-testid="button-start-baseline"
+              >
+                Start Assessment <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={onStartTour}
+                data-testid="button-start-tour"
+              >
+                <Sparkles className="h-4 w-4" /> Launch Interactive Tour
+              </Button>
+            </div>
           </Card>
         </motion.div>
 
@@ -85,77 +95,6 @@ export default function TcoHome({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-        >
-          <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col">
-            <Badge variant="outline" className="w-fit rounded-full text-[10px]" data-testid="badge-guided">
-              Guided Walkthrough
-            </Badge>
-            <h2 className="mt-3 text-xl font-serif tracking-tight" data-testid="text-tour-title">
-              Interactive Tour
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1" data-testid="text-tour-desc">
-              Take a step-by-step guided tour of every section before entering data.
-              Learn what each input means and how calculations flow.
-            </p>
-
-            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                Step-through walkthrough
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-3.5 w-3.5 text-yellow-500" />
-                Highlights each section in context
-              </div>
-              <div className="flex items-center gap-2">
-                <ClipboardCheck className="h-3.5 w-3.5 text-cyan-500" />
-                No data required
-              </div>
-            </div>
-
-            <Button
-              variant="outline"
-              className="mt-5 w-full gap-2"
-              onClick={onStartTour}
-              data-testid="button-start-tour"
-            >
-              Launch Tour <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Card>
-        </motion.div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
-        >
-          <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col opacity-60 pointer-events-none select-none" data-testid="card-tour-coming-soon">
-            <div className="flex items-start justify-between">
-              <Badge variant="outline" className="rounded-full text-[10px]" data-testid="badge-guided-coming-soon">
-                Guided Walkthrough
-              </Badge>
-              <Lock className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <h2 className="mt-3 text-xl font-serif tracking-tight">
-              Interactive Tour
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1">
-              Take a step-by-step guided tour of every section before entering data.
-              Learn what each input means and how calculations flow.
-            </p>
-
-            <Button disabled variant="outline" className="mt-5 w-full gap-2">
-              Coming Soon <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
         >
           <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col opacity-60 pointer-events-none select-none" data-testid="card-pro-assessment">
             <div className="flex items-start justify-between">
@@ -167,11 +106,11 @@ export default function TcoHome({
             <h2 className="mt-4 font-serif text-2xl tracking-tight" data-testid="text-pro-title">
               PRO TCO Assessment
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground" data-testid="text-pro-desc">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground flex-1" data-testid="text-pro-desc">
               Comprehensive assessment with ROI, future-state modeling, and collaboration features.
             </p>
 
-            <div className="mt-5 space-y-2">
+            <div className="mt-4 space-y-2">
               <div className="text-xs font-medium tracking-wide text-muted-foreground">Key Features</div>
               <div className="grid gap-2">
                 <div className="flex items-center gap-2 text-sm">
@@ -213,9 +152,14 @@ export default function TcoHome({
               </div>
             </div>
 
-            <Button disabled className="mt-6 w-full gap-2" size="lg" data-testid="button-start-pro">
-              Coming Soon <ArrowRight className="h-4 w-4" />
-            </Button>
+            <div className="mt-5 flex flex-col gap-2">
+              <Button disabled className="w-full gap-2" size="lg" data-testid="button-start-pro">
+                Coming Soon <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button disabled variant="outline" className="w-full gap-2" data-testid="button-tour-pro">
+                <Sparkles className="h-4 w-4" /> Launch Interactive Tour
+              </Button>
+            </div>
           </Card>
         </motion.div>
       </div>
