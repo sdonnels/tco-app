@@ -81,21 +81,15 @@ export default function TcoHome({
           </Card>
         </motion.div>
 
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
         >
-          <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col opacity-60 pointer-events-none select-none" data-testid="card-tour">
-            <div className="flex items-start justify-between">
-              <Badge variant="outline" className="rounded-full text-[10px]" data-testid="badge-guided">
-                Guided Walkthrough
-              </Badge>
-              <Lock className="h-4 w-4 text-muted-foreground" />
-            </div>
+          <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col">
+            <Badge variant="outline" className="w-fit rounded-full text-[10px]" data-testid="badge-guided">
+              Guided Walkthrough
+            </Badge>
             <h2 className="mt-3 text-xl font-serif tracking-tight" data-testid="text-tour-title">
               Interactive Tour
             </h2>
@@ -119,7 +113,40 @@ export default function TcoHome({
               </div>
             </div>
 
-            <Button disabled variant="outline" className="mt-5 w-full gap-2" data-testid="button-start-tour">
+            <Button
+              variant="outline"
+              className="mt-5 w-full gap-2"
+              onClick={onStartTour}
+              data-testid="button-start-tour"
+            >
+              Launch Tour <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Card>
+        </motion.div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
+        >
+          <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col opacity-60 pointer-events-none select-none" data-testid="card-tour-coming-soon">
+            <div className="flex items-start justify-between">
+              <Badge variant="outline" className="rounded-full text-[10px]" data-testid="badge-guided-coming-soon">
+                Guided Walkthrough
+              </Badge>
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <h2 className="mt-3 text-xl font-serif tracking-tight">
+              Interactive Tour
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1">
+              Take a step-by-step guided tour of every section before entering data.
+              Learn what each input means and how calculations flow.
+            </p>
+
+            <Button disabled variant="outline" className="mt-5 w-full gap-2">
               Coming Soon <ArrowRight className="h-4 w-4" />
             </Button>
           </Card>
