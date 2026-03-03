@@ -2341,6 +2341,24 @@ export default function TcoBaseline() {
                   />
 
                   <div className="mt-6 space-y-5">
+                    <div className="space-y-2" data-testid="group-total-users">
+                      <Label htmlFor="userCount" data-testid="label-usercount">
+                        Total users
+                      </Label>
+                      <Input
+                        id="userCount"
+                        className="max-w-[240px]"
+                        placeholder="e.g., 1500"
+                        {...numberField(inputs.environment.userCount, (v) =>
+                          setInputs((s) => ({
+                            ...s,
+                            environment: { ...s.environment, userCount: nonNeg(v) },
+                          })),
+                        )}
+                        data-testid="input-usercount"
+                      />
+                    </div>
+
                     <div className="space-y-5" data-testid="group-devices">
                       <div className="flex items-center justify-between">
                         <div>
@@ -2361,23 +2379,7 @@ export default function TcoBaseline() {
                           </Badge>
                         )}
                       </div>
-                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="userCount" data-testid="label-usercount">
-                            Total users
-                          </Label>
-                          <Input
-                            id="userCount"
-                            placeholder="e.g., 1500"
-                            {...numberField(inputs.environment.userCount, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                environment: { ...s.environment, userCount: nonNeg(v) },
-                              })),
-                            )}
-                            data-testid="input-usercount"
-                          />
-                        </div>
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <div className="space-y-2">
                           <Label htmlFor="laptops" data-testid="label-laptops">
                             Laptops
