@@ -16,8 +16,8 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 
 ### Input Structure
 - **Project Info**: Client Name, Assessment Date, Customer Champion, XenTegra Engineer
-- **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count, VDI % of Users
-- **EUC Pillars & Platforms**: 6 pillars with cascading Vendor → Platform → Version dropdowns, scoring flags (Critical Risk, Aging/Risk, Legacy), and "Other" free-text with SWOT override for Secure Enterprise Browser. Sub-pillars: Access (PC/AI/Mobile Hardware, Endpoint OS, Secure Enterprise Browser), Virtual Desktops & Applications (DaaS Cloud PC/Hosted Desktop, VDI On-Premises), Device/OS/User Management (UEM, DEX), Security (Endpoint Security, IAM, SASE), App Management (App Layering, App Readiness, Apps Config), Collaboration/AI/Applications (Workspace AI, Unified Comms & Collab)
+- **Environment**: User Count, Laptop Count, Desktop Count, Thin Client Count (VDI/DaaS user counts captured in EUC Pillars sub-pillars)
+- **EUC Pillars & Platforms**: 6 pillars with cascading Vendor → Platform → Version dropdowns, scoring flags (Critical Risk, Aging/Risk, Legacy), "Other" free-text with SWOT override for Secure Enterprise Browser, license count and license SKU per entry, VDI/DaaS user count inputs on DaaS and VDI sub-pillars. Sub-pillars: Access (PC/AI/Mobile Hardware, Endpoint OS, Secure Enterprise Browser), Virtual Desktops & Applications (DaaS Cloud PC/Hosted Desktop, VDI On-Premises), Device/OS/User Management (UEM, DEX), Security (Endpoint Security, IAM, SASE), App Management (App Layering, App Readiness, Apps Config), Collaboration/AI/Applications (Workspace AI, Unified Comms & Collab)
 - **EUC Pillars - Platform Cost Rollups (Optional Overrides)**: Override calculated cost categories with known annual spend
 
 ### Assumptions (15 values matching Excel)
@@ -34,7 +34,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 - Support & Ops = ticket labor + deployment labor
 - Licensing = users × cost/user × coverage %
 - Management & Security = endpoints × cost/endpoint
-- VDI/DaaS = VDI users × platform cost (gated on VDI presence)
+- VDI/DaaS = VDI users × platform cost (VDI user counts entered directly in EUC Pillars DaaS/VDI sub-pillars)
 - Overhead = subtotal × overhead %
 
 ### Summary Metrics

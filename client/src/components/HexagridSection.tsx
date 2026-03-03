@@ -52,11 +52,20 @@ export type HexagridEntry = {
   isCustom: boolean;
   customProductName?: string;
   swotOverride?: string;
+  licenseCount?: number;
+  licenseSku?: string;
+};
+
+type VdiUserCounts = {
+  daas?: number;
+  vdi?: number;
 };
 
 type HexagridSectionProps = {
   entries: HexagridEntry[];
   onChange: (entries: HexagridEntry[]) => void;
+  vdiUserCounts?: VdiUserCounts;
+  onVdiUserCountsChange?: (counts: VdiUserCounts) => void;
 };
 
 function fmtMoney(v: number) {
@@ -103,7 +112,9 @@ function resolveScoringFlag(
   return undefined;
 }
 
-export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
+const VDI_SUBPILLARS = ["DaaS (Cloud PC / Hosted Desktop)", "VDI (On-Premises)"];
+
+export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCountsChange }: HexagridSectionProps) {
   const [collapsedPillars, setCollapsedPillars] = useState<Record<string, boolean>>({});
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [pendingVendor, setPendingVendor] = useState<string>("");
@@ -240,6 +251,37 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
                           </Tooltip>
                         </div>
 
+                        {VDI_SUBPILLARS.includes(sp.name) && vdiUserCounts && onVdiUserCountsChange && (
+                          <div className="mb-2 flex items-center gap-2">
+                            <label className="text-[11px] text-muted-foreground whitespace-nowrap">
+                              VDI/DaaS users
+                            </label>
+                            <Input
+                              className="w-[100px] h-7 text-xs"
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="e.g., 200"
+                              value={
+                                (sp.name.startsWith("DaaS") ? vdiUserCounts.daas : vdiUserCounts.vdi) === undefined
+                                  ? ""
+                                  : String(sp.name.startsWith("DaaS") ? vdiUserCounts.daas : vdiUserCounts.vdi)
+                              }
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                const key = sp.name.startsWith("DaaS") ? "daas" : "vdi";
+                                if (raw.trim() === "") {
+                                  onVdiUserCountsChange({ ...vdiUserCounts, [key]: undefined });
+                                  return;
+                                }
+                                const next = Number(raw);
+                                if (!Number.isFinite(next) || next < 0) return;
+                                onVdiUserCountsChange({ ...vdiUserCounts, [key]: next });
+                              }}
+                              data-testid={`input-vdi-users-${sp.name.startsWith("DaaS") ? "daas" : "vdi"}`}
+                            />
+                          </div>
+                        )}
+
                         {spEntries.map((entry) => (
                           <div
                             key={entry.id}
@@ -348,6 +390,39 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
                                   })
                                 }
                                 data-testid={`input-notes-${entry.id}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-1.5 pl-1">
+                              <Input
+                                className="w-[100px] shrink-0 h-7 text-xs"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="License count"
+                                value={
+                                  entry.licenseCount === undefined ? "" : String(entry.licenseCount)
+                                }
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (raw.trim() === "") {
+                                    updateEntry(entry.id, { licenseCount: undefined });
+                                    return;
+                                  }
+                                  const next = Number(raw);
+                                  if (!Number.isFinite(next)) return;
+                                  updateEntry(entry.id, { licenseCount: next });
+                                }}
+                                data-testid={`input-license-count-${entry.id}`}
+                              />
+                              <Input
+                                className="flex-1 min-w-0 h-7 text-xs"
+                                placeholder="License SKU"
+                                value={entry.licenseSku ?? ""}
+                                onChange={(e) =>
+                                  updateEntry(entry.id, {
+                                    licenseSku: e.target.value || undefined,
+                                  })
+                                }
+                                data-testid={`input-license-sku-${entry.id}`}
                               />
                             </div>
                           </div>

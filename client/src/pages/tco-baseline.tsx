@@ -95,6 +95,10 @@ type Inputs = {
     vdiDaasAnnual?: number;
     overheadAnnual?: number;
   };
+  vdiUserCounts: {
+    daas?: number;
+    vdi?: number;
+  };
   vdiDaas: {
     vdiPresent: YesNo;
     vdiPctOfUsers?: number;
@@ -402,6 +406,7 @@ export default function TcoBaseline() {
     project: {},
     environment: {},
     categoryRollups: {},
+    vdiUserCounts: {},
     vdiDaas: {
       vdiPresent: "unknown",
       citrixPresent: "unknown",
@@ -505,6 +510,7 @@ export default function TcoBaseline() {
       project: {},
       environment: {},
       categoryRollups: {},
+      vdiUserCounts: {},
       vdiDaas: {
         vdiPresent: "unknown",
         citrixPresent: "unknown",
@@ -671,9 +677,9 @@ export default function TcoBaseline() {
     const userCount = nonNeg(inputs.environment.userCount) ?? 0;
     const endpoints = laptops + desktops + thinClients;
 
-    const vdiPctOfUsers = nonNeg(inputs.vdiDaas.vdiPctOfUsers) ?? 0;
-    const vdiPresent = inputs.vdiDaas.vdiPresent === "yes" || vdiPctOfUsers > 0;
-    const vdiUserCount = vdiPresent ? Math.round(userCount * vdiPctOfUsers / 100) : 0;
+    const vdiDirectCount = (nonNeg(inputs.vdiUserCounts?.daas) ?? 0) + (nonNeg(inputs.vdiUserCounts?.vdi) ?? 0);
+    const vdiPresent = inputs.vdiDaas.vdiPresent === "yes" || vdiDirectCount > 0;
+    const vdiUserCount = vdiDirectCount;
 
     const derivedEndUserDevices =
       (laptops * assumptions.deviceUnitCost.laptop / assumptions.deviceRefreshYears.laptop) +
@@ -1019,7 +1025,8 @@ export default function TcoBaseline() {
         entries.forEach((e) => {
           const flagStr = e.scoringFlag ? ` [${e.scoringFlag}]` : "";
           const nameStr = e.isCustom ? `${e.vendorName}${e.customProductName ? " — " + e.customProductName : ""}` : e.vendorName;
-          lines.push(`    ${nameStr} (${e.subPillar}): ${e.yearlyCost ? fmtMoney(e.yearlyCost) + "/yr" : "(no cost)"}${flagStr}${e.notes ? ` — ${e.notes}` : ""}`);
+          const licStr = e.licenseCount ? ` | ${e.licenseCount} licenses${e.licenseSku ? ` (${e.licenseSku})` : ""}` : "";
+          lines.push(`    ${nameStr} (${e.subPillar}): ${e.yearlyCost ? fmtMoney(e.yearlyCost) + "/yr" : "(no cost)"}${flagStr}${licStr}${e.notes ? ` — ${e.notes}` : ""}`);
         });
       });
       lines.push(`  ─────────────────────────────────────────────`);
@@ -1349,7 +1356,7 @@ export default function TcoBaseline() {
     rows.push(["Overhead %", String(assumptions.overhead.pctOfTotal * 100)]);
     rows.push([]);
 
-    rows.push(["EUC PILLARS & PLATFORMS", "Sub-Pillar", "Vendor", "Annual Cost", "Scoring Flag", "Notes"]);
+    rows.push(["EUC PILLARS & PLATFORMS", "Sub-Pillar", "Vendor", "Annual Cost", "Scoring Flag", "License Count", "License SKU", "Notes"]);
     if (inputs.hexagridEntries.length > 0) {
       const pillarGroups = inputs.hexagridEntries.reduce((acc, e) => {
         if (!acc[e.pillar]) acc[e.pillar] = [];
@@ -1359,12 +1366,12 @@ export default function TcoBaseline() {
       Object.entries(pillarGroups).forEach(([pillar, entries]) => {
         entries.forEach((e) => {
           const csvName = e.isCustom ? `${e.vendorName}${e.customProductName ? " — " + e.customProductName : ""}` : e.vendorName;
-          rows.push([pillar, e.subPillar, csvName, String(e.yearlyCost ?? 0), e.scoringFlag ?? "", e.notes ?? ""]);
+          rows.push([pillar, e.subPillar, csvName, String(e.yearlyCost ?? 0), e.scoringFlag ?? "", String(e.licenseCount ?? ""), e.licenseSku ?? "", e.notes ?? ""]);
         });
       });
-      rows.push(["EUC Pillars Total", "", "", String(derived.hexagridTotal), "", ""]);
+      rows.push(["EUC Pillars Total", "", "", String(derived.hexagridTotal), "", "", "", ""]);
     } else {
-      rows.push(["(No vendor entries)", "", "", "", ""]);
+      rows.push(["(No vendor entries)", "", "", "", "", "", "", ""]);
     }
     rows.push([]);
 
@@ -2333,8 +2340,8 @@ export default function TcoBaseline() {
                     testId="header-inputs"
                   />
 
-                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <div className="space-y-5" data-testid="group-devices">
+                  <div className="mt-6 grid gap-6 lg:grid-cols-3">
+                    <div className="lg:col-span-2 space-y-5" data-testid="group-devices">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="text-sm font-semibold" data-testid="text-devices-title">
@@ -2344,13 +2351,15 @@ export default function TcoBaseline() {
                             Counts only. No pricing here.
                           </div>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className="rounded-full"
-                          data-testid="badge-endpoints"
-                        >
-                          {fmtNumber(derived.endpoints)} endpoints
-                        </Badge>
+                        {derived.endpoints > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="rounded-full"
+                            data-testid="badge-endpoints"
+                          >
+                            {fmtNumber(derived.endpoints)} endpoints
+                          </Badge>
+                        )}
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
@@ -2418,55 +2427,26 @@ export default function TcoBaseline() {
                           />
                         </div>
                       </div>
+
                     </div>
 
-                    <div className="space-y-5" data-testid="group-vdi">
-                      <div>
-                        <div className="text-sm font-semibold" data-testid="text-vdi-title">
-                          VDI / DaaS
-                        </div>
-                        <div className="text-xs text-muted-foreground" data-testid="text-vdi-subtitle">
-                          Percentage of users on virtual desktop infrastructure.
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="vdiPct" data-testid="label-vdipct">
-                            VDI % of users
-                          </Label>
-                          <Input
-                            id="vdiPct"
-                            placeholder="e.g., 20"
-                            {...numberField(inputs.vdiDaas.vdiPctOfUsers, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                vdiDaas: { ...s.vdiDaas, vdiPctOfUsers: nonNeg(v) },
-                              })),
-                            )}
-                            data-testid="input-tier1"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-vdi-derived">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="text-sm font-semibold" data-testid="text-derived-title">
-                              Derived VDI users
-                            </div>
-                            <div className="mt-1 text-xs text-muted-foreground" data-testid="text-derived-subtitle">
-                              Based on user count and VDI percentage.
-                            </div>
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className="rounded-full"
-                            data-testid="badge-derived"
-                          >
-                            {fmtNumber(derived.vdiUserCount)} VDI users
-                          </Badge>
-                        </div>
+                    <div className="space-y-3" data-testid="group-how-this-works">
+                      <div className="rounded-2xl border bg-muted/30 p-4">
+                        <div className="text-sm font-semibold mb-2" data-testid="text-how-title">How This Works</div>
+                        <ul className="space-y-2 text-xs text-muted-foreground">
+                          <li className="flex gap-2">
+                            <span className="text-primary font-bold shrink-0">1.</span>
+                            <span>Enter device counts here — they drive annualized hardware cost via Assumptions.</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="text-primary font-bold shrink-0">2.</span>
+                            <span>Add vendors & costs in EUC Pillars below — those become your real spend data.</span>
+                          </li>
+                          <li className="flex gap-2">
+                            <span className="text-primary font-bold shrink-0">3.</span>
+                            <span>Use Overrides if you have known annual spend that should replace derived calculations.</span>
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   </div>
@@ -2486,6 +2466,10 @@ export default function TcoBaseline() {
                       entries={inputs.hexagridEntries}
                       onChange={(entries) =>
                         setInputs((s) => ({ ...s, hexagridEntries: entries }))
+                      }
+                      vdiUserCounts={inputs.vdiUserCounts}
+                      onVdiUserCountsChange={(counts) =>
+                        setInputs((s) => ({ ...s, vdiUserCounts: counts }))
                       }
                     />
 
