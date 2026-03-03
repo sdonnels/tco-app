@@ -1,4 +1,4 @@
-# TCO Baseline Micro-Assessment Tool i ''
+# TCO Baseline Micro-Assessment Tool
 
 ## Overview
 
