@@ -114,6 +114,13 @@ function resolveScoringFlag(
 
 const VDI_SUBPILLARS = ["DaaS (Cloud PC / Hosted Desktop)", "VDI (On-Premises)"];
 
+const LICENSE_EXCLUDED_SUBPILLARS = new Set([
+  "PC, AI, Mobile Hardware",
+  "Endpoint OS",
+  "Identity & Access Mgmt (IAM)",
+  "Secure Access Service Edge (SASE)",
+]);
+
 export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCountsChange }: HexagridSectionProps) {
   const [collapsedPillars, setCollapsedPillars] = useState<Record<string, boolean>>({});
   const [addingTo, setAddingTo] = useState<string | null>(null);
@@ -359,12 +366,13 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 </Select>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5 pl-1">
+                            <div className="flex items-center gap-1.5 pl-1 pt-0.5">
+                              <span className="text-[10px] text-muted-foreground whitespace-nowrap w-[52px] shrink-0">Cost</span>
                               <Input
-                                className="w-[130px] shrink-0 h-7 text-xs"
+                                className="w-[90px] shrink-0 h-7 text-xs"
                                 type="text"
                                 inputMode="numeric"
-                                placeholder="Cost/Annual"
+                                placeholder="Annual $"
                                 value={
                                   entry.yearlyCost === undefined ? "" : String(entry.yearlyCost)
                                 }
@@ -392,39 +400,42 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 data-testid={`input-notes-${entry.id}`}
                               />
                             </div>
-                            <div className="flex items-center gap-1.5 pl-1">
-                              <Input
-                                className="w-[100px] shrink-0 h-7 text-xs"
-                                type="text"
-                                inputMode="numeric"
-                                placeholder="License count"
-                                value={
-                                  entry.licenseCount === undefined ? "" : String(entry.licenseCount)
-                                }
-                                onChange={(e) => {
-                                  const raw = e.target.value;
-                                  if (raw.trim() === "") {
-                                    updateEntry(entry.id, { licenseCount: undefined });
-                                    return;
+                            {!LICENSE_EXCLUDED_SUBPILLARS.has(entry.subPillar) && (
+                              <div className="flex items-center gap-1.5 pl-1 pt-0.5">
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap w-[52px] shrink-0">Licensing</span>
+                                <Input
+                                  className="w-[90px] shrink-0 h-7 text-xs"
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="Count"
+                                  value={
+                                    entry.licenseCount === undefined ? "" : String(entry.licenseCount)
                                   }
-                                  const next = Number(raw);
-                                  if (!Number.isFinite(next)) return;
-                                  updateEntry(entry.id, { licenseCount: next });
-                                }}
-                                data-testid={`input-license-count-${entry.id}`}
-                              />
-                              <Input
-                                className="flex-1 min-w-0 h-7 text-xs"
-                                placeholder="License SKU"
-                                value={entry.licenseSku ?? ""}
-                                onChange={(e) =>
-                                  updateEntry(entry.id, {
-                                    licenseSku: e.target.value || undefined,
-                                  })
-                                }
-                                data-testid={`input-license-sku-${entry.id}`}
-                              />
-                            </div>
+                                  onChange={(e) => {
+                                    const raw = e.target.value;
+                                    if (raw.trim() === "") {
+                                      updateEntry(entry.id, { licenseCount: undefined });
+                                      return;
+                                    }
+                                    const next = Number(raw);
+                                    if (!Number.isFinite(next)) return;
+                                    updateEntry(entry.id, { licenseCount: next });
+                                  }}
+                                  data-testid={`input-license-count-${entry.id}`}
+                                />
+                                <Input
+                                  className="flex-1 min-w-0 h-7 text-xs"
+                                  placeholder="SKU / Plan name"
+                                  value={entry.licenseSku ?? ""}
+                                  onChange={(e) =>
+                                    updateEntry(entry.id, {
+                                      licenseSku: e.target.value || undefined,
+                                    })
+                                  }
+                                  data-testid={`input-license-sku-${entry.id}`}
+                                />
+                              </div>
+                            )}
                           </div>
                         ))}
 
