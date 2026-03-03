@@ -133,27 +133,23 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - Assumptions, defaults, and justification sources
 - Results, export formats, and troubleshooting
 
-### ReadMe Tab (in-app)
+### Tools Tab (formerly ReadMe)
+- **Customer Intake** card with Export Intake Form and Import Intake Responses buttons
+  - **Export Intake Form** — Generates a structured .xlsx workbook to send to customers for pre-meeting data collection
+    - Setup dialog collects Client Name (required), Project Name (optional), and section toggles
+    - Generates Cover Sheet with branding + instructions, plus one tab per selected section
+    - Sections: Environment Facts, Platform Cost Overrides, EUC Pillars, Managed Services
+    - Filename: `TCO_Intake_[ClientName]_[Date].xlsx`
+    - Implementation: `client/src/lib/intake-excel.ts`
+  - **Import Intake Responses** — Uploads completed .xlsx, parses responses, creates a pre-filled draft
+    - Summary/review dialog shows mapped fields (green), blank count, and errors (red)
+    - Creates draft with "intake received" status (blue badge in Recent Activity)
+    - Status auto-transitions to "draft" when consultant makes any edit
 - **Documentation & Resources** card with download buttons for Documentation and FAQ markdown files
 - **Quick Start Guide** with 9-step walkthrough covering: Home tab, Project Information, Environment Facts, EUC Pillars, Overrides, Assumptions, Observations, Summary, and Readiness Tracker
 - Files imported via Vite `?raw` suffix for client-side download generation
 
-### Excel Intake Form (Home Tab)
-- **Export Intake Form** — Generates a structured .xlsx workbook to send to customers for pre-meeting data collection
-  - Setup dialog collects Client Name (required), Project Name (optional), and section toggles
-  - Generates Cover Sheet with branding + instructions, plus one tab per selected section
-  - Sections: Environment Facts, Platform Cost Overrides, EUC Pillars, Managed Services
-  - EUC Pillars tab lists all vendors/platforms with prefixed cascading options
-  - Column C (Your Response) is highlighted for customer entry
-  - Filename: `TCO_Intake_[ClientName]_[Date].xlsx`
-  - Implementation: `client/src/lib/intake-excel.ts`
-- **Import Intake Responses** — Uploads completed .xlsx, parses responses, creates a pre-filled draft
-  - Summary/review dialog shows mapped fields (green), blank count, and errors (red)
-  - Creates draft with "intake received" status (blue badge in Recent Activity)
-  - Status auto-transitions to "draft" when consultant makes any edit
-  - Handles numeric parsing (strips $, commas), boolean fields, vendor/platform matching
-
-### Tools Menu
+### Tools Menu (dropdown in header toolbar)
 - **Generate Intake Form** — Downloads a structured JSON questionnaire for pre-meeting customer data collection
 - **Import Intake Data** — Uploads completed intake form JSON to auto-populate tool fields
 - **Help** — Generates pre-filled support email with issue description and diagnostic info

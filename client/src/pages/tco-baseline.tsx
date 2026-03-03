@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -26,7 +26,11 @@ import {
   Upload,
   Wrench,
   X,
+  XCircle,
   RotateCcw,
+  FileSpreadsheet,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 import JSZip from "jszip";
 import { Card } from "@/components/ui/card";
@@ -41,7 +45,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, migrateLegacyDraft, updateDraftStatus, type DraftMeta } from "@/lib/drafts";
-import type { ImportResult } from "@/lib/intake-excel";
+import {
+  exportIntakeForm,
+  parseIntakeFile,
+  type IntakeSections,
+  type ImportResult,
+} from "@/lib/intake-excel";
 import TcoHome from "@/pages/tco-home";
 import AuditTracePage from "@/components/AuditTracePage";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
@@ -485,6 +494,20 @@ export default function TcoBaseline() {
   const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const [helpIssue, setHelpIssue] = useState("");
   const [helpSent, setHelpSent] = useState(false);
+
+  const [excelExportOpen, setExcelExportOpen] = useState(false);
+  const [excelClientName, setExcelClientName] = useState("");
+  const [excelProjectName, setExcelProjectName] = useState("");
+  const [excelSections, setExcelSections] = useState<IntakeSections>({
+    environmentFacts: true,
+    eucPillars: true,
+    platformCostOverrides: true,
+    managedServices: true,
+  });
+  const [excelImportResult, setExcelImportResult] = useState<ImportResult | null>(null);
+  const [excelImportOpen, setExcelImportOpen] = useState(false);
+  const [excelImportError, setExcelImportError] = useState<string | null>(null);
+  const excelFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const migratedId = migrateLegacyDraft();
@@ -1989,6 +2012,78 @@ export default function TcoBaseline() {
     fileInput.click();
   }, []);
 
+  const handleExcelExport = useCallback(() => {
+    if (!excelClientName.trim()) return;
+    exportIntakeForm(excelClientName.trim(), excelProjectName.trim(), excelSections);
+    setExcelExportOpen(false);
+    setExcelClientName("");
+    setExcelProjectName("");
+  }, [excelClientName, excelProjectName, excelSections]);
+
+  const handleExcelFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      e.target.value = "";
+      if (!file.name.endsWith(".xlsx")) {
+        setExcelImportError("Please upload an Excel file (.xlsx).");
+        return;
+      }
+      try {
+        const buf = await file.arrayBuffer();
+        const result = parseIntakeFile(buf);
+        setExcelImportResult(result);
+        setExcelImportOpen(true);
+        setExcelImportError(null);
+      } catch {
+        setExcelImportError(
+          "This file doesn't match the expected intake form template. Please ensure you're uploading a completed TCO Intake Form.",
+        );
+      }
+    },
+    [],
+  );
+
+  const handleExcelCreateDraft = useCallback(() => {
+    if (!excelImportResult) return;
+    const result = excelImportResult;
+    const id = createDraft({
+      clientName: result.clientName,
+      projectName: result.projectName,
+      status: "intake received",
+    });
+    const intakeInputs: Partial<Inputs> = {
+      project: {
+        clientName: result.clientName || undefined,
+      },
+    };
+    const raw = result.inputs as Record<string, unknown>;
+    if (raw.userCount !== undefined) intakeInputs.userCount = raw.userCount as number;
+    if (raw.laptopCount !== undefined) intakeInputs.laptopCount = raw.laptopCount as number;
+    if (raw.desktopCount !== undefined) intakeInputs.desktopCount = raw.desktopCount as number;
+    if (raw.thinClientCount !== undefined) intakeInputs.thinClientCount = raw.thinClientCount as number;
+    if (raw.categoryRollups) {
+      intakeInputs.categoryRollups = {
+        ...inputs.categoryRollups,
+        ...(raw.categoryRollups as Partial<Inputs["categoryRollups"]>),
+      };
+    }
+    if (raw.managedServices) intakeInputs.managedServices = {
+      ...inputs.managedServices,
+      ...(raw.managedServices as Partial<Inputs["managedServices"]>),
+    };
+    if (raw.hexagridEntries) intakeInputs.hexagridEntries = raw.hexagridEntries as Inputs["hexagridEntries"];
+    if (raw.vdiUserCounts) intakeInputs.vdiUserCounts = raw.vdiUserCounts as Inputs["vdiUserCounts"];
+
+    saveDraftData(id, { inputs: intakeInputs }, result.clientName, result.projectName);
+    setDrafts(getDraftIndex());
+    setInputs((prev) => ({ ...prev, ...intakeInputs }));
+    setCurrentDraftId(id);
+    setExcelImportOpen(false);
+    setExcelImportResult(null);
+    setActiveTab("inputs");
+  }, [excelImportResult, inputs.categoryRollups, inputs.managedServices]);
+
   const sendHelpEmail = useCallback(() => {
     const subject = encodeURIComponent("TCO Baseline Tool - Support Request");
     const body = encodeURIComponent(
@@ -2191,8 +2286,8 @@ export default function TcoBaseline() {
                   <TabsTrigger value="summary" data-testid="tab-summary">
                     Summary
                   </TabsTrigger>
-                  <TabsTrigger value="readme" data-testid="tab-readme">
-                    ReadMe
+                  <TabsTrigger value="readme" data-testid="tab-tools">
+                    Tools
                   </TabsTrigger>
                   {debugMode && (
                     <TabsTrigger value="audit" data-testid="tab-audit">
@@ -2265,41 +2360,6 @@ export default function TcoBaseline() {
                   if (currentDraftId === id) {
                     setCurrentDraftId(null);
                   }
-                }}
-                onImportIntake={(result: ImportResult) => {
-                  const id = createDraft({
-                    clientName: result.clientName,
-                    projectName: result.projectName,
-                    status: "intake received",
-                  });
-                  const intakeInputs: Partial<Inputs> = {
-                    project: {
-                      clientName: result.clientName || undefined,
-                    },
-                  };
-                  const raw = result.inputs as Record<string, unknown>;
-                  if (raw.userCount !== undefined) intakeInputs.userCount = raw.userCount as number;
-                  if (raw.laptopCount !== undefined) intakeInputs.laptopCount = raw.laptopCount as number;
-                  if (raw.desktopCount !== undefined) intakeInputs.desktopCount = raw.desktopCount as number;
-                  if (raw.thinClientCount !== undefined) intakeInputs.thinClientCount = raw.thinClientCount as number;
-                  if (raw.categoryRollups) {
-                    intakeInputs.categoryRollups = {
-                      ...inputs.categoryRollups,
-                      ...(raw.categoryRollups as Partial<Inputs["categoryRollups"]>),
-                    };
-                  }
-                  if (raw.managedServices) intakeInputs.managedServices = {
-                    ...inputs.managedServices,
-                    ...(raw.managedServices as Partial<Inputs["managedServices"]>),
-                  };
-                  if (raw.hexagridEntries) intakeInputs.hexagridEntries = raw.hexagridEntries as Inputs["hexagridEntries"];
-                  if (raw.vdiUserCounts) intakeInputs.vdiUserCounts = raw.vdiUserCounts as Inputs["vdiUserCounts"];
-
-                  saveDraftData(id, { inputs: intakeInputs }, result.clientName, result.projectName);
-                  setDrafts(getDraftIndex());
-                  setInputs((prev) => ({ ...prev, ...intakeInputs }));
-                  setCurrentDraftId(id);
-                  setActiveTab("inputs");
                 }}
               />
             </TabsContent>
@@ -3739,12 +3799,81 @@ export default function TcoBaseline() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="readme" className="mt-5" data-testid="panel-readme">
+            <TabsContent value="readme" className="mt-5" data-testid="panel-tools">
               <div className="grid gap-6">
                 <Card className="glass hairline rounded-3xl p-6">
                   <SectionHeader
+                    icon={<FileSpreadsheet className="h-5 w-5 text-primary" />}
+                    eyebrow="Customer Intake"
+                    title="Excel Intake Forms"
+                    description="Export a structured workbook for customer data collection, or import completed responses to pre-fill an assessment."
+                    testId="header-intake"
+                  />
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Download className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">Export Intake Form</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Generate a structured .xlsx workbook with Cover Sheet and data tabs to send to the customer before the assessment meeting.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => setExcelExportOpen(true)}
+                        data-testid="button-export-intake"
+                      >
+                        <Download className="h-4 w-4" /> Export Intake Form
+                      </Button>
+                    </div>
+
+                    <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <FileUp className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">Import Intake Responses</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Upload a completed .xlsx intake form to parse responses and create a pre-filled draft assessment.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => excelFileInputRef.current?.click()}
+                        data-testid="button-import-intake"
+                      >
+                        <FileUp className="h-4 w-4" /> Import Responses
+                      </Button>
+                      <input
+                        ref={excelFileInputRef}
+                        type="file"
+                        accept=".xlsx"
+                        className="hidden"
+                        onChange={handleExcelFileSelect}
+                        data-testid="input-import-file"
+                      />
+                    </div>
+                  </div>
+
+                  {excelImportError && (
+                    <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                      <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                      {excelImportError}
+                      <button
+                        className="ml-auto text-xs underline"
+                        onClick={() => setExcelImportError(null)}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
                     icon={<BookMarked className="h-5 w-5 text-primary" />}
-                    eyebrow="ReadMe"
+                    eyebrow="Resources"
                     title="Documentation & Resources"
                     description="Download reference materials and learn how to use the tool."
                     testId="header-readme"
@@ -4057,6 +4186,181 @@ export default function TcoBaseline() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setAboutDialogOpen(false)} data-testid="button-about-close">
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={excelExportOpen} onOpenChange={setExcelExportOpen}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-export-intake">
+          <DialogHeader>
+            <DialogTitle>Export Intake Form</DialogTitle>
+            <DialogDescription>
+              Generate a structured Excel workbook to send to the customer for pre-meeting data collection.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="intake-client">Client Name *</Label>
+              <Input
+                id="intake-client"
+                placeholder="e.g., Globex Corp"
+                value={excelClientName}
+                onChange={(e) => setExcelClientName(e.target.value)}
+                data-testid="input-export-client"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="intake-project">Project Name (optional)</Label>
+              <Input
+                id="intake-project"
+                placeholder="e.g., Q1 2026 Assessment"
+                value={excelProjectName}
+                onChange={(e) => setExcelProjectName(e.target.value)}
+                data-testid="input-export-project"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Sections to include</Label>
+              <div className="rounded-lg border p-3 space-y-2">
+                {([
+                  { key: "environmentFacts" as const, label: "Environment Facts" },
+                  { key: "platformCostOverrides" as const, label: "Platform Cost Overrides" },
+                  { key: "eucPillars" as const, label: "EUC Pillars" },
+                  { key: "managedServices" as const, label: "Managed Services" },
+                ] as const).map((s) => (
+                  <label key={s.key} className="flex items-center gap-2 cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={excelSections[s.key]}
+                      onChange={() => setExcelSections((prev) => ({ ...prev, [s.key]: !prev[s.key] }))}
+                      className="h-4 w-4 rounded accent-primary"
+                      data-testid={`checkbox-section-${s.key}`}
+                    />
+                    {s.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcelExportOpen(false)} data-testid="button-export-cancel">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleExcelExport}
+              disabled={!excelClientName.trim()}
+              className="gap-2"
+              data-testid="button-export-confirm"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Download .xlsx
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={excelImportOpen} onOpenChange={setExcelImportOpen}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] overflow-y-auto" data-testid="dialog-import-review">
+          <DialogHeader>
+            <DialogTitle>Import Review</DialogTitle>
+            <DialogDescription>
+              Review the imported data before creating a draft assessment.
+            </DialogDescription>
+          </DialogHeader>
+
+          {excelImportResult && (
+            <div className="space-y-4 py-2">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border p-3">
+                  <div className="text-xs text-muted-foreground">Client</div>
+                  <div className="text-sm font-medium">{excelImportResult.clientName || "—"}</div>
+                </div>
+                <div className="rounded-lg border p-3">
+                  <div className="text-xs text-muted-foreground">Project</div>
+                  <div className="text-sm font-medium">{excelImportResult.projectName || "—"}</div>
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <Check className="h-4 w-4 text-green-500" />
+                  <div>
+                    <div className="text-lg font-semibold">{excelImportResult.mapped.length}</div>
+                    <div className="text-[11px] text-muted-foreground">Mapped fields</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
+                  <div>
+                    <div className="text-lg font-semibold">{excelImportResult.blankCount}</div>
+                    <div className="text-[11px] text-muted-foreground">Blank (skipped)</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <XCircle className="h-4 w-4 text-destructive" />
+                  <div>
+                    <div className="text-lg font-semibold">{excelImportResult.errors.length}</div>
+                    <div className="text-[11px] text-muted-foreground">Errors</div>
+                  </div>
+                </div>
+              </div>
+
+              {excelImportResult.mapped.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Mapped Fields
+                  </div>
+                  <div className="rounded-lg border divide-y max-h-48 overflow-y-auto">
+                    {excelImportResult.mapped.map((m, i) => (
+                      <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                        <Check className="h-3 w-3 text-green-500 shrink-0" />
+                        <span className="font-medium truncate">{m.field}</span>
+                        <span className="text-muted-foreground ml-auto truncate max-w-[120px]">
+                          {String(m.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {excelImportResult.errors.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-destructive mb-2">
+                    Errors
+                  </div>
+                  <div className="rounded-lg border border-destructive/30 divide-y max-h-32 overflow-y-auto">
+                    {excelImportResult.errors.map((e, i) => (
+                      <div key={i} className="flex items-start gap-2 px-3 py-1.5 text-xs">
+                        <AlertTriangle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-medium">{e.field}:</span>{" "}
+                          <span className="text-muted-foreground">"{e.value}"</span>
+                          {e.errorMsg && (
+                            <span className="text-destructive ml-1">— {e.errorMsg}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExcelImportOpen(false)} data-testid="button-import-cancel">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleExcelCreateDraft}
+              className="gap-2"
+              disabled={!excelImportResult || (!excelImportResult.clientName && excelImportResult.mapped.length === 0)}
+              data-testid="button-import-create-draft"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Create Draft Assessment
             </Button>
           </DialogFooter>
         </DialogContent>
