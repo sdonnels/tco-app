@@ -2317,47 +2317,48 @@ export default function TcoBaseline() {
                     </div>
                   </div>
 
-                </Card>
-
-                <Card className="glass hairline rounded-3xl p-4" data-testid="logo-upload-section">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <ImagePlus className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium">Client Logo</span>
-                      {clientLogo ? (
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={clientLogo}
-                            alt="Client logo"
-                            className="h-8 max-w-[100px] object-contain rounded border border-border bg-white p-0.5"
-                            data-testid="img-client-logo-preview"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={removeClientLogo}
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                            data-testid="button-remove-logo"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            accept=".png,.jpg,.jpeg,.svg,.webp"
-                            onChange={handleLogoUpload}
-                            className="hidden"
-                            data-testid="input-client-logo"
-                          />
-                          <div className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                            Upload
+                  <div className="mt-4 flex items-start gap-4" data-testid="logo-upload-section">
+                    <div className="flex-1 space-y-2">
+                      <Label data-testid="label-client-logo">Client logo (optional)</Label>
+                      <div className="flex items-center gap-3">
+                        {clientLogo ? (
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={clientLogo}
+                              alt="Client logo"
+                              className="h-10 max-w-[120px] object-contain rounded border border-border bg-white p-1"
+                              data-testid="img-client-logo-preview"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={removeClientLogo}
+                              className="text-muted-foreground hover:text-destructive"
+                              data-testid="button-remove-logo"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
-                        </label>
-                      )}
+                        ) : (
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept=".png,.jpg,.jpeg,.svg,.webp"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                              data-testid="input-client-logo"
+                            />
+                            <div className="inline-flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                              <ImagePlus className="h-4 w-4" />
+                              Upload logo
+                            </div>
+                          </label>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG, SVG, or WebP — max 500 KB. Best at 200 × 60 px or similar wide format.
+                      </p>
                     </div>
-                    <span className="text-[11px] text-muted-foreground">PNG, JPG, SVG, WebP — max 500 KB</span>
                   </div>
                 </Card>
 
@@ -3754,7 +3755,7 @@ export default function TcoBaseline() {
                         <div>
                           <h4 className="font-semibold text-sm" data-testid="text-qs-step2-title">Fill in Project Information (Inputs Tab)</h4>
                           <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step2-desc">
-                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can upload a <strong>Client Logo</strong> on the Inputs page (above Environment Facts) — PNG, JPG, SVG, or WebP, max 500 KB — which appears in the footer and PDF exports alongside the XenTegra branding.
+                            Enter the <strong>Client Name</strong>, <strong>Assessment Date</strong>, <strong>Customer Champion</strong>, and <strong>XenTegra Engineer</strong>. You can also upload a <strong>Client Logo</strong> (PNG, JPG, SVG, or WebP, max 500 KB) which will appear in the footer and in PDF exports alongside the XenTegra branding.
                           </p>
                         </div>
                       </div>
