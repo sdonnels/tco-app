@@ -292,15 +292,15 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                         {spEntries.map((entry) => (
                           <div
                             key={entry.id}
-                            className="py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors space-y-1"
+                            className="rounded-lg border border-sky-500/20 overflow-hidden space-y-0"
                             data-testid={`vendor-row-${entry.id}`}
                           >
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 bg-sky-500/15 px-2 py-1.5">
                               <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
                                 {entry.isCustom ? (
                                   <div className="flex gap-1 flex-1 min-w-0">
                                     <Input
-                                      className="h-7 text-xs font-medium flex-1 min-w-[100px]"
+                                      className="h-7 text-xs font-semibold flex-1 min-w-[100px] bg-transparent border-sky-500/30"
                                       value={entry.vendorName}
                                       onChange={(e) =>
                                         updateEntry(entry.id, { vendorName: e.target.value })
@@ -309,7 +309,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                       data-testid={`input-custom-name-${entry.id}`}
                                     />
                                     <Input
-                                      className="h-7 text-xs font-medium flex-1 min-w-[100px]"
+                                      className="h-7 text-xs font-semibold flex-1 min-w-[100px] bg-transparent border-sky-500/30"
                                       value={entry.customProductName ?? ""}
                                       onChange={(e) =>
                                         updateEntry(entry.id, { customProductName: e.target.value || undefined })
@@ -319,7 +319,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                     />
                                   </div>
                                 ) : (
-                                  <span className="text-xs font-medium truncate">
+                                  <span className="text-xs font-semibold text-sky-300">
                                     {entry.vendorName}
                                   </span>
                                 )}
@@ -329,7 +329,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                     href={entry.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-muted-foreground hover:text-foreground shrink-0"
+                                    className="text-sky-400/60 hover:text-sky-300 shrink-0"
                                     data-testid={`link-vendor-${entry.id}`}
                                   >
                                     <Link2 className="h-3 w-3" />
@@ -339,15 +339,16 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="shrink-0 h-7 w-7"
+                                className="shrink-0 h-7 w-7 hover:bg-sky-500/20"
                                 onClick={() => removeEntry(entry.id)}
                                 data-testid={`button-delete-${entry.id}`}
                               >
                                 <X className="h-3.5 w-3.5" />
                               </Button>
                             </div>
+                            <div className="px-2 py-1.5 space-y-1">
                             {entry.isCustom && sp.hasOtherWithSwot && (
-                              <div className="pl-1">
+                              <div>
                                 <Select
                                   value={entry.swotOverride ?? ""}
                                   onValueChange={(val) =>
@@ -366,7 +367,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 </Select>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5 pl-1 pt-0.5">
+                            <div className="flex items-center gap-1.5">
                               <span className="text-[10px] text-muted-foreground whitespace-nowrap w-[52px] shrink-0">Cost</span>
                               <Input
                                 className="w-[90px] shrink-0 h-7 text-xs"
@@ -401,7 +402,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                               />
                             </div>
                             {!LICENSE_EXCLUDED_SUBPILLARS.has(entry.subPillar) && (
-                              <div className="flex items-center gap-1.5 pl-1 pt-0.5">
+                              <div className="flex items-center gap-1.5">
                                 <span className="text-[10px] text-muted-foreground whitespace-nowrap w-[52px] shrink-0">Licensing</span>
                                 <Input
                                   className="w-[90px] shrink-0 h-7 text-xs"
@@ -436,6 +437,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 />
                               </div>
                             )}
+                            </div>
                           </div>
                         ))}
 
