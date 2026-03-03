@@ -1,7 +1,7 @@
 [
   {
-    "pillar": "Access",
-    "description": "The ability to access applications and information from anywhere, using any device. It focuses on workplace independence and mobility.",
+    "pillar": "Endpoint Hardware & OS",
+    "description": "Physical endpoint devices and their operating systems — the foundation of the end-user computing environment.",
     "sub_pillars": [
       {
         "name": "PC, AI, Mobile Hardware",
@@ -77,6 +77,47 @@
             "url": "https://www.unicon.com/",
             "platforms": [
               {"name": "eLux"}
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "pillar": "Access",
+    "description": "The ability to access applications and information from anywhere, using any device. It focuses on workplace independence and mobility.",
+    "sub_pillars": [
+      {
+        "name": "VPN",
+        "description": "Virtual Private Network solutions providing secure remote access to enterprise resources.",
+        "vendors": [
+          {
+            "name": "Cisco",
+            "url": "https://www.cisco.com/",
+            "platforms": [
+              {"name": "AnyConnect"},
+              {"name": "Secure Client"}
+            ]
+          },
+          {
+            "name": "Fortinet",
+            "url": "https://www.fortinet.com/",
+            "platforms": [
+              {"name": "FortiClient VPN"}
+            ]
+          },
+          {
+            "name": "Palo Alto Networks",
+            "url": "https://docs.paloaltonetworks.com/",
+            "platforms": [
+              {"name": "GlobalProtect"}
+            ]
+          },
+          {
+            "name": "Zscaler",
+            "url": "https://www.zscaler.com/",
+            "platforms": [
+              {"name": "Zscaler Private Access (ZPA)"}
             ]
           }
         ]

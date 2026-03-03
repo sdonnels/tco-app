@@ -703,13 +703,14 @@ export default function TcoBaseline() {
         .filter((e) => e.pillar === pillar)
         .reduce((sum, e) => sum + (e.yearlyCost ?? 0), 0);
 
+    const hexHardware = hexPillarCost("Endpoint Hardware & OS");
     const hexAccess = hexPillarCost("Access");
     const hexVdi = hexPillarCost("Virtual Desktops & Applications");
     const hexMgmt = hexPillarCost("Device, OS & User Management");
     const hexSecurity = hexPillarCost("Security");
     const hexAppMgmt = hexPillarCost("App Management");
     const hexCollab = hexPillarCost("Collaboration, AI & Applications");
-    const hexagridTotal = hexAccess + hexVdi + hexMgmt + hexSecurity + hexAppMgmt + hexCollab;
+    const hexagridTotal = hexHardware + hexAccess + hexVdi + hexMgmt + hexSecurity + hexAppMgmt + hexCollab;
 
     const mgmtSecurityFromPillars = hexMgmt + hexSecurity;
     const hasToolSpend = mgmtSecurityFromPillars > 0;
@@ -872,6 +873,7 @@ export default function TcoBaseline() {
       costFromInputs,
       costFromAssumptions,
       hexagridTotal,
+      hexHardware,
       hexAccess,
       hexVdi,
       hexMgmt,
@@ -928,6 +930,7 @@ export default function TcoBaseline() {
         eucPillars: {
           total: derived.hexagridTotal,
           byPillar: {
+            endpointHardwareOs: derived.hexHardware,
             access: derived.hexAccess,
             virtualDesktops: derived.hexVdi,
             deviceManagement: derived.hexMgmt,
