@@ -125,6 +125,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
   const [pendingVendor, setPendingVendor] = useState<string>("");
   const [pendingPlatform, setPendingPlatform] = useState<string>("");
   const [pendingVersion, setPendingVersion] = useState<string>("");
+  const [pendingCustomVersion, setPendingCustomVersion] = useState<string>("");
 
   const typedData = vendorsData as PillarDef[];
 
@@ -138,6 +139,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
     setPendingVendor("");
     setPendingPlatform("");
     setPendingVersion("");
+    setPendingCustomVersion("");
   };
 
   const startAdding = (key: string) => {
@@ -494,6 +496,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 value={pendingVersion}
                                 onValueChange={(val) => {
                                   setPendingVersion(val);
+                                  if (val !== "__other__") setPendingCustomVersion("");
                                 }}
                               >
                                 <SelectTrigger className="h-7 text-xs" data-testid={`select-version-${aKey}`}>
@@ -508,8 +511,20 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                       )}
                                     </SelectItem>
                                   ))}
+                                  <SelectItem value="__other__">Other</SelectItem>
                                 </SelectContent>
                               </Select>
+                            )}
+
+                            {pendingVersion === "__other__" && (
+                              <Input
+                                className="h-7 text-xs"
+                                placeholder="Enter version..."
+                                value={pendingCustomVersion}
+                                onChange={(e) => setPendingCustomVersion(e.target.value)}
+                                autoFocus
+                                data-testid={`input-custom-version-${aKey}`}
+                              />
                             )}
 
                             <div className="flex gap-1.5 pt-0.5">
@@ -520,11 +535,13 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                 disabled={
                                   !pendingVendor ||
                                   (hasPlatforms && !pendingPlatform) ||
-                                  (hasVersions && !pendingVersion)
+                                  (hasVersions && !pendingVersion) ||
+                                  (pendingVersion === "__other__" && !pendingCustomVersion.trim())
                                 }
                                 onClick={() => {
                                   const vDef = sp.vendors.find((v) => v.name === pendingVendor);
                                   const pDef = vDef?.platforms.find((p) => p.name === pendingPlatform);
+                                  const resolvedVersion = pendingVersion === "__other__" ? pendingCustomVersion.trim() : pendingVersion;
                                   const verDef = pDef?.versions?.find((v) => v.name === pendingVersion);
                                   const flag = resolveScoringFlag(vDef, pDef, verDef);
                                   addEntry(
@@ -532,7 +549,7 @@ export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCou
                                     sp.name,
                                     pendingVendor,
                                     pendingPlatform || undefined,
-                                    pendingVersion || undefined,
+                                    resolvedVersion || undefined,
                                     flag,
                                     vDef?.url,
                                     false,
