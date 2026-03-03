@@ -43,6 +43,7 @@ import { cn } from "@/lib/utils";
 import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, migrateLegacyDraft, updateDraftStatus, type DraftMeta } from "@/lib/drafts";
 import type { ImportResult } from "@/lib/intake-excel";
 import TcoHome from "@/pages/tco-home";
+import AuditTracePage from "@/components/AuditTracePage";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
 import xentegraLogoWhite from "@/assets/xentegra-white.webp";
 import xentegraLogoBlack from "@/assets/xentegra-black.webp";
@@ -400,8 +401,11 @@ export default function TcoBaseline() {
     return localStorage.getItem("tco-client-logo");
   });
   const [activeTab, setActiveTab] = useState<
-    "home" | "inputs" | "assumptions" | "observations" | "summary" | "readme"
+    "home" | "inputs" | "assumptions" | "observations" | "summary" | "readme" | "audit"
   >("home");
+  const [debugMode, setDebugMode] = useState(() => {
+    return localStorage.getItem("tco-debug-mode") === "true";
+  });
 
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
@@ -2028,6 +2032,11 @@ export default function TcoBaseline() {
                   >
                     EUC Total Cost of Ownership
                   </Badge>
+                  {debugMode && (
+                    <Badge variant="outline" className="rounded-full border-amber-500 text-amber-600 dark:text-amber-400 text-[10px]" data-testid="badge-debug">
+                      DEBUG
+                    </Badge>
+                  )}
                 </div>
                 <h1
                   className="mt-2 font-serif text-3xl tracking-tight sm:text-4xl"
@@ -2047,13 +2056,27 @@ export default function TcoBaseline() {
 
               <div className="flex flex-col items-stretch gap-2 sm:items-end">
                 <div className="flex items-center justify-between gap-2 sm:justify-end">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Dark</span>
-                    <Switch
-                      checked={dark}
-                      onCheckedChange={setDark}
-                      data-testid="switch-theme"
-                    />
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Debug</span>
+                      <Switch
+                        checked={debugMode}
+                        onCheckedChange={(v) => {
+                          setDebugMode(v);
+                          localStorage.setItem("tco-debug-mode", String(v));
+                          if (!v && activeTab === "audit") setActiveTab("home");
+                        }}
+                        data-testid="switch-debug"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Dark</span>
+                      <Switch
+                        checked={dark}
+                        onCheckedChange={setDark}
+                        data-testid="switch-theme"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -2171,6 +2194,11 @@ export default function TcoBaseline() {
                   <TabsTrigger value="readme" data-testid="tab-readme">
                     ReadMe
                   </TabsTrigger>
+                  {debugMode && (
+                    <TabsTrigger value="audit" data-testid="tab-audit">
+                      Audit / Trace
+                    </TabsTrigger>
+                  )}
                 </TabsList>
               )}
 
@@ -3891,6 +3919,12 @@ export default function TcoBaseline() {
                 </Card>
               </div>
             </TabsContent>
+
+            {debugMode && (
+              <TabsContent value="audit" className="mt-5" data-testid="panel-audit">
+                <AuditTracePage inputs={inputs} assumptions={assumptions} />
+              </TabsContent>
+            )}
           </Tabs>
         </main>
 

@@ -159,6 +159,21 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - **Help** — Generates pre-filled support email with issue description and diagnostic info
 - **About** — Version info (0.4.0), technical details, XenTegra copyright and legal notices
 
+### Debug Mode / Audit Trace
+- **Debug Mode toggle** in header (next to Dark mode), persisted in localStorage as `tco-debug-mode`
+- When enabled: amber "DEBUG" badge appears in header, "Audit / Trace" tab appears in navigation
+- When disabled: audit tab and badge completely hidden, no performance impact
+- **Audit / Trace page** (`client/src/components/AuditTracePage.tsx`):
+  - Collapsible sections: Environment Facts, EUC Pillars & Platforms, Platform Cost Overrides, Managed Services & Outsourcing, Assumptions, Calculated Outputs / Results
+  - Every field displayed as a trace card with: Field Name, Current Value, Source, Source Detail, Formula, Formula with Values, Intermediate Steps, Default Value, Dependency Links
+  - Source types: User Entry (blue), Intake Import (purple), Default/Assumption (amber, visually prominent), Calculated (green), Override (red)
+  - Summary dashboard with field counts by source type
+  - Search across field names, values, formulas
+  - Filter by source type (toggle badges) and section (dropdown)
+  - "Show Defaults Only" quick filter
+  - Clickable dependency links that scroll to and highlight the referenced trace card
+  - Export to .xlsx with one sheet per section: `TCO_Audit_Trace_[ClientName]_[Date].xlsx`
+
 ### Restart Assessment
 - **Restart Assessment** button appears in toolbar when any data has been entered
 - Hidden when assessment is in initial empty state
