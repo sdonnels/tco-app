@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, migrateLegacyDraft, type DraftMeta } from "@/lib/drafts";
 import TcoHome from "@/pages/tco-home";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
 import xentegraLogoWhite from "@/assets/xentegra-white.webp";
@@ -394,6 +395,9 @@ export default function TcoBaseline() {
     "home" | "inputs" | "assumptions" | "observations" | "summary" | "readme"
   >("home");
 
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<DraftMeta[]>([]);
+
   const [inputs, setInputs] = useState<Inputs>({
     project: {},
     environment: {},
@@ -467,30 +471,34 @@ export default function TcoBaseline() {
   const [helpSent, setHelpSent] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("tco_tool_master");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.inputs) {
-          setInputs((prev) => ({
-            ...prev,
-            ...parsed.inputs,
-            hexagridEntries: parsed.inputs.hexagridEntries ?? [],
-          }));
-        }
-        if (parsed.assumptions) setAssumptions(parsed.assumptions);
+    const migratedId = migrateLegacyDraft();
+    if (migratedId) {
+      setCurrentDraftId(migratedId);
+      const data = loadDraftData(migratedId) as { inputs?: Partial<Inputs>; assumptions?: typeof assumptions } | null;
+      if (data?.inputs) {
+        setInputs((prev) => ({
+          ...prev,
+          ...data.inputs,
+          hexagridEntries: data.inputs?.hexagridEntries ?? [],
+        }));
       }
-    } catch {}
+      if (data?.assumptions) setAssumptions(data.assumptions);
+    }
+    setDrafts(getDraftIndex());
   }, []);
 
   useEffect(() => {
+    if (!currentDraftId) return;
     try {
-      localStorage.setItem(
-        "tco_tool_master",
-        JSON.stringify({ inputs, assumptions }),
+      saveDraftData(
+        currentDraftId,
+        { inputs, assumptions, activeTab },
+        inputs.project.clientName ?? "",
+        inputs.project.engineerName ?? "",
       );
+      setDrafts(getDraftIndex());
     } catch {}
-  }, [inputs, assumptions]);
+  }, [inputs, assumptions, currentDraftId, activeTab]);
 
   const clearAll = useCallback(() => {
     setInputs({
@@ -540,18 +548,24 @@ export default function TcoBaseline() {
       vdi: { platformCostPerVdiUserPerYear: 800 },
       overhead: { pctOfTotal: 0.07 },
     });
+    if (currentDraftId) {
+      deleteDraft(currentDraftId);
+      setCurrentDraftId(null);
+    }
     localStorage.removeItem("tco_tool_master");
     setClientLogo(null);
     localStorage.removeItem("tco-client-logo");
     setRestartDialogOpen(false);
+    setDrafts(getDraftIndex());
+    setActiveTab("home");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  }, [currentDraftId]);
 
   const hasAnyData = useMemo(() => {
     const p = inputs.project;
     const e = inputs.environment;
-    const hasProject = !!(p.clientName || p.assessmentDate || p.customerChampion || p.xentegraEngineer);
-    const hasEnv = !!(e.userCount || e.laptopCount || e.desktopCount || e.thinClientCount || e.vdiPctOfUsers);
+    const hasProject = !!(p.clientName || p.assessmentDate || p.customerChampion || p.engineerName);
+    const hasEnv = !!(e.userCount || e.laptopCount || e.desktopCount || e.thinClientCount);
     const hasHex = inputs.hexagridEntries.length > 0;
     const hasOverrides = Object.values(inputs.categoryRollups ?? {}).some((v) => v !== undefined && v !== 0);
     const hasObs = !!(inputs.observations as Record<string, unknown>)?.strengths || !!(inputs.observations as Record<string, unknown>)?.weaknesses || !!(inputs.observations as Record<string, unknown>)?.opportunities || !!(inputs.observations as Record<string, unknown>)?.threats;
@@ -602,7 +616,13 @@ export default function TcoBaseline() {
       title: "Input Your Environment",
       content: "Enter your user counts, device counts, and EUC vendor costs across 6 pillars — Access, Virtual Desktops, Device Management, Security, App Management, and Collaboration.",
       placement: "bottom" as const,
-      action: () => setActiveTab("inputs"),
+      action: () => {
+        if (!currentDraftId) {
+          const id = createDraft();
+          setCurrentDraftId(id);
+        }
+        setActiveTab("inputs");
+      },
     },
     {
       target: "[data-testid='readiness-panel']",
@@ -1906,6 +1926,10 @@ export default function TcoBaseline() {
             }
             return updated;
           });
+          if (!currentDraftId) {
+            const id = createDraft();
+            setCurrentDraftId(id);
+          }
           setActiveTab("inputs");
           alert("Intake data imported successfully! Review the Inputs tab to verify the imported values.");
         } catch {
@@ -2140,7 +2164,37 @@ export default function TcoBaseline() {
             </div>
 
             <TabsContent value="home" className="mt-5" data-testid="panel-home">
-              <TcoHome onStartBaseline={() => setActiveTab("inputs")} onStartTour={handleStartTour} />
+              <TcoHome
+                onStartBaseline={() => {
+                  const id = createDraft();
+                  setCurrentDraftId(id);
+                  setActiveTab("inputs");
+                }}
+                onStartTour={handleStartTour}
+                drafts={drafts}
+                onResumeDraft={(id) => {
+                  const data = loadDraftData(id) as { inputs?: Partial<Inputs>; assumptions?: typeof assumptions; activeTab?: string } | null;
+                  if (data?.inputs) {
+                    setInputs((prev) => ({
+                      ...prev,
+                      ...data.inputs,
+                      hexagridEntries: data.inputs?.hexagridEntries ?? [],
+                    }));
+                  }
+                  if (data?.assumptions) setAssumptions(data.assumptions);
+                  setCurrentDraftId(id);
+                  const validTabs = ["inputs", "assumptions", "observations", "summary", "readme"] as const;
+                  const savedTab = data?.activeTab as typeof validTabs[number] | undefined;
+                  setActiveTab(savedTab && validTabs.includes(savedTab) ? savedTab : "inputs");
+                }}
+                onDeleteDraft={(id) => {
+                  deleteDraft(id);
+                  setDrafts(getDraftIndex());
+                  if (currentDraftId === id) {
+                    setCurrentDraftId(null);
+                  }
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="inputs" className="mt-5" data-testid="panel-inputs">

@@ -151,3 +151,13 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - Clears all inputs, assumptions, vendor selections, scoring flags, and logo
 - Scrolls to top of page after reset (no page reload)
 - Removes saved draft from localStorage
+
+### Recent Activity / Draft Management
+- Multiple assessment drafts stored in localStorage (`tco_drafts_index` for metadata, `tco_draft_{id}` for data)
+- Draft management utilities in `client/src/lib/drafts.ts`
+- Recent Activity table on Home tab shows all drafts with columns: Client/Project, Pack, Last Modified, Status, Action
+- Resume button loads saved draft data back into the assessment
+- Delete button removes individual drafts
+- Auto-migrates legacy `tco_tool_master` localStorage data to new draft format
+- Table hidden when no drafts exist
+- Sorted by last modified descending
