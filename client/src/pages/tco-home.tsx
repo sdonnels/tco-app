@@ -1,19 +1,15 @@
 import { motion } from "framer-motion";
 import {
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
-  ClipboardCheck,
   Lock,
   Shield,
   Sparkles,
-  Zap,
   Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import type { DraftMeta } from "@/lib/drafts";
 
 interface TcoHomeProps {
@@ -97,63 +93,34 @@ export default function TcoHome({
           transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
         >
           <Card className="glass hairline rounded-2xl p-6 h-full flex flex-col opacity-60 pointer-events-none select-none" data-testid="card-pro-assessment">
-            <div className="flex items-start justify-between">
-              <Badge variant="outline" className="rounded-full text-[10px] border-amber-400 text-amber-600 dark:text-amber-400" data-testid="badge-pro">
-                PRO Assessment
-              </Badge>
-              <Lock className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <h2 className="mt-4 font-serif text-2xl tracking-tight" data-testid="text-pro-title">
+            <Badge variant="outline" className="w-fit rounded-full text-[10px] border-amber-400 text-amber-600 dark:text-amber-400" data-testid="badge-pro">
+              PRO Assessment
+            </Badge>
+            <h2 className="mt-3 text-xl font-serif tracking-tight" data-testid="text-pro-title">
               PRO TCO Assessment
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground flex-1" data-testid="text-pro-desc">
-              Comprehensive assessment with ROI, future-state modeling, and collaboration features.
+            <p className="mt-2 text-sm text-muted-foreground leading-relaxed flex-1" data-testid="text-pro-desc">
+              Comprehensive assessment with ROI, future-state modeling, and
+              multi-user collaboration. Cloud-hosted with secure storage.
             </p>
 
-            <div className="mt-4 space-y-2">
-              <div className="text-xs font-medium tracking-wide text-muted-foreground">Key Features</div>
-              <div className="grid gap-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <Sparkles className="h-4 w-4 text-accent" />
-                  <span>Advanced ROI & TCO modeling</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Zap className="h-4 w-4 text-accent" />
-                  <span>Future-state scenario planning</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Shield className="h-4 w-4 text-accent" />
-                  <span>Multi-user collaboration</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Lock className="h-4 w-4 text-accent" />
-                  <span>Secure cloud storage</span>
-                </div>
+            <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                Advanced ROI & future-state modeling
               </div>
-            </div>
-
-            <Separator className="my-5" />
-
-            <div className="space-y-3">
-              <div className="text-xs font-medium tracking-wide text-muted-foreground">Guardrails</div>
-              <div className="grid gap-2">
-                <div className="flex items-start gap-2 text-sm">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Requires paid subscription</span>
-                </div>
-                <div className="flex items-start gap-2 text-sm">
-                  <ClipboardCheck className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Google Cloud focus</span>
-                </div>
-                <div className="flex items-start gap-2 text-sm">
-                  <Lock className="mt-0.5 h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-muted-foreground">Data retained for collaboration</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <Shield className="h-3.5 w-3.5 text-blue-500" />
+                Multi-user collaboration & sharing
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="h-3.5 w-3.5 text-amber-500" />
+                Secure cloud storage & history
               </div>
             </div>
 
             <div className="mt-5 flex flex-col gap-2">
-              <Button disabled className="w-full gap-2" size="lg" data-testid="button-start-pro">
+              <Button disabled className="w-full gap-2" data-testid="button-start-pro">
                 Coming Soon <ArrowRight className="h-4 w-4" />
               </Button>
               <Button disabled variant="outline" className="w-full gap-2" data-testid="button-tour-pro">
