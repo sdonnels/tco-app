@@ -115,7 +115,7 @@ function resolveScoringFlag(
 const VDI_SUBPILLARS = ["DaaS (Cloud PC / Hosted Desktop)", "VDI (On-Premises)"];
 
 const LICENSE_EXCLUDED_SUBPILLARS = new Set([
-  "PC, AI, Mobile Hardware",
+  "PC and Mobile Devices",
   "Endpoint OS",
 ]);
 

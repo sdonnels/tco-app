@@ -4,7 +4,7 @@
     "description": "Physical endpoint devices and their operating systems — the foundation of the end-user computing environment.",
     "sub_pillars": [
       {
-        "name": "PC, AI, Mobile Hardware",
+        "name": "PC and Mobile Devices",
         "description": "Enterprise hardware platforms including laptops, desktops, and mobile devices used across the workforce.",
         "vendors": [
           {
