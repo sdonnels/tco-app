@@ -984,7 +984,9 @@ export default function TcoBaseline() {
         const pillarTotal = entries.reduce((s, e) => s + (e.yearlyCost ?? 0), 0);
         lines.push(`  ${pillar}: ${fmtMoney(pillarTotal)}`);
         entries.forEach((e) => {
-          lines.push(`    ${e.vendorName} (${e.subPillar}): ${e.yearlyCost ? fmtMoney(e.yearlyCost) + "/yr" : "(no cost)"}${e.notes ? ` — ${e.notes}` : ""}`);
+          const flagStr = e.scoringFlag ? ` [${e.scoringFlag}]` : "";
+          const nameStr = e.isCustom ? `${e.vendorName}${e.customProductName ? " — " + e.customProductName : ""}` : e.vendorName;
+          lines.push(`    ${nameStr} (${e.subPillar}): ${e.yearlyCost ? fmtMoney(e.yearlyCost) + "/yr" : "(no cost)"}${flagStr}${e.notes ? ` — ${e.notes}` : ""}`);
         });
       });
       lines.push(`  ─────────────────────────────────────────────`);
@@ -1314,7 +1316,7 @@ export default function TcoBaseline() {
     rows.push(["Overhead %", String(assumptions.overhead.pctOfTotal * 100)]);
     rows.push([]);
 
-    rows.push(["EUC PILLARS & PLATFORMS", "Sub-Pillar", "Vendor", "Annual Cost", "Notes"]);
+    rows.push(["EUC PILLARS & PLATFORMS", "Sub-Pillar", "Vendor", "Annual Cost", "Scoring Flag", "Notes"]);
     if (inputs.hexagridEntries.length > 0) {
       const pillarGroups = inputs.hexagridEntries.reduce((acc, e) => {
         if (!acc[e.pillar]) acc[e.pillar] = [];
@@ -1323,10 +1325,11 @@ export default function TcoBaseline() {
       }, {} as Record<string, typeof inputs.hexagridEntries>);
       Object.entries(pillarGroups).forEach(([pillar, entries]) => {
         entries.forEach((e) => {
-          rows.push([pillar, e.subPillar, e.vendorName, String(e.yearlyCost ?? 0), e.notes ?? ""]);
+          const csvName = e.isCustom ? `${e.vendorName}${e.customProductName ? " — " + e.customProductName : ""}` : e.vendorName;
+          rows.push([pillar, e.subPillar, csvName, String(e.yearlyCost ?? 0), e.scoringFlag ?? "", e.notes ?? ""]);
         });
       });
-      rows.push(["EUC Pillars Total", "", "", String(derived.hexagridTotal), ""]);
+      rows.push(["EUC Pillars Total", "", "", String(derived.hexagridTotal), "", ""]);
     } else {
       rows.push(["(No vendor entries)", "", "", "", ""]);
     }

@@ -1,22 +1,57 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Info, Link2, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Info, Link2, Plus, X, AlertTriangle, AlertCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import vendorsData from "@/data/vendors.json";
+
+type VendorPlatformVersion = {
+  name: string;
+  scoringFlag?: string;
+};
+
+type VendorPlatform = {
+  name: string;
+  scoringFlag?: string;
+  versions?: VendorPlatformVersion[];
+};
+
+type VendorDef = {
+  name: string;
+  url: string;
+  scoringFlag?: string;
+  platforms: VendorPlatform[];
+};
+
+type SubPillarDef = {
+  name: string;
+  description: string;
+  hasOtherWithSwot?: boolean;
+  vendors: VendorDef[];
+};
+
+type PillarDef = {
+  pillar: string;
+  description: string;
+  sub_pillars: SubPillarDef[];
+};
 
 export type HexagridEntry = {
   id: string;
   pillar: string;
   subPillar: string;
   vendorName: string;
+  platform?: string;
+  version?: string;
+  scoringFlag?: string;
   url?: string;
   yearlyCost?: number;
   notes?: string;
   isCustom: boolean;
+  customProductName?: string;
+  swotOverride?: string;
 };
 
 type HexagridSectionProps = {
@@ -32,32 +67,92 @@ function fmtMoney(v: number) {
   });
 }
 
+function ScoringBadge({ flag }: { flag: string }) {
+  const colors: Record<string, string> = {
+    "Critical Risk": "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800",
+    "Aging / Risk": "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+    "Legacy": "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-200 dark:border-orange-800",
+  };
+  const icons: Record<string, React.ReactNode> = {
+    "Critical Risk": <AlertCircle className="h-3 w-3" />,
+    "Aging / Risk": <AlertTriangle className="h-3 w-3" />,
+    "Legacy": <Clock className="h-3 w-3" />,
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border",
+        colors[flag] || "bg-gray-100 text-gray-700 border-gray-200"
+      )}
+      data-testid={`scoring-badge-${flag}`}
+    >
+      {icons[flag]}
+      {flag}
+    </span>
+  );
+}
+
+function resolveScoringFlag(
+  vendorDef: VendorDef | undefined,
+  platformDef: VendorPlatform | undefined,
+  versionDef: VendorPlatformVersion | undefined
+): string | undefined {
+  if (versionDef?.scoringFlag) return versionDef.scoringFlag;
+  if (platformDef?.scoringFlag) return platformDef.scoringFlag;
+  if (vendorDef?.scoringFlag) return vendorDef.scoringFlag;
+  return undefined;
+}
+
 export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
-  const [openPopovers, setOpenPopovers] = useState<Record<string, boolean>>({});
   const [collapsedPillars, setCollapsedPillars] = useState<Record<string, boolean>>({});
+  const [addingTo, setAddingTo] = useState<string | null>(null);
+  const [pendingVendor, setPendingVendor] = useState<string>("");
+  const [pendingPlatform, setPendingPlatform] = useState<string>("");
+  const [pendingVersion, setPendingVersion] = useState<string>("");
+
+  const typedData = vendorsData as PillarDef[];
 
   const togglePillar = (pillar: string) => {
     setCollapsedPillars((prev) => ({ ...prev, [pillar]: !prev[pillar] }));
   };
 
-  const popoverKey = (pillar: string, subPillar: string) => `${pillar}::${subPillar}`;
+  const addKey = (pillar: string, subPillar: string) => `${pillar}::${subPillar}`;
 
-  const setPopoverOpen = (key: string, open: boolean) => {
-    setOpenPopovers((prev) => ({ ...prev, [key]: open }));
+  const resetPending = () => {
+    setPendingVendor("");
+    setPendingPlatform("");
+    setPendingVersion("");
+  };
+
+  const startAdding = (key: string) => {
+    setAddingTo(key);
+    resetPending();
+  };
+
+  const cancelAdding = () => {
+    setAddingTo(null);
+    resetPending();
   };
 
   const addEntry = (
     pillar: string,
     subPillar: string,
     vendorName: string,
-    url?: string,
+    platform: string | undefined,
+    version: string | undefined,
+    scoringFlag: string | undefined,
+    url: string | undefined,
     isCustom = false,
   ) => {
+    const displayName = [vendorName, platform, version].filter(Boolean).join(" — ");
     const newEntry: HexagridEntry = {
       id: crypto.randomUUID(),
       pillar,
       subPillar,
-      vendorName,
+      vendorName: isCustom ? "" : displayName,
+      platform,
+      version,
+      scoringFlag,
       url,
       isCustom,
     };
@@ -84,7 +179,7 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
   return (
     <TooltipProvider delayDuration={200}>
       <div className="grid gap-4 md:grid-cols-2" data-testid="hexagrid-section">
-        {vendorsData.map((pillarData) => {
+        {typedData.map((pillarData) => {
           const collapsed = collapsedPillars[pillarData.pillar] ?? false;
           const subtotal = pillarSubtotal(pillarData.pillar);
           const hasEntriesWithCost = entriesForPillar(pillarData.pillar).some(
@@ -115,9 +210,14 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
               {!collapsed && (
                 <div className="mt-2 space-y-2">
                   {pillarData.sub_pillars.map((sp) => {
-                    const pKey = popoverKey(pillarData.pillar, sp.name);
+                    const aKey = addKey(pillarData.pillar, sp.name);
                     const spEntries = entriesForSubPillar(pillarData.pillar, sp.name);
-                    const selectedNames = spEntries.map((e) => e.vendorName);
+                    const isAdding = addingTo === aKey;
+
+                    const vendorDef = sp.vendors.find((v) => v.name === pendingVendor);
+                    const hasPlatforms = vendorDef && vendorDef.platforms.length > 0;
+                    const platformDef = vendorDef?.platforms.find((p) => p.name === pendingPlatform);
+                    const hasVersions = platformDef && platformDef.versions && platformDef.versions.length > 0;
 
                     return (
                       <div
@@ -147,23 +247,35 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
                             data-testid={`vendor-row-${entry.id}`}
                           >
                             <div className="flex items-center gap-1.5">
-                              <div className="min-w-0 flex-1 flex items-center gap-1">
+                              <div className="min-w-0 flex-1 flex items-center gap-1 flex-wrap">
                                 {entry.isCustom ? (
-                                  <Input
-                                    className="h-7 text-xs font-medium"
-                                    value={entry.vendorName}
-                                    onChange={(e) =>
-                                      updateEntry(entry.id, { vendorName: e.target.value })
-                                    }
-                                    placeholder="Custom vendor name"
-                                    data-testid={`input-custom-name-${entry.id}`}
-                                  />
+                                  <div className="flex gap-1 flex-1 min-w-0">
+                                    <Input
+                                      className="h-7 text-xs font-medium flex-1 min-w-[100px]"
+                                      value={entry.vendorName}
+                                      onChange={(e) =>
+                                        updateEntry(entry.id, { vendorName: e.target.value })
+                                      }
+                                      placeholder="Vendor name"
+                                      data-testid={`input-custom-name-${entry.id}`}
+                                    />
+                                    <Input
+                                      className="h-7 text-xs font-medium flex-1 min-w-[100px]"
+                                      value={entry.customProductName ?? ""}
+                                      onChange={(e) =>
+                                        updateEntry(entry.id, { customProductName: e.target.value || undefined })
+                                      }
+                                      placeholder="Product name"
+                                      data-testid={`input-custom-product-${entry.id}`}
+                                    />
+                                  </div>
                                 ) : (
                                   <span className="text-xs font-medium truncate">
                                     {entry.vendorName}
                                   </span>
                                 )}
-                                {entry.url && (
+                                {entry.scoringFlag && <ScoringBadge flag={entry.scoringFlag} />}
+                                {entry.url && !entry.isCustom && (
                                   <a
                                     href={entry.url}
                                     target="_blank"
@@ -185,6 +297,26 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
                                 <X className="h-3.5 w-3.5" />
                               </Button>
                             </div>
+                            {entry.isCustom && sp.hasOtherWithSwot && (
+                              <div className="pl-1">
+                                <Select
+                                  value={entry.swotOverride ?? ""}
+                                  onValueChange={(val) =>
+                                    updateEntry(entry.id, { swotOverride: val || undefined })
+                                  }
+                                >
+                                  <SelectTrigger className="h-7 text-xs w-[160px]" data-testid={`select-swot-${entry.id}`}>
+                                    <SelectValue placeholder="SWOT rating..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Strength">Strength</SelectItem>
+                                    <SelectItem value="Weakness">Weakness</SelectItem>
+                                    <SelectItem value="Opportunity">Opportunity</SelectItem>
+                                    <SelectItem value="Threat">Threat</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                             <div className="flex items-center gap-1.5 pl-1">
                               <Input
                                 className="w-[130px] shrink-0 h-7 text-xs"
@@ -221,76 +353,135 @@ export function HexagridSection({ entries, onChange }: HexagridSectionProps) {
                           </div>
                         ))}
 
-                        <Popover
-                          open={openPopovers[pKey] ?? false}
-                          onOpenChange={(open) => setPopoverOpen(pKey, open)}
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mt-1 h-6 text-[11px] gap-1 px-2"
-                              data-testid={`button-add-vendor-${pillarData.pillar}-${sp.name}`}
+                        {isAdding ? (
+                          <div
+                            className="mt-1 p-2 rounded-lg border border-dashed border-primary/30 bg-muted/20 space-y-1.5"
+                            data-testid={`add-form-${aKey}`}
+                          >
+                            <Select
+                              value={pendingVendor}
+                              onValueChange={(val) => {
+                                if (val === "__other__") {
+                                  addEntry(pillarData.pillar, sp.name, "", undefined, undefined, undefined, undefined, true);
+                                  cancelAdding();
+                                  return;
+                                }
+                                setPendingVendor(val);
+                                setPendingPlatform("");
+                                setPendingVersion("");
+                              }}
                             >
-                              <Plus className="h-3 w-3" />
-                              Select vendor...
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[280px] p-0" align="start">
-                            <Command>
-                              <CommandInput placeholder="Search vendors..." />
-                              <CommandList>
-                                <CommandEmpty>No vendor found.</CommandEmpty>
-                                <CommandGroup>
-                                  {sp.vendors.map((v) => {
-                                    const isSelected = selectedNames.includes(v.name);
-                                    return (
-                                      <CommandItem
-                                        key={v.name}
-                                        value={v.name}
-                                        onSelect={() => {
-                                          addEntry(
-                                            pillarData.pillar,
-                                            sp.name,
-                                            v.name,
-                                            v.url,
-                                            false,
-                                          );
-                                          setPopoverOpen(pKey, false);
-                                        }}
-                                        className={cn(isSelected && "opacity-60")}
-                                        data-testid={`vendor-option-${v.name}`}
-                                      >
-                                        {v.name}
-                                        {isSelected && (
-                                          <span className="ml-auto text-xs text-muted-foreground">
-                                            added
-                                          </span>
-                                        )}
-                                      </CommandItem>
-                                    );
-                                  })}
-                                  <CommandItem
-                                    value="Other..."
-                                    onSelect={() => {
-                                      addEntry(
-                                        pillarData.pillar,
-                                        sp.name,
-                                        "",
-                                        undefined,
-                                        true,
-                                      );
-                                      setPopoverOpen(pKey, false);
-                                    }}
-                                    data-testid={`vendor-option-other-${pillarData.pillar}-${sp.name}`}
-                                  >
-                                    Other...
-                                  </CommandItem>
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                              <SelectTrigger className="h-7 text-xs" data-testid={`select-vendor-${aKey}`}>
+                                <SelectValue placeholder="Select vendor..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {sp.vendors.map((v) => (
+                                  <SelectItem key={v.name} value={v.name}>
+                                    {v.name}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="__other__">Other...</SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            {pendingVendor && hasPlatforms && (
+                              <Select
+                                value={pendingPlatform}
+                                onValueChange={(val) => {
+                                  setPendingPlatform(val);
+                                  setPendingVersion("");
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs" data-testid={`select-platform-${aKey}`}>
+                                  <SelectValue placeholder="Select platform..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {vendorDef!.platforms.map((p) => (
+                                    <SelectItem key={p.name} value={p.name}>
+                                      {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+
+                            {pendingPlatform && hasVersions && (
+                              <Select
+                                value={pendingVersion}
+                                onValueChange={(val) => {
+                                  setPendingVersion(val);
+                                }}
+                              >
+                                <SelectTrigger className="h-7 text-xs" data-testid={`select-version-${aKey}`}>
+                                  <SelectValue placeholder="Select version..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {platformDef!.versions!.map((v) => (
+                                    <SelectItem key={v.name} value={v.name}>
+                                      {v.name}
+                                      {v.scoringFlag && (
+                                        <span className="ml-1 text-[10px] text-red-500">⚠ {v.scoringFlag}</span>
+                                      )}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+
+                            <div className="flex gap-1.5 pt-0.5">
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-6 text-[11px] px-2"
+                                disabled={
+                                  !pendingVendor ||
+                                  (hasPlatforms && !pendingPlatform) ||
+                                  (hasVersions && !pendingVersion)
+                                }
+                                onClick={() => {
+                                  const vDef = sp.vendors.find((v) => v.name === pendingVendor);
+                                  const pDef = vDef?.platforms.find((p) => p.name === pendingPlatform);
+                                  const verDef = pDef?.versions?.find((v) => v.name === pendingVersion);
+                                  const flag = resolveScoringFlag(vDef, pDef, verDef);
+                                  addEntry(
+                                    pillarData.pillar,
+                                    sp.name,
+                                    pendingVendor,
+                                    pendingPlatform || undefined,
+                                    pendingVersion || undefined,
+                                    flag,
+                                    vDef?.url,
+                                    false,
+                                  );
+                                  cancelAdding();
+                                }}
+                                data-testid={`button-confirm-add-${aKey}`}
+                              >
+                                Add
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 text-[11px] px-2"
+                                onClick={cancelAdding}
+                                data-testid={`button-cancel-add-${aKey}`}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-1 h-6 text-[11px] gap-1 px-2"
+                            onClick={() => startAdding(aKey)}
+                            data-testid={`button-add-vendor-${pillarData.pillar}-${sp.name}`}
+                          >
+                            <Plus className="h-3 w-3" />
+                            Select vendor...
+                          </Button>
+                        )}
                       </div>
                     );
                   })}

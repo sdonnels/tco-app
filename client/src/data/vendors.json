@@ -7,30 +7,120 @@
         "name": "PC, AI, Mobile Hardware",
         "description": "Enterprise hardware platforms including laptops, desktops, and mobile devices used across the workforce.",
         "vendors": [
-          {"name": "Apple - MacBook / iPad / iPhone", "url": "https://www.apple.com/business/"},
-          {"name": "Dell - Latitude / Precision / OptiPlex", "url": "https://www.dell.com/support/"},
-          {"name": "HP - EliteBook / ZBook / ProBook", "url": "https://support.hp.com/"},
-          {"name": "Lenovo - ThinkPad / ThinkCentre", "url": "https://support.lenovo.com/"}
+          {
+            "name": "Apple",
+            "url": "https://www.apple.com/business/",
+            "platforms": [
+              {"name": "MacBook"},
+              {"name": "iPad"},
+              {"name": "iPhone"}
+            ]
+          },
+          {
+            "name": "Dell",
+            "url": "https://www.dell.com/support/",
+            "platforms": [
+              {"name": "Latitude"},
+              {"name": "OptiPlex"},
+              {"name": "Precision"}
+            ]
+          },
+          {
+            "name": "HP",
+            "url": "https://support.hp.com/",
+            "platforms": [
+              {"name": "EliteBook"},
+              {"name": "ProBook"},
+              {"name": "ZBook"}
+            ]
+          },
+          {
+            "name": "Lenovo",
+            "url": "https://support.lenovo.com/",
+            "platforms": [
+              {"name": "ThinkCentre"},
+              {"name": "ThinkPad"}
+            ]
+          }
         ]
       },
       {
         "name": "Endpoint OS",
         "description": "Secure, lightweight operating systems designed to extend hardware lifecycles and reduce the local attack surface.",
         "vendors": [
-          {"name": "IGEL - IGEL OS (Cosmos)", "url": "https://kb.igel.com/"},
-          {"name": "Stratodesk - NoTouch OS", "url": "https://kb.stratodesk.com/"},
-          {"name": "Unicon - eLux / Scout", "url": "https://www.unicon.com/"},
-          {"name": "Microsoft - Windows 11 / Windows 10 IoT", "url": "https://learn.microsoft.com/en-us/windows/"}
+          {
+            "name": "IGEL",
+            "url": "https://kb.igel.com/",
+            "platforms": [
+              {"name": "OS 12"},
+              {"name": "OS 11", "scoringFlag": "Critical Risk"}
+            ]
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/windows/",
+            "platforms": [
+              {"name": "Windows 10 IoT"},
+              {"name": "Windows 11"}
+            ]
+          },
+          {
+            "name": "Stratodesk (Legacy)",
+            "url": "https://kb.stratodesk.com/",
+            "scoringFlag": "Critical Risk",
+            "platforms": [
+              {"name": "NoTouch OS"}
+            ]
+          },
+          {
+            "name": "Unicon",
+            "url": "https://www.unicon.com/",
+            "platforms": [
+              {"name": "eLux"}
+            ]
+          }
         ]
       },
       {
         "name": "Secure Enterprise Browser",
         "description": "A secure workspace layer within the browser to manage SaaS and web apps without full VDI/DaaS.",
+        "hasOtherWithSwot": true,
         "vendors": [
-          {"name": "Dizzion - Halo (Secure Every Browser)", "url": "https://www.dizzion.com/"},
-          {"name": "Island - Island Enterprise Browser", "url": "https://www.island.io/resources"},
-          {"name": "Talon (Palo Alto Networks) - Talon Enterprise Browser", "url": "https://docs.paloaltonetworks.com/"},
-          {"name": "Surf - Surf Security Browser", "url": "https://www.surf.security/"}
+          {
+            "name": "Citrix",
+            "url": "https://docs.citrix.com/",
+            "platforms": [
+              {"name": "Secure Private Access"}
+            ]
+          },
+          {
+            "name": "Dizzion",
+            "url": "https://www.dizzion.com/",
+            "platforms": [
+              {"name": "Halo"}
+            ]
+          },
+          {
+            "name": "Island",
+            "url": "https://www.island.io/resources",
+            "platforms": [
+              {"name": "Island Enterprise Browser"}
+            ]
+          },
+          {
+            "name": "Palo Alto Networks (Talon)",
+            "url": "https://docs.paloaltonetworks.com/",
+            "platforms": [
+              {"name": "Talon Enterprise Browser"}
+            ]
+          },
+          {
+            "name": "Surf",
+            "url": "https://www.surf.security/",
+            "platforms": [
+              {"name": "Surf Security Browser"}
+            ]
+          }
         ]
       }
     ]
@@ -40,34 +130,124 @@
     "description": "Solutions that deliver virtualized desktops and applications to simplify management and provide secure access to workloads.",
     "sub_pillars": [
       {
-        "name": "DaaS (Cloud PC)",
+        "name": "DaaS (Cloud PC / Hosted Desktop)",
         "description": "Cloud-hosted desktop-as-a-service platforms that deliver persistent or non-persistent Cloud PCs.",
         "vendors": [
-          {"name": "Microsoft - Windows 365", "url": "https://learn.microsoft.com/en-us/windows-365/"},
-          {"name": "Dizzion - Dizzion Cloud PC", "url": "https://www.dizzion.com/"},
-          {"name": "Kasm Technologies - Kasm Workspaces", "url": "https://www.kasmweb.com/docs/"}
+          {
+            "name": "Apporto",
+            "url": "https://www.apporto.com/",
+            "platforms": [
+              {"name": "Apporto Cloud Desktops"}
+            ]
+          },
+          {
+            "name": "AWS",
+            "url": "https://docs.aws.amazon.com/workspaces/",
+            "platforms": [
+              {"name": "Amazon WorkSpaces"},
+              {"name": "AppStream 2.0"}
+            ]
+          },
+          {
+            "name": "Citrix",
+            "url": "https://docs.citrix.com/",
+            "platforms": [
+              {"name": "DaaS"},
+              {"name": "DaaS Hybrid"}
+            ]
+          },
+          {
+            "name": "Dizzion",
+            "url": "https://www.dizzion.com/",
+            "platforms": [
+              {"name": "Cloud PC"},
+              {"name": "DaaS"}
+            ]
+          },
+          {
+            "name": "Kasm Technologies",
+            "url": "https://www.kasmweb.com/docs/",
+            "platforms": [
+              {"name": "Kasm Workspaces"}
+            ]
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/windows-365/",
+            "platforms": [
+              {"name": "Azure Virtual Desktop"},
+              {"name": "Windows 365"}
+            ]
+          },
+          {
+            "name": "Omnissa",
+            "url": "https://docs.omnissa.com/",
+            "platforms": [
+              {"name": "Horizon Cloud"}
+            ]
+          },
+          {
+            "name": "Parallels",
+            "url": "https://www.parallels.com/products/ras/",
+            "platforms": [
+              {"name": "Parallels RAS"}
+            ]
+          },
+          {
+            "name": "Workspot",
+            "url": "https://www.workspot.com/",
+            "platforms": [
+              {"name": "Enterprise Desktop Cloud"}
+            ]
+          }
         ]
       },
       {
-        "name": "DaaS (Service Provider)",
-        "description": "Managed desktop-as-a-service delivered through service providers and cloud infrastructure.",
-        "vendors": [
-          {"name": "Dizzion - Dizzion Frame", "url": "https://www.dizzion.com/"},
-          {"name": "Dizzion - Dizzion Managed DaaS", "url": "https://www.dizzion.com/"},
-          {"name": "AWS - Amazon WorkSpaces / AppStream 2.0", "url": "https://docs.aws.amazon.com/workspaces/"},
-          {"name": "Workspot - Workspot Managed Services", "url": "https://www.workspot.com/"}
-        ]
-      },
-      {
-        "name": "VDI",
+        "name": "VDI (On-Premises)",
         "description": "On-premises or hybrid virtual desktop infrastructure engines for delivering desktops and apps.",
         "vendors": [
-          {"name": "Omnissa - Horizon 8", "url": "https://docs.omnissa.com/"},
-          {"name": "Citrix - Citrix Virtual Apps and Desktops", "url": "https://docs.citrix.com/"},
-          {"name": "Microsoft - Azure Virtual Desktop (AVD)", "url": "https://learn.microsoft.com/en-us/azure/virtual-desktop/"},
-          {"name": "Dizzion - Dizzion Frame", "url": "https://www.dizzion.com/"},
-          {"name": "Apporto - Apporto VDI", "url": "https://www.apporto.com/"},
-          {"name": "Parallels - Parallels RAS", "url": "https://www.parallels.com/products/ras/"}
+          {
+            "name": "Citrix",
+            "url": "https://docs.citrix.com/",
+            "platforms": [
+              {
+                "name": "Citrix Virtual Apps and Desktops",
+                "versions": [
+                  {"name": "7 2402 LTSR"},
+                  {"name": "7 2203 LTSR"},
+                  {"name": "7 1912 LTSR", "scoringFlag": "Aging / Risk"}
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Omnissa",
+            "url": "https://docs.omnissa.com/",
+            "platforms": [
+              {
+                "name": "Horizon",
+                "versions": [
+                  {"name": "Horizon 8 ESB (2111–2503)"},
+                  {"name": "Horizon 7", "scoringFlag": "Legacy"}
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Parallels",
+            "url": "https://www.parallels.com/products/ras/",
+            "platforms": [
+              {
+                "name": "Parallels RAS",
+                "versions": [
+                  {"name": "20 LTS"},
+                  {"name": "19 LTS"},
+                  {"name": "19.x CR"},
+                  {"name": "20.x CR"}
+                ]
+              }
+            ]
+          }
         ]
       }
     ]
@@ -80,26 +260,105 @@
         "name": "Unified Endpoint Mgmt (UEM)",
         "description": "Unified tools for managing the lifecycle of mobile and desktop operating systems.",
         "vendors": [
-          {"name": "Microsoft - Microsoft Intune", "url": "https://learn.microsoft.com/en-us/mem/intune/"},
-          {"name": "Omnissa - Workspace ONE UEM", "url": "https://docs.omnissa.com/"},
-          {"name": "Ivanti - Ivanti Neurons for UEM", "url": "https://www.ivanti.com/resources"},
-          {"name": "Recast Software - Application Workspace", "url": "https://www.recastsoftware.com/"},
-          {"name": "Tanium - Converged Endpoint Management (XEM)", "url": "https://docs.tanium.com/"},
-          {"name": "PDQ - PDQ Connect", "url": "https://www.pdq.com/"},
-          {"name": "JAMF - Jamf Pro", "url": "https://docs.jamf.com/"},
-          {"name": "Kaseya - Kaseya VSA / Datto RMM", "url": "https://www.kaseya.com/"}
+          {
+            "name": "Citrix",
+            "url": "https://docs.citrix.com/",
+            "platforms": [
+              {"name": "Workspace Environment Management (WEM)"}
+            ]
+          },
+          {
+            "name": "Ivanti",
+            "url": "https://www.ivanti.com/resources",
+            "platforms": [
+              {"name": "Endpoint Manager"},
+              {"name": "Neurons for UEM"}
+            ]
+          },
+          {
+            "name": "JAMF",
+            "url": "https://docs.jamf.com/",
+            "platforms": [
+              {"name": "Jamf Pro"}
+            ]
+          },
+          {
+            "name": "Kaseya",
+            "url": "https://www.kaseya.com/",
+            "platforms": [
+              {"name": "VSA"}
+            ]
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/mem/intune/",
+            "platforms": [
+              {"name": "Co-Managed"},
+              {"name": "Intune"},
+              {"name": "SCCM"}
+            ]
+          },
+          {
+            "name": "Omnissa",
+            "url": "https://docs.omnissa.com/",
+            "platforms": [
+              {"name": "Workspace ONE UEM"}
+            ]
+          },
+          {
+            "name": "PDQ",
+            "url": "https://www.pdq.com/",
+            "platforms": [
+              {"name": "PDQ Connect"},
+              {"name": "PDQ Deploy"}
+            ]
+          },
+          {
+            "name": "Recast Software",
+            "url": "https://www.recastsoftware.com/",
+            "platforms": [
+              {"name": "Endpoint Insights"},
+              {"name": "Right Click Tools"}
+            ]
+          },
+          {
+            "name": "Tanium",
+            "url": "https://docs.tanium.com/",
+            "platforms": [
+              {"name": "Tanium Endpoint Management"}
+            ]
+          }
         ]
       },
       {
         "name": "Digital Employee Experience (DEX)",
         "description": "Monitoring and real-time remediation tools to improve user productivity and reduce support tickets.",
         "vendors": [
-          {"name": "ControlUp - Edge DX / ControlUp One", "url": "https://support.controlup.com/"},
-          {"name": "Nexthink - Nexthink Infinity", "url": "https://docs.nexthink.com/"},
-          {"name": "Omnissa - Workspace ONE Experience Management", "url": "https://docs.omnissa.com/"},
-          {"name": "Lakeside Software - SysTrack", "url": "https://www.lakesidesoftware.com/resources/"},
-          {"name": "Citrix - Workspace Environment Management (WEM)", "url": "https://docs.citrix.com/"},
-          {"name": "Liquidware - Stratosphere UX", "url": "https://docs.liquidware.com/"}
+          {
+            "name": "ControlUp",
+            "url": "https://support.controlup.com/",
+            "platforms": []
+          },
+          {
+            "name": "Lakeside",
+            "url": "https://www.lakesidesoftware.com/resources/",
+            "platforms": []
+          },
+          {
+            "name": "Liquidware",
+            "url": "https://docs.liquidware.com/",
+            "platforms": []
+          },
+          {
+            "name": "Nexthink",
+            "url": "https://docs.nexthink.com/",
+            "platforms": []
+          },
+          {
+            "name": "Omnissa",
+            "url": "https://docs.omnissa.com/",
+            "platforms": []
+          }
         ]
       }
     ]
@@ -112,27 +371,63 @@
         "name": "Endpoint Security",
         "description": "Advanced threat detection and response at the device level.",
         "vendors": [
-          {"name": "Microsoft - Microsoft Defender", "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/"},
-          {"name": "CrowdStrike - Falcon Platform", "url": "https://www.crowdstrike.com/resources/"},
-          {"name": "SentinelOne - Singularity", "url": "https://www.sentinelone.com/"}
+          {
+            "name": "CrowdStrike",
+            "url": "https://www.crowdstrike.com/resources/",
+            "platforms": []
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/",
+            "platforms": []
+          },
+          {
+            "name": "SentinelOne",
+            "url": "https://www.sentinelone.com/",
+            "platforms": []
+          }
         ]
       },
       {
         "name": "Identity & Access Mgmt (IAM)",
         "description": "Verifying user identity as the first line of defense in the digital workspace.",
         "vendors": [
-          {"name": "Microsoft - Microsoft Entra ID", "url": "https://learn.microsoft.com/en-us/entra/"},
-          {"name": "Okta - Okta Workforce Identity", "url": "https://help.okta.com/"},
-          {"name": "Ping Identity - PingOne", "url": "https://docs.pingidentity.com/"}
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/entra/",
+            "platforms": []
+          },
+          {
+            "name": "Okta",
+            "url": "https://help.okta.com/",
+            "platforms": []
+          },
+          {
+            "name": "Ping Identity",
+            "url": "https://docs.pingidentity.com/",
+            "platforms": []
+          }
         ]
       },
       {
         "name": "Secure Access Service Edge (SASE)",
         "description": "Converged network and security services delivered from the cloud for secure access.",
         "vendors": [
-          {"name": "Cato Networks - Cato SASE Cloud", "url": "https://www.catonetworks.com/"},
-          {"name": "Zscaler - Zscaler Private Access (ZTNA)", "url": "https://help.zscaler.com/"},
-          {"name": "Netskope - Intelligent SSE", "url": "https://docs.netskope.com/"}
+          {
+            "name": "Cato Networks",
+            "url": "https://www.catonetworks.com/",
+            "platforms": []
+          },
+          {
+            "name": "Netskope",
+            "url": "https://docs.netskope.com/",
+            "platforms": []
+          },
+          {
+            "name": "Zscaler",
+            "url": "https://help.zscaler.com/",
+            "platforms": []
+          }
         ]
       }
     ]
@@ -145,29 +440,68 @@
         "name": "App Layering & Streaming",
         "description": "Tools that package and deliver apps dynamically to users without permanent installation.",
         "vendors": [
-          {"name": "Omnissa - App Volumes", "url": "https://docs.omnissa.com/"},
-          {"name": "Liquidware - FlexApp", "url": "https://docs.liquidware.com/"},
-          {"name": "Citrix - Citrix App Layering", "url": "https://docs.citrix.com/"}
+          {
+            "name": "Citrix",
+            "url": "https://docs.citrix.com/",
+            "platforms": []
+          },
+          {
+            "name": "Liquidware",
+            "url": "https://docs.liquidware.com/",
+            "platforms": []
+          },
+          {
+            "name": "Omnissa",
+            "url": "https://docs.omnissa.com/",
+            "platforms": []
+          }
         ]
       },
       {
         "name": "Application Readiness & Packaging",
         "description": "Testing, compatibility, and packaging tools for enterprise application deployment.",
         "vendors": [
-          {"name": "Flexera - AdminStudio", "url": "https://docs.flexera.com/"},
-          {"name": "Rimo3 - Rimo3 Cloud", "url": "https://www.rimo3.com/"}
+          {
+            "name": "Flexera",
+            "url": "https://docs.flexera.com/",
+            "platforms": []
+          },
+          {
+            "name": "Recast Software",
+            "url": "https://www.recastsoftware.com/",
+            "platforms": []
+          },
+          {
+            "name": "Rimo3",
+            "url": "https://www.rimo3.com/",
+            "platforms": []
+          }
         ]
       },
       {
         "name": "Apps Config & Asset Management",
         "description": "Configuration management and IT asset tracking tools for application lifecycle management.",
         "vendors": [
-          {"name": "Recast Software - Application Workspace", "url": "https://www.recastsoftware.com/"},
-          {"name": "Microsoft - Microsoft Intune", "url": "https://learn.microsoft.com/en-us/mem/intune/"},
-          {"name": "Microsoft - Configuration Manager (SCCM)", "url": "https://learn.microsoft.com/en-us/mem/configmgr/"},
-          {"name": "ManageEngine - AssetExplorer", "url": "https://www.manageengine.com/products/asset-explorer/"},
-          {"name": "ManageEngine - Endpoint Central", "url": "https://www.manageengine.com/products/desktop-central/"},
-          {"name": "Nexthink - Application Experience", "url": "https://docs.nexthink.com/"}
+          {
+            "name": "ManageEngine",
+            "url": "https://www.manageengine.com/",
+            "platforms": []
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/mem/intune/",
+            "platforms": []
+          },
+          {
+            "name": "Nexthink",
+            "url": "https://docs.nexthink.com/",
+            "platforms": []
+          },
+          {
+            "name": "Recast Software",
+            "url": "https://www.recastsoftware.com/",
+            "platforms": []
+          }
         ]
       }
     ]
@@ -180,21 +514,141 @@
         "name": "Workspace AI",
         "description": "Generative AI assistants integrated into the workspace to automate workflows.",
         "vendors": [
-          {"name": "Microsoft - Microsoft 365 Copilot", "url": "https://learn.microsoft.com/en-us/microsoft-365/"},
-          {"name": "Google - Gemini for Google Workspace", "url": "https://support.google.com/a/"},
-          {"name": "Google - NotebookLM", "url": "https://notebooklm.google.com/"},
-          {"name": "OpenAI - ChatGPT", "url": "https://platform.openai.com/docs"},
-          {"name": "Anthropic - Claude", "url": "https://docs.anthropic.com/"},
-          {"name": "Perplexity - Perplexity Pro / Comet", "url": "https://www.perplexity.ai/"}
+          {
+            "name": "Adobe",
+            "url": "https://www.adobe.com/",
+            "platforms": []
+          },
+          {
+            "name": "Amazon",
+            "url": "https://aws.amazon.com/",
+            "platforms": []
+          },
+          {
+            "name": "Anthropic",
+            "url": "https://docs.anthropic.com/",
+            "platforms": []
+          },
+          {
+            "name": "Apple",
+            "url": "https://www.apple.com/",
+            "platforms": []
+          },
+          {
+            "name": "Atlassian",
+            "url": "https://www.atlassian.com/",
+            "platforms": []
+          },
+          {
+            "name": "Cisco",
+            "url": "https://www.cisco.com/",
+            "platforms": []
+          },
+          {
+            "name": "Google",
+            "url": "https://support.google.com/a/",
+            "platforms": []
+          },
+          {
+            "name": "IBM",
+            "url": "https://www.ibm.com/",
+            "platforms": []
+          },
+          {
+            "name": "Meta",
+            "url": "https://www.meta.com/",
+            "platforms": []
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/microsoft-365/",
+            "platforms": []
+          },
+          {
+            "name": "Notion",
+            "url": "https://www.notion.so/",
+            "platforms": []
+          },
+          {
+            "name": "OpenAI",
+            "url": "https://platform.openai.com/docs",
+            "platforms": []
+          },
+          {
+            "name": "Perplexity",
+            "url": "https://www.perplexity.ai/",
+            "platforms": []
+          },
+          {
+            "name": "Salesforce",
+            "url": "https://www.salesforce.com/",
+            "platforms": []
+          },
+          {
+            "name": "ServiceNow",
+            "url": "https://www.servicenow.com/",
+            "platforms": []
+          },
+          {
+            "name": "Slack",
+            "url": "https://slack.com/help",
+            "platforms": []
+          },
+          {
+            "name": "Zoom",
+            "url": "https://support.zoom.com/",
+            "platforms": []
+          }
         ]
       },
       {
         "name": "Unified Comms & Collab",
         "description": "Enterprise communication and collaboration platforms for meetings, messaging, and teamwork.",
         "vendors": [
-          {"name": "Microsoft - Microsoft Teams", "url": "https://learn.microsoft.com/en-us/microsoftteams/"},
-          {"name": "Zoom - Zoom Workplace", "url": "https://support.zoom.com/"},
-          {"name": "Slack - Slack Enterprise Grid", "url": "https://slack.com/help"}
+          {
+            "name": "Cisco",
+            "url": "https://www.cisco.com/",
+            "platforms": [
+              {"name": "Webex Suite"}
+            ]
+          },
+          {
+            "name": "Google",
+            "url": "https://support.google.com/a/",
+            "platforms": [
+              {"name": "Chat"},
+              {"name": "Meet"}
+            ]
+          },
+          {
+            "name": "Microsoft",
+            "url": "https://learn.microsoft.com/en-us/microsoftteams/",
+            "platforms": [
+              {"name": "Teams"}
+            ]
+          },
+          {
+            "name": "RingCentral",
+            "url": "https://www.ringcentral.com/",
+            "platforms": [
+              {"name": "MVP"},
+              {"name": "RingCX"}
+            ]
+          },
+          {
+            "name": "Slack",
+            "url": "https://slack.com/help",
+            "platforms": [
+              {"name": "Slack Enterprise"}
+            ]
+          },
+          {
+            "name": "Zoom",
+            "url": "https://support.zoom.com/",
+            "platforms": [
+              {"name": "Zoom Workplace"}
+            ]
+          }
         ]
       }
     ]
