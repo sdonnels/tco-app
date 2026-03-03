@@ -14,7 +14,7 @@ import {
   HelpCircle,
   ImagePlus,
   Info,
-  Lock,
+
   Mail,
   Plus,
   Printer,
@@ -3226,20 +3226,12 @@ export default function TcoBaseline() {
 
                 <Separator className="my-6" />
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <InlineInfo
-                    title="Assumption Application Logic"
-                    body="Input present → use input. Input missing → use assumption. Input always overrides assumption."
-                    icon={<CheckCircle2 className="h-4 w-4" />}
-                    testId="info-logic"
-                  />
-                  <InlineInfo
-                    title="Frozen Engine (Mockup)"
-                    body="This prototype shows the structure and traceability model. Version-locking and audit logs come later."
-                    icon={<Lock className="h-4 w-4" />}
-                    testId="info-frozen"
-                  />
-                </div>
+                <InlineInfo
+                  title="How this works"
+                  body="Input present → use input. Input missing → use assumption. Input always overrides assumption."
+                  icon={<CheckCircle2 className="h-4 w-4" />}
+                  testId="info-logic"
+                />
               </Card>
             </TabsContent>
 
