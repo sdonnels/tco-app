@@ -117,8 +117,6 @@ const VDI_SUBPILLARS = ["DaaS (Cloud PC / Hosted Desktop)", "VDI (On-Premises)"]
 const LICENSE_EXCLUDED_SUBPILLARS = new Set([
   "PC, AI, Mobile Hardware",
   "Endpoint OS",
-  "Identity & Access Mgmt (IAM)",
-  "Secure Access Service Edge (SASE)",
 ]);
 
 export function HexagridSection({ entries, onChange, vdiUserCounts, onVdiUserCountsChange }: HexagridSectionProps) {
