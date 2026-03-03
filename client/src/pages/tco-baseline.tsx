@@ -2475,6 +2475,158 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<Activity className="h-5 w-5 text-primary" />}
                     eyebrow="Inputs"
+                    title="EUC Pillars - Platform Cost Rollups (Optional Overrides)"
+                    description="If you know total annual spend for a category, enter it here to override the calculated value. Otherwise, the tool calculates from environment data, EUC Pillar vendor costs, and assumptions."
+                    testId="header-rollups"
+                  />
+
+                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                    <div className="space-y-4" data-testid="group-rollups-1">
+                      <div className="text-sm font-semibold" data-testid="text-rollups-title">
+                        Access & Infrastructure
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-devices" data-testid="label-rollup-devices">
+                            End-User Devices (Access)
+                          </Label>
+                          <Input
+                            id="rollup-devices"
+                            placeholder={`derived: ${fmtMoney(derived.endUserDevicesValue)}`}
+                            {...numberField(inputs.categoryRollups.endUserDevicesAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  endUserDevicesAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-devices"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-support" data-testid="label-rollup-support">
+                            Support & Ops
+                          </Label>
+                          <Input
+                            id="rollup-support"
+                            placeholder={`derived: ${fmtMoney(derived.supportOpsValue)}`}
+                            {...numberField(inputs.categoryRollups.supportOpsAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  supportOpsAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-support"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-licensing" data-testid="label-rollup-licensing">
+                            Licensing (Collaboration, AI & Apps)
+                          </Label>
+                          <Input
+                            id="rollup-licensing"
+                            placeholder={`derived: ${fmtMoney(derived.licensingValue)}`}
+                            {...numberField(inputs.categoryRollups.licensingAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  licensingAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-licensing"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4" data-testid="group-rollups-2">
+                      <div className="text-sm font-semibold" data-testid="text-rollups-title-2">
+                        Management, Security & VDI
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-mgmt" data-testid="label-rollup-mgmt">
+                            Device, OS & User Mgmt + Security
+                          </Label>
+                          <Input
+                            id="rollup-mgmt"
+                            placeholder={`derived: ${fmtMoney(derived.mgmtSecurityValue)}`}
+                            {...numberField(inputs.categoryRollups.mgmtSecurityAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  mgmtSecurityAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-mgmt"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-vdi" data-testid="label-rollup-vdi">
+                            Virtual Desktops & Applications
+                          </Label>
+                          <Input
+                            id="rollup-vdi"
+                            placeholder={`derived: ${fmtMoney(derived.vdiDaasValue)}`}
+                            {...numberField(inputs.categoryRollups.vdiDaasAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  vdiDaasAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-vdi"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="rollup-overhead" data-testid="label-rollup-overhead">
+                            Overhead
+                          </Label>
+                          <Input
+                            id="rollup-overhead"
+                            placeholder={`derived: ${fmtMoney(derived.overheadValue)}`}
+                            {...numberField(inputs.categoryRollups.overheadAnnual, (v) =>
+                              setInputs((s) => ({
+                                ...s,
+                                categoryRollups: {
+                                  ...s.categoryRollups,
+                                  overheadAnnual: nonNeg(v),
+                                },
+                              })),
+                            )}
+                            data-testid="input-rollup-overhead"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div className="mt-4">
+                    <InlineInfo
+                      title="How this works"
+                      body="These rollup fields let you override any calculated cost category with a known annual spend. When blank, the tool uses EUC Pillar vendor costs (if entered) or falls back to industry-standard assumptions. Overrides take highest priority, then actual vendor costs from pillars, then calculated assumptions."
+                      icon={<BookOpen className="h-4 w-4" />}
+                      testId="info-rollups"
+                    />
+                  </div>
+                </Card>
+
+                <Card className="glass hairline rounded-3xl p-6">
+                  <SectionHeader
+                    icon={<Activity className="h-5 w-5 text-primary" />}
+                    eyebrow="Inputs"
                     title="EUC Pillars & Platforms"
                     description="Capture vendor costs organized by EUC domain. Costs flow into the TCO baseline, replacing assumptions with real spend data."
                     testId="header-euc-pillars"
@@ -2753,157 +2905,6 @@ export default function TcoBaseline() {
                   </div>
                 </Card>
 
-                <Card className="glass hairline rounded-3xl p-6">
-                  <SectionHeader
-                    icon={<Activity className="h-5 w-5 text-primary" />}
-                    eyebrow="Inputs"
-                    title="EUC Pillars - Platform Cost Rollups (Optional Overrides)"
-                    description="If you know total annual spend for a category, enter it here to override the calculated value. Otherwise, the tool calculates from environment data, EUC Pillar vendor costs, and assumptions."
-                    testId="header-rollups"
-                  />
-
-                  <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                    <div className="space-y-4" data-testid="group-rollups-1">
-                      <div className="text-sm font-semibold" data-testid="text-rollups-title">
-                        Access & Infrastructure
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="rollup-devices" data-testid="label-rollup-devices">
-                            End-User Devices (Access)
-                          </Label>
-                          <Input
-                            id="rollup-devices"
-                            placeholder={`derived: ${fmtMoney(derived.endUserDevicesValue)}`}
-                            {...numberField(inputs.categoryRollups.endUserDevicesAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                categoryRollups: {
-                                  ...s.categoryRollups,
-                                  endUserDevicesAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-rollup-devices"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="rollup-support" data-testid="label-rollup-support">
-                            Support & Ops
-                          </Label>
-                          <Input
-                            id="rollup-support"
-                            placeholder={`derived: ${fmtMoney(derived.supportOpsValue)}`}
-                            {...numberField(inputs.categoryRollups.supportOpsAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                categoryRollups: {
-                                  ...s.categoryRollups,
-                                  supportOpsAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-rollup-support"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="rollup-licensing" data-testid="label-rollup-licensing">
-                            Licensing (Collaboration, AI & Apps)
-                          </Label>
-                          <Input
-                            id="rollup-licensing"
-                            placeholder={`derived: ${fmtMoney(derived.licensingValue)}`}
-                            {...numberField(inputs.categoryRollups.licensingAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                categoryRollups: {
-                                  ...s.categoryRollups,
-                                  licensingAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-rollup-licensing"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4" data-testid="group-rollups-2">
-                      <div className="text-sm font-semibold" data-testid="text-rollups-title-2">
-                        Management, Security & VDI
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Label htmlFor="rollup-mgmt" data-testid="label-rollup-mgmt">
-                            Device, OS & User Mgmt + Security
-                          </Label>
-                          <Input
-                            id="rollup-mgmt"
-                            placeholder={`derived: ${fmtMoney(derived.mgmtSecurityValue)}`}
-                            {...numberField(inputs.categoryRollups.mgmtSecurityAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                categoryRollups: {
-                                  ...s.categoryRollups,
-                                  mgmtSecurityAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-rollup-mgmt"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="rollup-vdi" data-testid="label-rollup-vdi">
-                            Virtual Desktops & Applications
-                          </Label>
-                          <Input
-                            id="rollup-vdi"
-                            placeholder={`derived: ${fmtMoney(derived.vdiDaasValue)}`}
-                            {...numberField(inputs.categoryRollups.vdiDaasAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                categoryRollups: {
-                                  ...s.categoryRollups,
-                                  vdiDaasAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-rollup-vdi"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="rollup-overhead" data-testid="label-rollup-overhead">
-                            Overhead
-                          </Label>
-                          <Input
-                            id="rollup-overhead"
-                            placeholder={`derived: ${fmtMoney(derived.overheadValue)}`}
-                            {...numberField(inputs.categoryRollups.overheadAnnual, (v) =>
-                              setInputs((s) => ({
-                                ...s,
-                                categoryRollups: {
-                                  ...s.categoryRollups,
-                                  overheadAnnual: nonNeg(v),
-                                },
-                              })),
-                            )}
-                            data-testid="input-rollup-overhead"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  <div className="mt-4">
-                    <InlineInfo
-                      title="How this works"
-                      body="These rollup fields let you override any calculated cost category with a known annual spend. When blank, the tool uses EUC Pillar vendor costs (if entered) or falls back to industry-standard assumptions. Overrides take highest priority, then actual vendor costs from pillars, then calculated assumptions."
-                      icon={<BookOpen className="h-4 w-4" />}
-                      testId="info-rollups"
-                    />
-                  </div>
-                </Card>
               </div>
             </TabsContent>
 
