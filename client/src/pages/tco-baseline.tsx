@@ -31,6 +31,9 @@ import {
   FileSpreadsheet,
   Check,
   AlertTriangle,
+  Sun,
+  Moon,
+  Bug,
 } from "lucide-react";
 import JSZip from "jszip";
 import { Card } from "@/components/ui/card";
@@ -2152,50 +2155,57 @@ export default function TcoBaseline() {
               <div className="flex flex-col items-stretch gap-2 sm:items-end">
                 <div className="flex items-center justify-between gap-2 sm:justify-end">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Debug</span>
-                      <Switch
-                        checked={debugMode}
-                        onCheckedChange={(v) => {
-                          setDebugMode(v);
-                          localStorage.setItem("tco-debug-mode", String(v));
-                          if (!v && activeTab === "audit") setActiveTab("home");
-                        }}
-                        data-testid="switch-debug"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">Dark</span>
-                      <Switch
-                        checked={dark}
-                        onCheckedChange={setDark}
-                        data-testid="switch-theme"
-                      />
-                    </div>
-                    {activeTab !== "home" && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" data-testid="button-tools">
-                            <Wrench className="h-4 w-4 mr-1" /> Tools
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
-                          <DropdownMenuItem onClick={generateIntakeForm} data-testid="menu-generate-intake">
-                            <FileDown className="h-4 w-4 mr-2" /> Generate Intake Form
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={importIntakeData} data-testid="menu-import-intake">
-                            <FileUp className="h-4 w-4 mr-2" /> Import Intake Data
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setHelpDialogOpen(true)} data-testid="menu-help">
-                            <HelpCircle className="h-4 w-4 mr-2" /> Help
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setAboutDialogOpen(true)} data-testid="menu-about">
-                            <Info className="h-4 w-4 mr-2" /> About
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                    {debugMode && (
+                      <Badge variant="outline" className="border-amber-400 text-amber-600 dark:text-amber-400 text-[10px]">
+                        DEBUG
+                      </Badge>
                     )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" data-testid="button-tools">
+                          <Wrench className="h-4 w-4 mr-1" /> Tools
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={generateIntakeForm} data-testid="menu-generate-intake">
+                          <FileDown className="h-4 w-4 mr-2" /> Generate Intake Form
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={importIntakeData} data-testid="menu-import-intake">
+                          <FileUp className="h-4 w-4 mr-2" /> Import Intake Data
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setDark(!dark);
+                          }}
+                          data-testid="menu-toggle-theme"
+                        >
+                          {dark ? <Sun className="h-4 w-4 mr-2" /> : <Moon className="h-4 w-4 mr-2" />}
+                          {dark ? "Light Mode" : "Dark Mode"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const next = !debugMode;
+                            setDebugMode(next);
+                            localStorage.setItem("tco-debug-mode", String(next));
+                            if (!next && activeTab === "audit") setActiveTab("home");
+                          }}
+                          data-testid="menu-toggle-debug"
+                        >
+                          <Bug className="h-4 w-4 mr-2" />
+                          {debugMode ? "Disable Debug Mode" : "Enable Debug Mode"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setHelpDialogOpen(true)} data-testid="menu-help">
+                          <HelpCircle className="h-4 w-4 mr-2" /> Help
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setAboutDialogOpen(true)} data-testid="menu-about">
+                          <Info className="h-4 w-4 mr-2" /> About
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
