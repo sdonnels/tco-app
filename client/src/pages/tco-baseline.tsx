@@ -51,7 +51,7 @@ import { cn } from "@/lib/utils";
 import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, migrateLegacyDraft, updateDraftStatus, type DraftMeta } from "@/lib/drafts";
 import {
   exportIntakeForm,
-  parseIntakeFile,
+  parseIntakeImport,
   type IntakeSections,
   type ImportResult,
 } from "@/lib/intake-excel";
@@ -1965,15 +1965,15 @@ export default function TcoBaseline() {
   const importIntakeData = useCallback(() => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = ".json,.xlsx";
+    fileInput.accept = ".json,.xlsx,.csv";
     fileInput.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      if (file.name.endsWith(".xlsx")) {
+      if (file.name.endsWith(".xlsx") || file.name.endsWith(".csv")) {
         try {
           const buf = await file.arrayBuffer();
-          const result = parseIntakeFile(buf);
+          const result = parseIntakeImport(buf, file.name);
           setExcelImportResult(result);
           setExcelImportOpen(true);
           setExcelImportError(null);
@@ -2067,13 +2067,13 @@ export default function TcoBaseline() {
       const file = e.target.files?.[0];
       if (!file) return;
       e.target.value = "";
-      if (!file.name.endsWith(".xlsx")) {
-        setExcelImportError("Please upload an Excel file (.xlsx).");
+      if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".csv")) {
+        setExcelImportError("Please upload an Excel (.xlsx) or CSV (.csv) file.");
         return;
       }
       try {
         const buf = await file.arrayBuffer();
-        const result = parseIntakeFile(buf);
+        const result = parseIntakeImport(buf, file.name);
         setExcelImportResult(result);
         setExcelImportOpen(true);
         setExcelImportError(null);
@@ -4028,7 +4028,7 @@ export default function TcoBaseline() {
                       <input
                         ref={excelFileInputRef}
                         type="file"
-                        accept=".xlsx"
+                        accept=".xlsx,.csv"
                         className="hidden"
                         onChange={handleExcelFileSelect}
                         data-testid="input-import-file"

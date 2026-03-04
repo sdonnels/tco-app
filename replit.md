@@ -141,7 +141,12 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
     - Sections: Environment Facts, Platform Cost Overrides, EUC Pillars, Managed Services
     - Filename: `TCO_Intake_[ClientName]_[Date].xlsx`
     - Implementation: `client/src/lib/intake-excel.ts`
-  - **Import Intake Responses** — Uploads completed .xlsx, parses responses, creates a pre-filled draft
+  - **Import Intake Responses** — Uploads completed .xlsx or .csv, parses responses, creates a pre-filled draft
+    - Dual-label parser: exact short export labels first (e.g., "Vendor", "License Count"), then keyword regex for long Forms labels (e.g., "Which hardware vendor(s) do you use?")
+    - CSV parsing: bracket-prefixed headers `[1.1 PC / AI / Mobile Hardware] Vendor` → section + field; first 3 cols are Timestamp, Client Name, Project Name; handles UTF-8 BOM
+    - Canonical field map for Managed Services: classifyMspField() with exact map + regex fallback
+    - Ordered section resolution: 15 sub-pillars with regex priority to avoid "ai"/"pc" false matches
+    - Unified entry: `parseIntakeImport(file, filename)` dispatches to xlsx or csv parser
     - Summary/review dialog shows mapped fields (green), blank count, and errors (red)
     - Creates draft with "intake received" status (blue badge in Recent Activity)
     - Status auto-transitions to "draft" when consultant makes any edit
@@ -151,7 +156,7 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 
 ### Tools Menu (dropdown in header toolbar)
 - **Generate Intake Form** — Downloads a structured JSON questionnaire for pre-meeting customer data collection
-- **Import Intake Data** — Uploads completed intake form JSON to auto-populate tool fields
+- **Import Intake Data** — Uploads completed intake form (JSON, .xlsx, or .csv) to auto-populate tool fields
 - **Help** — Generates pre-filled support email with issue description and diagnostic info
 - **About** — Version info (0.4.0), technical details, XenTegra copyright and legal notices
 
