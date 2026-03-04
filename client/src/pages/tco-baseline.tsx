@@ -1965,10 +1965,26 @@ export default function TcoBaseline() {
   const importIntakeData = useCallback(() => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = ".json";
-    fileInput.onchange = (e) => {
+    fileInput.accept = ".json,.xlsx";
+    fileInput.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
+
+      if (file.name.endsWith(".xlsx")) {
+        try {
+          const buf = await file.arrayBuffer();
+          const result = parseIntakeFile(buf);
+          setExcelImportResult(result);
+          setExcelImportOpen(true);
+          setExcelImportError(null);
+        } catch {
+          setExcelImportError(
+            "This file doesn't match the expected intake form template. Please ensure you're uploading a completed TCO Intake Form.",
+          );
+        }
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = () => {
         try {

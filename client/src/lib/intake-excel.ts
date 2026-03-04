@@ -240,27 +240,107 @@ function parseBool(raw: unknown): boolean {
   return String(raw).toLowerCase().trim() === "yes";
 }
 
+function findSheet(wb: XLSX.WorkBook, ...names: string[]): XLSX.WorkSheet | null {
+  for (const name of names) {
+    if (wb.Sheets[name]) return wb.Sheets[name];
+  }
+  const lowerNames = names.map((n) => n.toLowerCase());
+  for (const sn of wb.SheetNames) {
+    if (lowerNames.includes(sn.toLowerCase())) return wb.Sheets[sn];
+  }
+  return null;
+}
+
+function matchEnvField(label: string): string | null {
+  const l = label.toLowerCase();
+  if (/total\s*users|end\s*users|user\s*count/.test(l)) return "userCount";
+  if (/laptop/.test(l)) return "laptopCount";
+  if (/desktop/.test(l) && !/virtual|vdi|daas/.test(l)) return "desktopCount";
+  if (/thin\s*client/.test(l)) return "thinClientCount";
+  return null;
+}
+
+function matchOverrideField(label: string): string | null {
+  const l = label.toLowerCase();
+  if (/end.?user\s*device|hardware\s*refresh/.test(l)) return "endUserDevicesAnnual";
+  if (/support.*ops|operations/.test(l)) return "supportOpsAnnual";
+  if (/licensing|license.*annual/.test(l)) return "licensingAnnual";
+  if (/mgmt|management.*security|device.*security/.test(l)) return "mgmtSecurityAnnual";
+  if (/vdi|daas|virtual\s*desktop/.test(l)) return "vdiDaasAnnual";
+  if (/overhead/.test(l)) return "overheadAnnual";
+  return null;
+}
+
+function getResponseColumn(row: Record<string, unknown>): unknown {
+  if (row["Your Response"] !== undefined) return row["Your Response"];
+  for (const key of Object.keys(row)) {
+    const lk = key.toLowerCase();
+    if (lk.includes("response") || lk.includes("answer") || lk.includes("value")) return row[key];
+  }
+  return undefined;
+}
+
+function getFirstColumnLabel(row: Record<string, unknown>): string {
+  if (row["Field Label"] !== undefined) return String(row["Field Label"] || "").trim();
+  const firstKey = Object.keys(row)[0];
+  return firstKey ? String(row[firstKey] || "").trim() : "";
+}
+
+const EUC_SECTION_PATTERN = /^(\d+\.\d+)\s+(.+)/;
+
+const EUC_SECTION_RULES: [RegExp, string][] = [
+  [/workspace\s*ai/i, "Workspace AI"],
+  [/daas|cloud\s*pc|hosted\s*desktop/i, "DaaS (Cloud PC / Hosted Desktop)"],
+  [/vdi|on.premises/i, "VDI (On-Premises)"],
+  [/unified\s*endpoint\s*management|uem/i, "UEM"],
+  [/digital\s*employee\s*experience|dex/i, "DEX"],
+  [/endpoint\s*security/i, "Endpoint Security"],
+  [/identity.*access|access.*management|iam/i, "IAM"],
+  [/secure\s*access\s*service\s*edge|sase/i, "SASE"],
+  [/secure\s*enterprise\s*browser|secure\s*browser/i, "Secure Enterprise Browser"],
+  [/endpoint\s*os/i, "Endpoint OS"],
+  [/app\s*layering|streaming/i, "App Layering"],
+  [/app(?:lication)?\s*readiness|packaging/i, "App Readiness"],
+  [/apps?\s*config|asset\s*management/i, "Apps Config"],
+  [/unified\s*comm|collaboration/i, "Unified Comms & Collab"],
+  [/vpn/i, "VPN"],
+  [/pc.*mobile|mobile.*hardware|hardware/i, "PC and Mobile Devices"],
+];
+
+function resolveSubPillar(sectionHeader: string): string | null {
+  const cleaned = sectionHeader.replace(EUC_SECTION_PATTERN, "$2").trim();
+  for (const [pattern, sp] of EUC_SECTION_RULES) {
+    if (pattern.test(cleaned)) return sp;
+  }
+  const lc = cleaned.toLowerCase();
+  for (const pillar of typedVendors) {
+    for (const sp of pillar.sub_pillars) {
+      if (sp.name.toLowerCase() === lc) return sp.name;
+      if (lc.includes(sp.name.toLowerCase())) return sp.name;
+    }
+  }
+  return null;
+}
+
+function classifyEucQuestion(label: string): string | null {
+  const l = label.toLowerCase();
+  if (/vendor|provider|which.*(?:vendor|company|manufacturer)|who\s/.test(l) && !/platform|product|version|license|cost|sku|user\s*count/.test(l)) return "Vendor";
+  if (/product|platform|device\s*type|what.*(?:device|product|platform|type)/.test(l) && !/vendor|version|license|cost|sku/.test(l)) return "Platform";
+  if (/version|which\s*(?:os\s*)?version|release/.test(l) && !/vendor|platform|license|cost|sku/.test(l)) return "Version";
+  if (/annual\s*cost|cost|spend|price/.test(l) && !/license|sku/.test(l)) return "Annual Cost";
+  if (/license\s*count|how\s*many\s.*licenses|number\s*of\s*licenses/.test(l)) return "License Count";
+  if (/license\s*sku|sku|plan\s*name/.test(l)) return "License SKU";
+  if (/user\s*count|how\s*many\s.*users|number\s*of\s*users/.test(l)) return "User Count";
+  return null;
+}
+
 export function parseIntakeFile(file: ArrayBuffer): ImportResult {
   const wb = XLSX.read(file, { type: "array" });
 
-  const knownTabs = ["Cover", "Environment Facts", "EUC Pillars", "Platform Cost Overrides", "Managed Services"];
-  const hasKnownTab = wb.SheetNames.some((name) => knownTabs.includes(name));
+  const knownTabs = ["Cover", "Cover Sheet", "Environment Facts", "EUC Pillars", "Platform Cost Overrides", "Managed Services"];
+  const hasKnownTab = wb.SheetNames.some((name) => knownTabs.some((k) => k.toLowerCase() === name.toLowerCase()));
   if (!hasKnownTab) {
     throw new Error("This file doesn't match the expected intake form template.");
-  }
-
-  const checkHeader = (sheetName: string) => {
-    const ws = wb.Sheets[sheetName];
-    if (!ws) return;
-    const firstRow = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 })?.[0];
-    if (!firstRow || !Array.isArray(firstRow)) return;
-    const hasFieldLabel = firstRow.some((c) => String(c || "").toLowerCase().includes("field label"));
-    if (!hasFieldLabel) {
-      throw new Error(`Sheet "${sheetName}" is missing the expected column headers.`);
-    }
-  };
-  for (const tab of ["Environment Facts", "EUC Pillars", "Platform Cost Overrides", "Managed Services"]) {
-    if (wb.Sheets[tab]) checkHeader(tab);
   }
 
   let clientName = "";
@@ -272,95 +352,99 @@ export function parseIntakeFile(file: ArrayBuffer): ImportResult {
 
   const inputs: Record<string, unknown> = {};
 
-  const coverSheet = wb.Sheets["Cover"];
+  const coverSheet = findSheet(wb, "Cover", "Cover Sheet");
   if (coverSheet) {
     const coverData = XLSX.utils.sheet_to_json<string[]>(coverSheet, { header: 1 }) as unknown[][];
     for (const row of coverData) {
-      if (row[0] === "Client Name" && row[1]) clientName = String(row[1]);
-      if (row[0] === "Project Name" && row[1]) projectName = String(row[1]).replace("(not specified)", "").trim();
+      const cellLabel = String(row[0] || "").toLowerCase();
+      if (cellLabel.includes("client") && row[1]) clientName = String(row[1]);
+      if (cellLabel.includes("project") && row[1]) projectName = String(row[1]).replace("(not specified)", "").trim();
     }
   }
 
-  const envSheet = wb.Sheets["Environment Facts"];
+  const envSheet = findSheet(wb, "Environment Facts");
   if (envSheet) {
     const envData = XLSX.utils.sheet_to_json<Record<string, unknown>>(envSheet);
-    const envMap: Record<string, string> = {
-      "Total Users": "userCount",
-      "Laptops": "laptopCount",
-      "Desktops": "desktopCount",
-      "Thin Clients": "thinClientCount",
-    };
     for (const row of envData) {
-      const label = String(row["Field Label"] || "").trim();
-      const response = row["Your Response"];
-      if (!label || !(label in envMap)) continue;
+      const label = getFirstColumnLabel(row);
+      const response = getResponseColumn(row);
+      if (!label) continue;
+      const target = matchEnvField(label);
+      if (!target) {
+        if (response !== null && response !== undefined && response !== "") {
+          unmapped.push({ field: label, value: String(response), target: "", status: "unmapped" });
+        }
+        continue;
+      }
       if (response === null || response === undefined || response === "") {
         blankCount++;
         continue;
       }
       const num = parseNumeric(response);
       if (num === null) {
-        errors.push({ field: label, value: String(response), target: envMap[label], status: "error", errorMsg: "Expected a number" });
+        errors.push({ field: label, value: String(response), target, status: "error", errorMsg: "Expected a number" });
       } else {
-        inputs[envMap[label]] = num;
-        mapped.push({ field: label, value: num, target: envMap[label], status: "mapped" });
+        inputs[target] = num;
+        mapped.push({ field: label, value: num, target, status: "mapped" });
       }
     }
   }
 
-  const overrideSheet = wb.Sheets["Platform Cost Overrides"];
+  const overrideSheet = findSheet(wb, "Platform Cost Overrides");
   if (overrideSheet) {
     const overrideData = XLSX.utils.sheet_to_json<Record<string, unknown>>(overrideSheet);
-    const overrideMap: Record<string, string> = {
-      "End-User Devices (Annual)": "endUserDevicesAnnual",
-      "Support & Ops (Annual)": "supportOpsAnnual",
-      "Licensing (Annual)": "licensingAnnual",
-      "Device, OS & User Mgmt + Security (Annual)": "mgmtSecurityAnnual",
-      "Virtual Desktops & Applications (Annual)": "vdiDaasAnnual",
-      "Overhead (Annual)": "overheadAnnual",
-    };
     const categoryRollups: Record<string, number> = {};
     for (const row of overrideData) {
-      const label = String(row["Field Label"] || "").trim();
-      const response = row["Your Response"];
-      if (!label || !(label in overrideMap)) continue;
+      const label = getFirstColumnLabel(row);
+      const response = getResponseColumn(row);
+      if (!label) continue;
+      const target = matchOverrideField(label);
+      if (!target) {
+        if (response !== null && response !== undefined && response !== "") {
+          unmapped.push({ field: label, value: String(response), target: "", status: "unmapped" });
+        }
+        continue;
+      }
       if (response === null || response === undefined || response === "") {
         blankCount++;
         continue;
       }
       const num = parseNumeric(response);
       if (num === null) {
-        errors.push({ field: label, value: String(response), target: overrideMap[label], status: "error", errorMsg: "Expected a number" });
+        errors.push({ field: label, value: String(response), target, status: "error", errorMsg: "Expected a number" });
       } else {
-        categoryRollups[overrideMap[label]] = num;
-        mapped.push({ field: label, value: num, target: `categoryRollups.${overrideMap[label]}`, status: "mapped" });
+        categoryRollups[target] = num;
+        mapped.push({ field: label, value: num, target: `categoryRollups.${target}`, status: "mapped" });
       }
     }
     if (Object.keys(categoryRollups).length > 0) inputs.categoryRollups = categoryRollups;
   }
 
-  const mspSheet = wb.Sheets["Managed Services"];
+  const mspSheet = findSheet(wb, "Managed Services");
   if (mspSheet) {
     const mspData = XLSX.utils.sheet_to_json<Record<string, unknown>>(mspSheet);
     const managedServices: Record<string, unknown> = {};
     for (const row of mspData) {
-      const label = String(row["Field Label"] || "").trim();
-      const response = row["Your Response"];
+      const label = getFirstColumnLabel(row);
+      const response = getResponseColumn(row);
       if (!label) continue;
       if (response === null || response === undefined || response === "") {
         blankCount++;
         continue;
       }
 
-      if (label === "Total MSP / Managed Services Spend") {
+      const l = label.toLowerCase();
+      const val = String(response);
+
+      if (label === "Total MSP / Managed Services Spend" || /total.*msp|managed\s*services?\s*spend/i.test(label)) {
         const num = parseNumeric(response);
         if (num === null) {
-          errors.push({ field: label, value: String(response), target: "managedServices.totalAnnualSpend", status: "error", errorMsg: "Expected a number" });
+          errors.push({ field: label, value: val, target: "managedServices.totalAnnualSpend", status: "error", errorMsg: "Expected a number" });
         } else {
           managedServices.totalAnnualSpend = num;
           mapped.push({ field: label, value: num, target: "managedServices.totalAnnualSpend", status: "mapped" });
         }
-      } else if (label.startsWith("Outsourced:")) {
+      } else if (label.startsWith("Outsourced:") || /outsourc.*endpoint/i.test(label)) {
         const keyMap: Record<string, string> = {
           "Outsourced: Endpoint Management": "outsourcedEndpointMgmt",
           "Outsourced: Security / EDR / SOC": "outsourcedSecurity",
@@ -372,55 +456,176 @@ export function parseIntakeFile(file: ArrayBuffer): ImportResult {
         const key = keyMap[label];
         if (key) {
           managedServices[key] = parseBool(response);
-          mapped.push({ field: label, value: String(response), target: `managedServices.${key}`, status: "mapped" });
+          mapped.push({ field: label, value: val, target: `managedServices.${key}`, status: "mapped" });
         }
-      } else if (label === "Other Outsourced Description") {
-        managedServices.otherDescription = String(response);
-        mapped.push({ field: label, value: String(response), target: "managedServices.otherDescription", status: "mapped" });
-      } else if (label === "MSP Provider: XenTegra") {
-        managedServices.mspXentegra = parseBool(response);
-        mapped.push({ field: label, value: String(response), target: "managedServices.mspXentegra", status: "mapped" });
-      } else if (label === "MSP Provider: Other") {
-        managedServices.mspOther = parseBool(response);
-        mapped.push({ field: label, value: String(response), target: "managedServices.mspOther", status: "mapped" });
-      } else if (label === "Other MSP Provider Names") {
-        const providers = String(response).split(",").map((s) => s.trim()).filter(Boolean);
+      } else if (label === "Other Outsourced Description" || /additional.*managed|managed.*details/i.test(label)) {
+        managedServices.otherDescription = val;
+        mapped.push({ field: label, value: val, target: "managedServices.otherDescription", status: "mapped" });
+      } else if (label === "MSP Provider: XenTegra" || /do\s*you\s*use.*msp|managed\s*services?\s*provider/i.test(label)) {
+        if (/xentegra/i.test(val)) {
+          managedServices.mspXentegra = true;
+          mapped.push({ field: label, value: val, target: "managedServices.mspXentegra", status: "mapped" });
+        }
+        if (/other/i.test(val)) {
+          managedServices.mspOther = true;
+          mapped.push({ field: label, value: val, target: "managedServices.mspOther", status: "mapped" });
+        }
+        if (!(/xentegra/i.test(val) || /other/i.test(val))) {
+          mapped.push({ field: label, value: val, target: "managedServices.mspProvider", status: "mapped" });
+        }
+      } else if (label === "MSP Provider: Other" || /other.*msp|who.*msp|if\s*other.*provider/i.test(label)) {
+        const providers = val.split(",").map((s) => s.trim()).filter(Boolean);
+        managedServices.mspOther = true;
         managedServices.mspOtherProviders = providers;
-        mapped.push({ field: label, value: String(response), target: "managedServices.mspOtherProviders", status: "mapped" });
+        mapped.push({ field: label, value: val, target: "managedServices.mspOtherProviders", status: "mapped" });
+      } else if (label === "Other MSP Provider Names") {
+        const providers = val.split(",").map((s) => s.trim()).filter(Boolean);
+        managedServices.mspOtherProviders = providers;
+        mapped.push({ field: label, value: val, target: "managedServices.mspOtherProviders", status: "mapped" });
+      } else if (/tier\s*1|helpdesk/i.test(l) && /outsourc/i.test(l)) {
+        managedServices.outsourcedHelpdesk = parseBool(response);
+        mapped.push({ field: label, value: val, target: "managedServices.outsourcedHelpdesk", status: "mapped" });
+      } else if (/tier\s*[23]|tier\s*2\+/i.test(l) && /outsourc/i.test(l)) {
+        managedServices.outsourcedTier2Plus = parseBool(response);
+        mapped.push({ field: label, value: val, target: "managedServices.outsourcedTier2Plus", status: "mapped" });
+      } else if (/support\s*staff|fte|how\s*many.*tier\s*1/i.test(l)) {
+        const num = parseNumeric(response);
+        if (num !== null) {
+          managedServices.tier1StaffCount = num;
+          mapped.push({ field: label, value: num, target: "managedServices.tier1StaffCount", status: "mapped" });
+        }
+      } else {
+        unmapped.push({ field: label, value: val, target: "", status: "unmapped" });
       }
     }
     if (Object.keys(managedServices).length > 0) inputs.managedServices = managedServices;
   }
 
-  const eucSheet = wb.Sheets["EUC Pillars"];
+  const eucSheet = findSheet(wb, "EUC Pillars");
   if (eucSheet) {
     const eucData = XLSX.utils.sheet_to_json<Record<string, unknown>>(eucSheet);
     const hexEntries: Record<string, unknown>[] = [];
     let currentSp = "";
+    let currentSpName = "";
     let entry: Record<string, unknown> = {};
     const vdiUserCounts: Record<string, number> = {};
 
     for (const row of eucData) {
-      const label = String(row["Field Label"] || "").trim();
-      const response = row["Your Response"];
+      const label = getFirstColumnLabel(row);
+      const response = getResponseColumn(row);
       if (!label) continue;
       if (label.startsWith("---")) continue;
 
       const spMatch = label.match(/^(.+?)\s*—\s*(Vendor|Platform|Version|Annual Cost|License Count|License SKU|User Count|Other Vendor Name|Other Platform Name|Other Version)$/);
-      if (!spMatch) continue;
 
-      const sp = spMatch[1];
-      const fieldType = spMatch[2];
+      if (spMatch) {
+        const sp = spMatch[1];
+        const fieldType = spMatch[2];
 
-      if (sp !== currentSp) {
-        if (currentSp && entry.vendor) {
+        if (sp !== currentSp) {
+          if (currentSp && entry.vendor) {
+            hexEntries.push({ ...entry });
+          }
+          currentSp = sp;
+          currentSpName = sp;
+          entry = { subPillar: sp };
+          const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === sp));
+          if (pillarDef) entry.pillar = pillarDef.pillar;
+        }
+
+        if (response === null || response === undefined || response === "") {
+          blankCount++;
+          continue;
+        }
+
+        const val = String(response).trim();
+
+        switch (fieldType) {
+          case "Vendor": {
+            const vendorName = val === "Other" ? (entry.customVendor as string) || val : val;
+            entry.vendor = vendorName;
+            mapped.push({ field: label, value: val, target: `euc.${sp}.vendor`, status: "mapped" });
+            break;
+          }
+          case "Other Vendor Name":
+            entry.customVendor = val;
+            entry.vendor = val;
+            mapped.push({ field: label, value: val, target: `euc.${sp}.customVendor`, status: "mapped" });
+            break;
+          case "Platform": {
+            const parts = val.split(" — ");
+            entry.platform = parts.length > 1 ? parts[parts.length - 1] : val;
+            mapped.push({ field: label, value: val, target: `euc.${sp}.platform`, status: "mapped" });
+            break;
+          }
+          case "Other Platform Name":
+            entry.platform = val;
+            mapped.push({ field: label, value: val, target: `euc.${sp}.customPlatform`, status: "mapped" });
+            break;
+          case "Version": {
+            const parts = val.split(" — ");
+            entry.version = parts[parts.length - 1];
+            mapped.push({ field: label, value: val, target: `euc.${sp}.version`, status: "mapped" });
+            break;
+          }
+          case "Other Version":
+            entry.version = val;
+            mapped.push({ field: label, value: val, target: `euc.${sp}.customVersion`, status: "mapped" });
+            break;
+          case "Annual Cost": {
+            const num = parseNumeric(response);
+            if (num === null) {
+              errors.push({ field: label, value: val, target: `euc.${sp}.annualCost`, status: "error", errorMsg: "Expected a number" });
+            } else {
+              entry.annualCost = num;
+              mapped.push({ field: label, value: num, target: `euc.${sp}.annualCost`, status: "mapped" });
+            }
+            break;
+          }
+          case "License Count": {
+            const num = parseNumeric(response);
+            if (num === null) {
+              errors.push({ field: label, value: val, target: `euc.${sp}.licenseCount`, status: "error", errorMsg: "Expected a number" });
+            } else {
+              entry.licenseCount = num;
+              mapped.push({ field: label, value: num, target: `euc.${sp}.licenseCount`, status: "mapped" });
+            }
+            break;
+          }
+          case "License SKU":
+            entry.licenseSku = val;
+            mapped.push({ field: label, value: val, target: `euc.${sp}.licenseSku`, status: "mapped" });
+            break;
+          case "User Count": {
+            const num = parseNumeric(response);
+            if (num === null) {
+              errors.push({ field: label, value: val, target: `euc.${sp}.userCount`, status: "error", errorMsg: "Expected a number" });
+            } else {
+              const key = sp.toLowerCase().includes("daas") ? "daas" : "vdi";
+              vdiUserCounts[key] = num;
+              mapped.push({ field: label, value: num, target: `vdiUserCounts.${key}`, status: "mapped" });
+            }
+            break;
+          }
+        }
+        continue;
+      }
+
+      const sectionMatch = label.match(EUC_SECTION_PATTERN);
+      if (sectionMatch) {
+        if (currentSpName && entry.vendor) {
           hexEntries.push({ ...entry });
         }
-        currentSp = sp;
-        entry = { subPillar: sp };
-        const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === sp));
+        const resolved = resolveSubPillar(label);
+        currentSpName = resolved || sectionMatch[2].trim();
+        currentSp = currentSpName;
+        entry = { subPillar: currentSpName };
+        const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === currentSpName));
         if (pillarDef) entry.pillar = pillarDef.pillar;
+        continue;
       }
+
+      if (!currentSpName) continue;
 
       if (response === null || response === undefined || response === "") {
         blankCount++;
@@ -428,69 +633,56 @@ export function parseIntakeFile(file: ArrayBuffer): ImportResult {
       }
 
       const val = String(response).trim();
+      const fieldType = classifyEucQuestion(label);
+
+      if (!fieldType) {
+        unmapped.push({ field: label, value: val, target: "", status: "unmapped" });
+        continue;
+      }
 
       switch (fieldType) {
-        case "Vendor": {
-          const vendorName = val === "Other" ? (entry.customVendor as string) || val : val;
-          entry.vendor = vendorName;
-          mapped.push({ field: label, value: val, target: `euc.${sp}.vendor`, status: "mapped" });
-          break;
-        }
-        case "Other Vendor Name":
-          entry.customVendor = val;
+        case "Vendor":
           entry.vendor = val;
-          mapped.push({ field: label, value: val, target: `euc.${sp}.customVendor`, status: "mapped" });
+          mapped.push({ field: label, value: val, target: `euc.${currentSpName}.vendor`, status: "mapped" });
           break;
-        case "Platform": {
-          const parts = val.split(" — ");
-          entry.platform = parts.length > 1 ? parts[parts.length - 1] : val;
-          mapped.push({ field: label, value: val, target: `euc.${sp}.platform`, status: "mapped" });
-          break;
-        }
-        case "Other Platform Name":
+        case "Platform":
           entry.platform = val;
-          mapped.push({ field: label, value: val, target: `euc.${sp}.customPlatform`, status: "mapped" });
+          mapped.push({ field: label, value: val, target: `euc.${currentSpName}.platform`, status: "mapped" });
           break;
-        case "Version": {
-          const parts = val.split(" — ");
-          entry.version = parts[parts.length - 1];
-          mapped.push({ field: label, value: val, target: `euc.${sp}.version`, status: "mapped" });
-          break;
-        }
-        case "Other Version":
+        case "Version":
           entry.version = val;
-          mapped.push({ field: label, value: val, target: `euc.${sp}.customVersion`, status: "mapped" });
+          mapped.push({ field: label, value: val, target: `euc.${currentSpName}.version`, status: "mapped" });
           break;
         case "Annual Cost": {
           const num = parseNumeric(response);
           if (num === null) {
-            errors.push({ field: label, value: val, target: `euc.${sp}.annualCost`, status: "error", errorMsg: "Expected a number" });
+            errors.push({ field: label, value: val, target: `euc.${currentSpName}.annualCost`, status: "error", errorMsg: "Expected a number" });
           } else {
             entry.annualCost = num;
-            mapped.push({ field: label, value: num, target: `euc.${sp}.annualCost`, status: "mapped" });
+            mapped.push({ field: label, value: num, target: `euc.${currentSpName}.annualCost`, status: "mapped" });
           }
           break;
         }
         case "License Count": {
           const num = parseNumeric(response);
           if (num === null) {
-            errors.push({ field: label, value: val, target: `euc.${sp}.licenseCount`, status: "error", errorMsg: "Expected a number" });
+            errors.push({ field: label, value: val, target: `euc.${currentSpName}.licenseCount`, status: "error", errorMsg: "Expected a number" });
           } else {
             entry.licenseCount = num;
-            mapped.push({ field: label, value: num, target: `euc.${sp}.licenseCount`, status: "mapped" });
+            mapped.push({ field: label, value: num, target: `euc.${currentSpName}.licenseCount`, status: "mapped" });
           }
           break;
         }
         case "License SKU":
           entry.licenseSku = val;
-          mapped.push({ field: label, value: val, target: `euc.${sp}.licenseSku`, status: "mapped" });
+          mapped.push({ field: label, value: val, target: `euc.${currentSpName}.licenseSku`, status: "mapped" });
           break;
         case "User Count": {
           const num = parseNumeric(response);
           if (num === null) {
-            errors.push({ field: label, value: val, target: `euc.${sp}.userCount`, status: "error", errorMsg: "Expected a number" });
+            errors.push({ field: label, value: val, target: `euc.${currentSpName}.userCount`, status: "error", errorMsg: "Expected a number" });
           } else {
-            const key = sp.toLowerCase().includes("daas") ? "daas" : "vdi";
+            const key = currentSpName.toLowerCase().includes("daas") ? "daas" : "vdi";
             vdiUserCounts[key] = num;
             mapped.push({ field: label, value: num, target: `vdiUserCounts.${key}`, status: "mapped" });
           }
@@ -499,18 +691,18 @@ export function parseIntakeFile(file: ArrayBuffer): ImportResult {
       }
     }
 
-    if (currentSp && entry.vendor) {
+    if (currentSpName && entry.vendor) {
       hexEntries.push({ ...entry });
     }
 
     if (hexEntries.length > 0) {
       inputs.hexagridEntries = hexEntries.map((e) => ({
         id: crypto.randomUUID(),
-        pillar: e.pillar || "",
-        subPillar: e.subPillar || "",
-        vendor: e.vendor || "",
-        platform: e.platform || undefined,
-        version: e.version || undefined,
+        pillar: (e.pillar as string) || "",
+        subPillar: (e.subPillar as string) || "",
+        vendor: (e.vendor as string) || "",
+        platform: (e.platform as string) || undefined,
+        version: (e.version as string) || undefined,
         annualCost: (e.annualCost as number) || undefined,
         licenseCount: (e.licenseCount as number) || undefined,
         licenseSku: (e.licenseSku as string) || undefined,
