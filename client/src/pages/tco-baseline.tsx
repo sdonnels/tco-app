@@ -157,7 +157,7 @@ type Inputs = {
     mspOtherProviders: string[];
   };
   observations: {
-    notes?: string;
+    notes: { observation: string; details: string }[];
   };
   hexagridEntries: HexagridEntry[];
 };
@@ -456,7 +456,7 @@ export default function TcoBaseline() {
       mspOther: false,
       mspOtherProviders: [],
     },
-    observations: {},
+    observations: { notes: [] },
     hexagridEntries: [],
   });
 
@@ -512,6 +512,15 @@ export default function TcoBaseline() {
   const [excelImportError, setExcelImportError] = useState<string | null>(null);
   const excelFileInputRef = useRef<HTMLInputElement>(null);
 
+  const migrateObservationsNotes = (obs: any): Inputs["observations"] => {
+    if (!obs) return { notes: [] };
+    if (typeof obs.notes === "string") {
+      return { notes: obs.notes.trim() ? [{ observation: obs.notes, details: "" }] : [] };
+    }
+    if (Array.isArray(obs.notes)) return obs as Inputs["observations"];
+    return { notes: [] };
+  };
+
   useEffect(() => {
     const migratedId = migrateLegacyDraft();
     if (migratedId) {
@@ -522,6 +531,7 @@ export default function TcoBaseline() {
           ...prev,
           ...data.inputs,
           hexagridEntries: data.inputs?.hexagridEntries ?? [],
+          observations: migrateObservationsNotes(data.inputs?.observations),
         }));
       }
       if (data?.assumptions) setAssumptions(data.assumptions);
@@ -582,7 +592,7 @@ export default function TcoBaseline() {
         mspOther: false,
         mspOtherProviders: [],
       },
-      observations: {},
+      observations: { notes: [] },
       hexagridEntries: [],
     });
     setAssumptions({
@@ -619,7 +629,7 @@ export default function TcoBaseline() {
     const hasEnv = !!(e.userCount || e.laptopCount || e.desktopCount || e.thinClientCount);
     const hasHex = inputs.hexagridEntries.length > 0;
     const hasOverrides = Object.values(inputs.categoryRollups ?? {}).some((v) => v !== undefined && v !== 0);
-    const hasObs = !!(inputs.observations as Record<string, unknown>)?.strengths || !!(inputs.observations as Record<string, unknown>)?.weaknesses || !!(inputs.observations as Record<string, unknown>)?.opportunities || !!(inputs.observations as Record<string, unknown>)?.threats;
+    const hasObs = inputs.observations.notes.length > 0;
     return hasProject || hasEnv || hasHex || hasOverrides || hasObs;
   }, [inputs]);
 
@@ -1205,8 +1215,11 @@ export default function TcoBaseline() {
     lines.push("┌" + "─".repeat(68) + "┐");
     lines.push("│ OBSERVATIONS & NOTES" + " ".repeat(47) + "│");
     lines.push("└" + "─".repeat(68) + "┘");
-    if (inputs.observations.notes?.trim()) {
-      lines.push(`  ${inputs.observations.notes}`);
+    if (inputs.observations.notes.length > 0) {
+      inputs.observations.notes.forEach((n, i) => {
+        lines.push(`  ${i + 1}. ${n.observation}`);
+        if (n.details.trim()) lines.push(`     ${n.details}`);
+      });
     } else {
       lines.push("  (No observations recorded)");
     }
@@ -1454,7 +1467,12 @@ export default function TcoBaseline() {
     rows.push([]);
 
     rows.push(["OBSERVATIONS"]);
-    rows.push([inputs.observations.notes ?? ""]);
+    if (inputs.observations.notes.length > 0) {
+      rows.push(["Observation", "Details"]);
+      inputs.observations.notes.forEach((n) => rows.push([n.observation, n.details]));
+    } else {
+      rows.push(["(No observations recorded)"]);
+    }
     
     const escapeCSV = (value: string) => {
       if (value.includes(",") || value.includes('"') || value.includes("\n")) {
@@ -1671,9 +1689,11 @@ export default function TcoBaseline() {
     </div>` : ""}
   </div>
 
-  ${inputs.observations.notes?.trim() ? `
+  ${inputs.observations.notes.length > 0 ? `
   <h2>Observations</h2>
-  <p style="font-size: 13px; color: #475569;">${inputs.observations.notes}</p>
+  <ul style="font-size: 13px; color: #475569;">
+    ${inputs.observations.notes.map((n) => `<li><strong>${n.observation}</strong>${n.details.trim() ? `<br/>${n.details}` : ""}</li>`).join("")}
+  </ul>
   ` : ""}
 
   <h2>Visualizations</h2>
@@ -1996,7 +2016,9 @@ export default function TcoBaseline() {
               }
             }
             if (data.additionalNotes) {
-              updated.observations = { ...updated.observations, notes: data.additionalNotes };
+              if (data.additionalNotes?.trim()) {
+                updated.observations = { ...updated.observations, notes: [{ observation: data.additionalNotes, details: "" }] };
+              }
             }
             return updated;
           });
@@ -2355,6 +2377,7 @@ export default function TcoBaseline() {
                       ...prev,
                       ...data.inputs,
                       hexagridEntries: data.inputs?.hexagridEntries ?? [],
+                      observations: migrateObservationsNotes(data.inputs?.observations),
                     }));
                   }
                   if (data?.assumptions) setAssumptions(data.assumptions);
@@ -3385,28 +3408,105 @@ export default function TcoBaseline() {
 
                 <div className="mt-6 grid gap-6 lg:grid-cols-3">
                   <div className="lg:col-span-2 space-y-6">
-                    <div>
-                      <Label htmlFor="notes" data-testid="label-notes">
-                        Notes & caveats
-                      </Label>
-                      <Textarea
-                        id="notes"
-                        placeholder="Example: Ticket counts are estimated. Licensing invoices pending. Some endpoints are shared in call centers."
-                        className="mt-2 min-h-28"
-                        value={inputs.observations.notes ?? ""}
-                        onChange={(e) =>
-                          setInputs((s) => ({
-                            ...s,
-                            observations: {
-                              ...s.observations,
-                              notes: e.target.value,
-                            },
-                          }))
-                        }
-                        data-testid="textarea-notes"
-                      />
+                    <div data-testid="section-notes-caveats">
+                      <div className="flex items-center justify-between">
+                        <Label data-testid="label-notes">Notes & Caveats</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() =>
+                            setInputs((s) => ({
+                              ...s,
+                              observations: {
+                                ...s.observations,
+                                notes: [...s.observations.notes, { observation: "", details: "" }],
+                              },
+                            }))
+                          }
+                          data-testid="button-add-note"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add Note
+                        </Button>
+                      </div>
                       <div className="mt-2 text-xs text-muted-foreground" data-testid="text-notes-hint">
                         This section does not affect calculations.
+                      </div>
+
+                      {inputs.observations.notes.length === 0 && (
+                        <div className="mt-4 text-sm text-muted-foreground italic" data-testid="text-notes-empty">
+                          No notes yet. Click "Add Note" to capture an observation.
+                        </div>
+                      )}
+
+                      <div className="mt-4 space-y-4">
+                        {inputs.observations.notes.map((note, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-2xl border bg-card/60 p-4 space-y-3"
+                            data-testid={`note-card-${idx}`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 space-y-3">
+                                <div>
+                                  <Label htmlFor={`obs-${idx}`} className="text-xs text-muted-foreground">
+                                    Observation
+                                  </Label>
+                                  <Input
+                                    id={`obs-${idx}`}
+                                    placeholder="What did you observe?"
+                                    className="mt-1"
+                                    value={note.observation}
+                                    onChange={(e) =>
+                                      setInputs((s) => {
+                                        const updated = [...s.observations.notes];
+                                        updated[idx] = { ...updated[idx], observation: e.target.value };
+                                        return { ...s, observations: { ...s.observations, notes: updated } };
+                                      })
+                                    }
+                                    data-testid={`input-observation-${idx}`}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`details-${idx}`} className="text-xs text-muted-foreground">
+                                    Details
+                                  </Label>
+                                  <Textarea
+                                    id={`details-${idx}`}
+                                    placeholder="Additional context, caveats, or supporting notes..."
+                                    className="mt-1 min-h-16"
+                                    value={note.details}
+                                    onChange={(e) =>
+                                      setInputs((s) => {
+                                        const updated = [...s.observations.notes];
+                                        updated[idx] = { ...updated[idx], details: e.target.value };
+                                        return { ...s, observations: { ...s.observations, notes: updated } };
+                                      })
+                                    }
+                                    data-testid={`textarea-details-${idx}`}
+                                  />
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive shrink-0 mt-5"
+                                onClick={() =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    observations: {
+                                      ...s.observations,
+                                      notes: s.observations.notes.filter((_, i) => i !== idx),
+                                    },
+                                  }))
+                                }
+                                data-testid={`button-delete-note-${idx}`}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
@@ -3695,7 +3795,14 @@ export default function TcoBaseline() {
                         Observations
                       </div>
                       <div className="mt-2 text-sm text-muted-foreground" data-testid="text-notes-summary">
-                        {inputs.observations.notes?.trim() ? inputs.observations.notes : "No observations captured."}
+                        {inputs.observations.notes.length > 0
+                          ? inputs.observations.notes.map((n, i) => (
+                              <div key={i} className="mb-2">
+                                <div className="font-medium text-sm">{n.observation || "(Untitled)"}</div>
+                                {n.details.trim() && <div className="text-xs mt-0.5">{n.details}</div>}
+                              </div>
+                            ))
+                          : "No observations captured."}
                       </div>
                     </div>
 
