@@ -2172,43 +2172,42 @@ export default function TcoBaseline() {
                         data-testid="switch-theme"
                       />
                     </div>
+                    {activeTab !== "home" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" data-testid="button-tools">
+                            <Wrench className="h-4 w-4 mr-1" /> Tools
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem onClick={generateIntakeForm} data-testid="menu-generate-intake">
+                            <FileDown className="h-4 w-4 mr-2" /> Generate Intake Form
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={importIntakeData} data-testid="menu-import-intake">
+                            <FileUp className="h-4 w-4 mr-2" /> Import Intake Data
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setHelpDialogOpen(true)} data-testid="menu-help">
+                            <HelpCircle className="h-4 w-4 mr-2" /> Help
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setAboutDialogOpen(true)} data-testid="menu-about">
+                            <Info className="h-4 w-4 mr-2" /> About
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
 
-                {activeTab !== "home" && (
-                  <div className="flex items-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" data-testid="button-tools">
-                          <Wrench className="h-4 w-4 mr-1" /> Tools
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem onClick={generateIntakeForm} data-testid="menu-generate-intake">
-                          <FileDown className="h-4 w-4 mr-2" /> Generate Intake Form
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={importIntakeData} data-testid="menu-import-intake">
-                          <FileUp className="h-4 w-4 mr-2" /> Import Intake Data
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setHelpDialogOpen(true)} data-testid="menu-help">
-                          <HelpCircle className="h-4 w-4 mr-2" /> Help
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setAboutDialogOpen(true)} data-testid="menu-about">
-                          <Info className="h-4 w-4 mr-2" /> About
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {hasAnyData && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setRestartDialogOpen(true)}
-                        data-testid="button-restart-assessment"
-                      >
-                        <RotateCcw className="h-4 w-4 mr-1" /> Restart Assessment
-                      </Button>
-                    )}
+                {activeTab !== "home" && hasAnyData && (
+                  <div className="flex items-center gap-2 sm:justify-end">
+                    <Button
+                      variant="outline"
+                      onClick={() => setRestartDialogOpen(true)}
+                      data-testid="button-restart-assessment"
+                    >
+                      <RotateCcw className="h-4 w-4 mr-1" /> Restart Assessment
+                    </Button>
                     <Dialog open={restartDialogOpen} onOpenChange={setRestartDialogOpen}>
                       <DialogContent>
                         <DialogHeader>
