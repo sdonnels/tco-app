@@ -5,6 +5,7 @@ import {
   BookMarked,
   BookOpen,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   ClipboardCheck,
   Download,
@@ -2132,6 +2133,46 @@ export default function TcoBaseline() {
     }, 2000);
   }, [helpIssue, inputs.project.clientName, inputs.project.engineerName]);
 
+  const tabOrder: { value: string; label: string }[] = [
+    { value: "home", label: "Home" },
+    { value: "inputs", label: "Inputs" },
+    { value: "assumptions", label: "Assumptions" },
+    { value: "observations", label: "Observations" },
+    { value: "summary", label: "Summary" },
+    { value: "readme", label: "Tools" },
+    ...(debugMode ? [{ value: "audit", label: "Audit / Trace" }] : []),
+  ];
+
+  const TabNav = ({ current }: { current: string }) => {
+    const idx = tabOrder.findIndex((t) => t.value === current);
+    const prev = idx > 1 ? tabOrder[idx - 1] : null;
+    const next = idx < tabOrder.length - 1 ? tabOrder[idx + 1] : null;
+    return (
+      <div className="mt-8 flex items-center justify-between" data-testid={`tab-nav-${current}`}>
+        {prev ? (
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => { setActiveTab(prev.value as any); window.scrollTo(0, 0); }}
+            data-testid={`button-prev-${current}`}
+          >
+            <ChevronLeft className="h-4 w-4" /> {prev.label}
+          </Button>
+        ) : <div />}
+        {next ? (
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => { setActiveTab(next.value as any); window.scrollTo(0, 0); }}
+            data-testid={`button-next-${current}`}
+          >
+            {next.label} <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : <div />}
+      </div>
+    );
+  };
+
   return (
     <div className="app-shell grain min-h-screen">
       <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
@@ -3067,6 +3108,7 @@ export default function TcoBaseline() {
                 </Card>
 
               </div>
+              <TabNav current="inputs" />
             </TabsContent>
 
             <TabsContent value="assumptions" className="mt-5" data-testid="panel-assumptions">
@@ -3394,6 +3436,7 @@ export default function TcoBaseline() {
                   testId="info-logic"
                 />
               </Card>
+              <TabNav current="assumptions" />
             </TabsContent>
 
             <TabsContent value="observations" className="mt-5" data-testid="panel-observations">
@@ -3627,6 +3670,7 @@ export default function TcoBaseline() {
                   />
                 </div>
               </Card>
+              <TabNav current="observations" />
             </TabsContent>
 
             <TabsContent value="summary" className="mt-5" data-testid="panel-summary">
@@ -3916,6 +3960,7 @@ export default function TcoBaseline() {
                   </div>
                 </div>
               </Card>
+              <TabNav current="summary" />
             </TabsContent>
 
             <TabsContent value="readme" className="mt-5" data-testid="panel-tools">
@@ -4166,11 +4211,13 @@ export default function TcoBaseline() {
                   </div>
                 </Card>
               </div>
+              <TabNav current="readme" />
             </TabsContent>
 
             {debugMode && (
               <TabsContent value="audit" className="mt-5" data-testid="panel-audit">
                 <AuditTracePage inputs={inputs} assumptions={assumptions} />
+                <TabNav current="audit" />
               </TabsContent>
             )}
           </Tabs>
