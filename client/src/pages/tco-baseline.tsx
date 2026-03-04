@@ -2861,66 +2861,6 @@ export default function TcoBaseline() {
                           </div>
                         </div>
                       )}
-                    </div>
-
-                    <div className="space-y-4" data-testid="group-msp-services">
-                      <div className="text-sm font-semibold">What's outsourced?</div>
-                      <div className="rounded-2xl border bg-card/60 p-4">
-                        <div className="grid gap-3">
-                          {([
-                            { k: "outsourcedEndpointMgmt", label: "Endpoint management (UEM, imaging, lifecycle)" },
-                            { k: "outsourcedSecurity", label: "Security / EDR / SOC" },
-                            { k: "outsourcedPatching", label: "Patching & updates" },
-                            { k: "outsourcedHelpdesk", label: "Helpdesk / Tier 1 support" },
-                            { k: "outsourcedTier2Plus", label: "Tier 2+ support / engineering" },
-                            { k: "outsourcedOther", label: "Other" },
-                          ] as const).map((row) => (
-                            <div
-                              key={row.k}
-                              className="flex items-center gap-3"
-                              data-testid={`row-msp-${row.k}`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={row.k}
-                                checked={Boolean(inputs.managedServices[row.k as keyof typeof inputs.managedServices])}
-                                onChange={(e) =>
-                                  setInputs((s) => ({
-                                    ...s,
-                                    managedServices: {
-                                      ...s.managedServices,
-                                      [row.k]: e.target.checked,
-                                    },
-                                  }))
-                                }
-                                className="h-4 w-4 rounded border-gray-300 accent-primary"
-                                data-testid={`checkbox-${row.k}`}
-                              />
-                              <Label htmlFor={row.k} className="cursor-pointer text-sm">
-                                {row.label}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                        {inputs.managedServices.outsourcedOther && (
-                          <div className="mt-3">
-                            <Input
-                              placeholder="Describe other outsourced services"
-                              value={inputs.managedServices.otherDescription ?? ""}
-                              onChange={(e) =>
-                                setInputs((s) => ({
-                                  ...s,
-                                  managedServices: {
-                                    ...s.managedServices,
-                                    otherDescription: e.target.value,
-                                  },
-                                }))
-                              }
-                              data-testid="input-msp-other-desc"
-                            />
-                          </div>
-                        )}
-                      </div>
 
                       <div className="space-y-3 mt-4">
                         <div className="text-sm font-semibold">MSP Provider</div>
@@ -3029,6 +2969,66 @@ export default function TcoBaseline() {
                             </div>
                           )}
                         </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4" data-testid="group-msp-services">
+                      <div className="text-sm font-semibold">What's outsourced?</div>
+                      <div className="rounded-2xl border bg-card/60 p-4">
+                        <div className="grid gap-3">
+                          {([
+                            { k: "outsourcedEndpointMgmt", label: "Endpoint management (UEM, imaging, lifecycle)" },
+                            { k: "outsourcedSecurity", label: "Security / EDR / SOC" },
+                            { k: "outsourcedPatching", label: "Patching & updates" },
+                            { k: "outsourcedHelpdesk", label: "Helpdesk / Tier 1 support" },
+                            { k: "outsourcedTier2Plus", label: "Tier 2+ support / engineering" },
+                            { k: "outsourcedOther", label: "Other" },
+                          ] as const).map((row) => (
+                            <div
+                              key={row.k}
+                              className="flex items-center gap-3"
+                              data-testid={`row-msp-${row.k}`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={row.k}
+                                checked={Boolean(inputs.managedServices[row.k as keyof typeof inputs.managedServices])}
+                                onChange={(e) =>
+                                  setInputs((s) => ({
+                                    ...s,
+                                    managedServices: {
+                                      ...s.managedServices,
+                                      [row.k]: e.target.checked,
+                                    },
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-gray-300 accent-primary"
+                                data-testid={`checkbox-${row.k}`}
+                              />
+                              <Label htmlFor={row.k} className="cursor-pointer text-sm">
+                                {row.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                        {inputs.managedServices.outsourcedOther && (
+                          <div className="mt-3">
+                            <Input
+                              placeholder="Describe other outsourced services"
+                              value={inputs.managedServices.otherDescription ?? ""}
+                              onChange={(e) =>
+                                setInputs((s) => ({
+                                  ...s,
+                                  managedServices: {
+                                    ...s.managedServices,
+                                    otherDescription: e.target.value,
+                                  },
+                                }))
+                              }
+                              data-testid="input-msp-other-desc"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
