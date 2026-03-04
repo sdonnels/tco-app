@@ -3487,12 +3487,6 @@ export default function TcoBaseline() {
                   </div>
 
                   <div className="space-y-4">
-                    <InlineInfo
-                      title="How this works"
-                      body="Capture notes and caveats to document what you observed during the assessment. The calculation trace shows exactly how each line item was derived — every assumed value is labeled, and every input is traceable. Nothing silently defaults."
-                      icon={<BookOpen className="h-4 w-4" />}
-                      testId="info-observations"
-                    />
                     <div className="rounded-2xl border bg-card/60 p-4" data-testid="panel-assumed-list">
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-semibold" data-testid="text-assumed-title">
@@ -3522,6 +3516,15 @@ export default function TcoBaseline() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-4">
+                  <InlineInfo
+                    title="How this works"
+                    body="Capture notes and caveats to document what you observed during the assessment. The calculation trace shows exactly how each line item was derived — every assumed value is labeled, and every input is traceable. Nothing silently defaults."
+                    icon={<BookOpen className="h-4 w-4" />}
+                    testId="info-observations"
+                  />
                 </div>
               </Card>
             </TabsContent>
