@@ -79,6 +79,11 @@ function colLetter(c: number): string {
   return XLSX.utils.encode_col(c);
 }
 
+type ValidationEntry = {
+  row: number;
+  options: string[];
+};
+
 function addRow(
   data: (string | number | null)[][],
   label: string,
@@ -87,6 +92,33 @@ function addRow(
   response: string | number | null = null,
 ) {
   data.push([label, description, response, validOptions ?? ""]);
+}
+
+function collectDropdownOptions(validOptions: string): string[] | null {
+  if (!validOptions) return null;
+  if (/^numeric|^text$/i.test(validOptions.trim())) return null;
+  if (/^numeric\s*\(/i.test(validOptions.trim())) return null;
+  const opts = validOptions.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (opts.length < 2 || opts.length > 250) return null;
+  return opts;
+}
+
+function addRowWithValidation(
+  data: (string | number | null)[][],
+  validations: ValidationEntry[],
+  label: string,
+  description: string,
+  validOptions?: string,
+  response: string | number | null = null,
+) {
+  const rowIdx = data.length;
+  data.push([label, description, response, validOptions ?? ""]);
+  if (validOptions) {
+    const opts = collectDropdownOptions(validOptions);
+    if (opts) {
+      validations.push({ row: rowIdx, options: opts });
+    }
+  }
 }
 
 function buildCoverSheet(clientName: string, projectName: string): XLSX.WorkSheet {
@@ -258,14 +290,17 @@ function applySheetProtection(ws: XLSX.WorkSheet) {
   for (let r = 0; r <= range.e.r; r++) {
     for (let c = 0; c <= range.e.c; c++) {
       const ref = `${colLetter(c)}${r + 1}`;
-      const cell = ws[ref];
-      if (cell) {
-        if (!cell.s) cell.s = {};
-        if (c === 2 && r > 0) {
-          (cell.s as Record<string, unknown>).protection = { locked: false };
-        } else {
-          (cell.s as Record<string, unknown>).protection = { locked: true };
-        }
+      let cell = ws[ref];
+      if (!cell) {
+        cell = { v: "", t: "s", s: {} };
+        ws[ref] = cell;
+      }
+      if (!cell.s) cell.s = {};
+      const style = cell.s as Record<string, unknown>;
+      if (c === 2 && r > 0) {
+        style.protection = { locked: false };
+      } else {
+        style.protection = { locked: true };
       }
     }
   }
@@ -310,9 +345,15 @@ function buildHeaderRow(): [string, string, string, string][] {
   return [["Field Label", "Description", "Your Response", "Valid Options"]];
 }
 
-function buildEnvironmentSheet(): XLSX.WorkSheet {
+type SheetResult = {
+  ws: XLSX.WorkSheet;
+  validations: ValidationEntry[];
+};
+
+function buildEnvironmentSheet(): SheetResult {
   const data: (string | number | null)[][] = [...buildHeaderRow()];
   const rowTypes: RowType[] = [];
+  const validations: ValidationEntry[] = [];
   addRow(data, "Total Users", "Total number of end users in the environment", "Numeric");
   rowTypes.push("data");
   addRow(data, "Laptops", "Number of managed laptops", "Numeric");
@@ -328,12 +369,13 @@ function buildEnvironmentSheet(): XLSX.WorkSheet {
   applySheetProtection(ws);
   applyPrintSetup(ws);
   ws["!autofilter"] = { ref: "A1:D1" };
-  return ws;
+  return { ws, validations };
 }
 
-function buildEucPillarsSheet(): XLSX.WorkSheet {
+function buildEucPillarsSheet(): SheetResult {
   const data: (string | number | null)[][] = [...buildHeaderRow()];
   const rowTypes: RowType[] = [];
+  const validations: ValidationEntry[] = [];
 
   for (const pillar of typedVendors) {
     data.push([pillar.pillar, pillar.description, null, ""]);
@@ -364,16 +406,16 @@ function buildEucPillarsSheet(): XLSX.WorkSheet {
       }
       if (allVersions.length > 0) allVersions.push("Other");
 
-      addRow(data, `${sp.name} \u2014 Vendor`, sp.description, vendorOptions);
+      addRowWithValidation(data, validations, `${sp.name} \u2014 Vendor`, sp.description, vendorOptions);
       rowTypes.push("data");
       addRow(data, `${sp.name} \u2014 Other Vendor Name`, "If you selected 'Other' above, specify the vendor name", "Text");
       rowTypes.push("data");
-      addRow(data, `${sp.name} \u2014 Platform`, "Select the product/platform in use", platformOptions);
+      addRowWithValidation(data, validations, `${sp.name} \u2014 Platform`, "Select the product/platform in use", platformOptions);
       rowTypes.push("data");
       addRow(data, `${sp.name} \u2014 Other Platform Name`, "If you selected 'Other' above, specify the platform name", "Text");
       rowTypes.push("data");
       if (allVersions.length > 0) {
-        addRow(data, `${sp.name} \u2014 Version`, "Select the version in use", allVersions.join("\n"));
+        addRowWithValidation(data, validations, `${sp.name} \u2014 Version`, "Select the version in use", allVersions.join("\n"));
         rowTypes.push("data");
         addRow(data, `${sp.name} \u2014 Other Version`, "If you selected 'Other' above, specify the version", "Text");
         rowTypes.push("data");
@@ -400,14 +442,14 @@ function buildEucPillarsSheet(): XLSX.WorkSheet {
   applyColumnHeaderStyle(ws);
   applySectionDataStyles(ws, rowTypes);
   applySheetProtection(ws);
-
   applyPrintSetup(ws);
-  return ws;
+  return { ws, validations };
 }
 
-function buildOverridesSheet(): XLSX.WorkSheet {
+function buildOverridesSheet(): SheetResult {
   const data: (string | number | null)[][] = [...buildHeaderRow()];
   const rowTypes: RowType[] = [];
+  const validations: ValidationEntry[] = [];
   addRow(data, "End-User Devices (Annual)", "Total annual spend on end-user device hardware refresh", "Numeric (dollars)");
   rowTypes.push("data");
   addRow(data, "Support & Ops (Annual)", "Total annual spend on support and operations", "Numeric (dollars)");
@@ -425,37 +467,37 @@ function buildOverridesSheet(): XLSX.WorkSheet {
   applyColumnHeaderStyle(ws);
   applySectionDataStyles(ws, rowTypes);
   applySheetProtection(ws);
-
   applyPrintSetup(ws);
-  return ws;
+  return { ws, validations };
 }
 
-function buildManagedServicesSheet(): XLSX.WorkSheet {
+function buildManagedServicesSheet(): SheetResult {
   const data: (string | number | null)[][] = [...buildHeaderRow()];
   const rowTypes: RowType[] = [];
-  addRow(data, "Total MSP / Managed Services Spend", "Total annual spend on managed services or MSP providers", "Numeric (dollars)");
+  const validations: ValidationEntry[] = [];
+  addRowWithValidation(data, validations, "Total MSP / Managed Services Spend", "Total annual spend on managed services or MSP providers", "Numeric (dollars)");
   rowTypes.push("data");
   addRow(data, "", "", "");
   rowTypes.push("spacer");
-  addRow(data, "Outsourced: Endpoint Management", "Is endpoint management (UEM, imaging, lifecycle) outsourced?", "Yes\nNo");
+  addRowWithValidation(data, validations, "Outsourced: Endpoint Management", "Is endpoint management (UEM, imaging, lifecycle) outsourced?", "Yes\nNo");
   rowTypes.push("data");
-  addRow(data, "Outsourced: Security / EDR / SOC", "Is security / EDR / SOC outsourced?", "Yes\nNo");
+  addRowWithValidation(data, validations, "Outsourced: Security / EDR / SOC", "Is security / EDR / SOC outsourced?", "Yes\nNo");
   rowTypes.push("data");
-  addRow(data, "Outsourced: Patching & Updates", "Is patching and updates outsourced?", "Yes\nNo");
+  addRowWithValidation(data, validations, "Outsourced: Patching & Updates", "Is patching and updates outsourced?", "Yes\nNo");
   rowTypes.push("data");
-  addRow(data, "Outsourced: Tier 1 Support / Helpdesk", "Is Tier 1 support / helpdesk outsourced?", "Yes\nNo");
+  addRowWithValidation(data, validations, "Outsourced: Tier 1 Support / Helpdesk", "Is Tier 1 support / helpdesk outsourced?", "Yes\nNo");
   rowTypes.push("data");
-  addRow(data, "Outsourced: Tier 2+ Support / Engineering", "Is Tier 2+ support / engineering outsourced?", "Yes\nNo");
+  addRowWithValidation(data, validations, "Outsourced: Tier 2+ Support / Engineering", "Is Tier 2+ support / engineering outsourced?", "Yes\nNo");
   rowTypes.push("data");
-  addRow(data, "Outsourced: Other", "Are any other EUC functions outsourced?", "Yes\nNo");
+  addRowWithValidation(data, validations, "Outsourced: Other", "Are any other EUC functions outsourced?", "Yes\nNo");
   rowTypes.push("data");
   addRow(data, "Other Outsourced Description", "If 'Other' is Yes, describe what's outsourced", "Text");
   rowTypes.push("data");
   addRow(data, "", "", "");
   rowTypes.push("spacer");
-  addRow(data, "MSP Provider: XenTegra", "Is XenTegra a managed services provider?", "Yes\nNo");
+  addRowWithValidation(data, validations, "MSP Provider: XenTegra", "Is XenTegra a managed services provider?", "Yes\nNo");
   rowTypes.push("data");
-  addRow(data, "MSP Provider: Other", "Do you use another MSP provider?", "Yes\nNo");
+  addRowWithValidation(data, validations, "MSP Provider: Other", "Do you use another MSP provider?", "Yes\nNo");
   rowTypes.push("data");
   addRow(data, "Other MSP Provider Names", "If 'Other' is Yes, list provider names separated by commas", "Text");
   rowTypes.push("data");
@@ -464,27 +506,181 @@ function buildManagedServicesSheet(): XLSX.WorkSheet {
   applyColumnHeaderStyle(ws);
   applySectionDataStyles(ws, rowTypes);
   applySheetProtection(ws);
-
   applyPrintSetup(ws);
-  return ws;
+  return { ws, validations };
 }
 
-export function exportIntakeForm(clientName: string, projectName: string, sections: IntakeSections = ALL_SECTIONS) {
+function escapeXml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+type ListColumn = {
+  colIndex: number;
+  options: string[];
+};
+
+function buildListsSheet(allValidations: Map<number, ValidationEntry[]>): { ws: XLSX.WorkSheet; columns: ListColumn[] } {
+  const columns: ListColumn[] = [];
+  const uniqueLists = new Map<string, string[]>();
+
+  for (const validations of allValidations.values()) {
+    for (const v of validations) {
+      const key = v.options.join("\x00");
+      if (!uniqueLists.has(key)) {
+        uniqueLists.set(key, v.options);
+      }
+    }
+  }
+
+  let colIdx = 0;
+  for (const [, opts] of uniqueLists) {
+    columns.push({ colIndex: colIdx, options: opts });
+    colIdx++;
+  }
+
+  const maxRows = Math.max(...columns.map((c) => c.options.length), 0);
+  const data: (string | null)[][] = [];
+  for (let r = 0; r < maxRows; r++) {
+    const row: (string | null)[] = [];
+    for (const col of columns) {
+      row.push(r < col.options.length ? col.options[r] : null);
+    }
+    data.push(row);
+  }
+
+  const ws = data.length > 0 ? XLSX.utils.aoa_to_sheet(data) : XLSX.utils.aoa_to_sheet([[""]]);
+  return { ws, columns };
+}
+
+function findListColIndex(columns: ListColumn[], options: string[]): number {
+  const key = options.join("\x00");
+  for (const col of columns) {
+    if (col.options.join("\x00") === key) return col.colIndex;
+  }
+  return -1;
+}
+
+function buildDataValidationXml(
+  validations: ValidationEntry[],
+  listColumns: ListColumn[],
+  listsSheetName: string,
+): string {
+  if (validations.length === 0) return "";
+  const items: string[] = [];
+  for (const v of validations) {
+    const cellRef = `C${v.row + 1}`;
+    const inlineFormula = v.options.join(",");
+
+    if (inlineFormula.length <= 250) {
+      const formula = `"${v.options.map(escapeXml).join(",")}"`;
+      items.push(
+        `<dataValidation type="list" allowBlank="1" showInputMessage="1" showDropDown="0" sqref="${cellRef}">` +
+          `<formula1>${formula}</formula1>` +
+          `</dataValidation>`,
+      );
+    } else {
+      const colIdx = findListColIndex(listColumns, v.options);
+      if (colIdx >= 0) {
+        const col = listColumns[colIdx];
+        const colLtr = XLSX.utils.encode_col(colIdx);
+        const formula = `'${escapeXml(listsSheetName)}'!$${colLtr}$1:$${colLtr}$${col.options.length}`;
+        items.push(
+          `<dataValidation type="list" allowBlank="1" showInputMessage="1" showDropDown="0" sqref="${cellRef}">` +
+            `<formula1>${formula}</formula1>` +
+            `</dataValidation>`,
+        );
+      }
+    }
+  }
+  if (items.length === 0) return "";
+  return `<dataValidations count="${items.length}">${items.join("")}</dataValidations>`;
+}
+
+async function injectDataValidations(
+  xlsxBuffer: ArrayBuffer,
+  sheetValidations: Map<number, ValidationEntry[]>,
+  listColumns: ListColumn[],
+  listsSheetName: string,
+  listsSheetIdx: number,
+): Promise<Blob> {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(xlsxBuffer);
+
+  for (const [sheetIdx, validations] of sheetValidations) {
+    if (validations.length === 0) continue;
+    const sheetPath = `xl/worksheets/sheet${sheetIdx + 1}.xml`;
+    const xml = await zip.file(sheetPath)?.async("string");
+    if (!xml) continue;
+
+    const dvXml = buildDataValidationXml(validations, listColumns, listsSheetName);
+    if (!dvXml) continue;
+
+    let modified: string;
+    if (xml.includes("</worksheet>")) {
+      modified = xml.replace("</worksheet>", `${dvXml}</worksheet>`);
+    } else {
+      modified = xml + dvXml;
+    }
+
+    zip.file(sheetPath, modified);
+  }
+
+  const listsSheetPath = `xl/worksheets/sheet${listsSheetIdx + 1}.xml`;
+  const listsXml = await zip.file(listsSheetPath)?.async("string");
+  if (listsXml) {
+    const hiddenAttr = listsXml.includes("<sheetViews>")
+      ? listsXml
+      : listsXml;
+    zip.file(listsSheetPath, hiddenAttr);
+  }
+
+  const wbXmlPath = "xl/workbook.xml";
+  const wbXml = await zip.file(wbXmlPath)?.async("string");
+  if (wbXml) {
+    const listsSheetTag = `name="${escapeXml(listsSheetName)}"`;
+    if (wbXml.includes(listsSheetTag)) {
+      const modified = wbXml.replace(
+        new RegExp(`(<sheet[^>]*name="${escapeXml(listsSheetName)}")`),
+        `$1 state="veryHidden"`,
+      );
+      zip.file(wbXmlPath, modified);
+    }
+  }
+
+  return await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+export async function exportIntakeForm(clientName: string, projectName: string, sections: IntakeSections = ALL_SECTIONS) {
   const wb = XLSX.utils.book_new();
+  const sheetValidations = new Map<number, ValidationEntry[]>();
+  let sheetIdx = 0;
 
   XLSX.utils.book_append_sheet(wb, buildCoverSheet(clientName, projectName), "Cover");
+  sheetIdx++;
 
   if (sections.environmentFacts) {
-    XLSX.utils.book_append_sheet(wb, buildEnvironmentSheet(), "Environment Facts");
+    const result = buildEnvironmentSheet();
+    XLSX.utils.book_append_sheet(wb, result.ws, "Environment Facts");
+    sheetValidations.set(sheetIdx, result.validations);
+    sheetIdx++;
   }
   if (sections.platformCostOverrides) {
-    XLSX.utils.book_append_sheet(wb, buildOverridesSheet(), "Platform Cost Overrides");
+    const result = buildOverridesSheet();
+    XLSX.utils.book_append_sheet(wb, result.ws, "Platform Cost Overrides");
+    sheetValidations.set(sheetIdx, result.validations);
+    sheetIdx++;
   }
   if (sections.eucPillars) {
-    XLSX.utils.book_append_sheet(wb, buildEucPillarsSheet(), "EUC Pillars");
+    const result = buildEucPillarsSheet();
+    XLSX.utils.book_append_sheet(wb, result.ws, "EUC Pillars");
+    sheetValidations.set(sheetIdx, result.validations);
+    sheetIdx++;
   }
   if (sections.managedServices) {
-    XLSX.utils.book_append_sheet(wb, buildManagedServicesSheet(), "Managed Services");
+    const result = buildManagedServicesSheet();
+    XLSX.utils.book_append_sheet(wb, result.ws, "Managed Services");
+    sheetValidations.set(sheetIdx, result.validations);
+    sheetIdx++;
   }
 
   const sheetTabColors: Record<string, string> = {
@@ -506,7 +702,27 @@ export function exportIntakeForm(clientName: string, projectName: string, sectio
   const slug = clientName.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") || "Client";
   const filename = `TCO_Intake_${slug}_${dateStr}.xlsx`;
 
-  XLSX.writeFile(wb, filename);
+  const hasValidations = Array.from(sheetValidations.values()).some((v) => v.length > 0);
+
+  if (hasValidations) {
+    const listsSheetName = "_Lists";
+    const { ws: listsWs, columns: listColumns } = buildListsSheet(sheetValidations);
+    XLSX.utils.book_append_sheet(wb, listsWs, listsSheetName);
+    const listsSheetIdx = wb.SheetNames.indexOf(listsSheetName);
+
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = await injectDataValidations(buffer, sheetValidations, listColumns, listsSheetName, listsSheetIdx);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } else {
+    XLSX.writeFile(wb, filename);
+  }
 }
 
 export type MappedField = {

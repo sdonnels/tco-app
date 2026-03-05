@@ -1870,9 +1870,9 @@ export default function TcoBaseline() {
     fileInput.click();
   }, []);
 
-  const handleExcelExport = useCallback(() => {
+  const handleExcelExport = useCallback(async () => {
     if (!excelClientName.trim()) return;
-    exportIntakeForm(excelClientName.trim(), excelProjectName.trim(), excelSections);
+    await exportIntakeForm(excelClientName.trim(), excelProjectName.trim(), excelSections);
     setExcelExportOpen(false);
     setExcelClientName("");
     setExcelProjectName("");
@@ -1932,7 +1932,7 @@ export default function TcoBaseline() {
     }
   }, [googleFormUrlDraft, toast]);
 
-  const handleSendEmail = useCallback(() => {
+  const handleSendEmail = useCallback(async () => {
     const clientName = inputs.project.clientName || "[Client Name]";
     const engineerName = inputs.project.engineerName || "[XenTegra Engineer Name]";
     const dueDate = emailDueDate
@@ -1954,7 +1954,7 @@ export default function TcoBaseline() {
 
     if (emailMethod === "excel") {
       const clientName2 = inputs.project.clientName?.trim() || "Client";
-      exportIntakeForm(clientName2, "", excelSections);
+      await exportIntakeForm(clientName2, "", excelSections);
     }
 
     window.open(mailto, "_self");
