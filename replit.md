@@ -116,13 +116,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Documentation
 
-Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.3) which includes:
+Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.4) and `DOCUMENTATION.md` (root) which includes:
 - Full feature description and tool overview
-- EUC Pillars & Platforms framework (6 pillars, 17 sub-pillars, 60+ vendors)
+- EUC Pillars & Platforms framework (7 pillars, 17 sub-pillars, 60+ vendors)
 - All 15 assumptions with industry-sourced justifications
 - Calculation formulas and derived metrics (Override > EUC Pillar costs > Assumptions priority chain)
 - Five current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source)
-- Export format specifications (JSON, CSV, PDF, Audit Trail, Justifications, Download All zip)
+- Export format specifications (CSV, PDF, Audit Trail, Justifications, Download All zip)
 - Tools menu documentation (Intake Form, Import, Help, About)
 - Onboarding tour and readiness tracker details
 - Dark mode toggle documentation
@@ -155,8 +155,8 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - Files imported via Vite `?raw` suffix for client-side download generation
 
 ### Tools Menu (dropdown in header toolbar)
-- **Generate Intake Form** — Downloads a structured JSON questionnaire for pre-meeting customer data collection
-- **Import Intake Data** — Uploads completed intake form (JSON, .xlsx, or .csv) to auto-populate tool fields
+- **Generate Intake Form** — Opens the Excel intake form export dialog (same as Tools tab)
+- **Import Intake Data** — Uploads completed intake form (.xlsx or .csv) to auto-populate tool fields
 - **Help** — Generates pre-filled support email with issue description and diagnostic info
 - **About** — Version info (0.4.0), technical details, XenTegra copyright and legal notices
 

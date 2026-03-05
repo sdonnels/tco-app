@@ -171,7 +171,7 @@ function buildManagedServicesSheet(): XLSX.WorkSheet {
   addRow(data, "Outsourced: Endpoint Management", "Is endpoint management (UEM, imaging, lifecycle) outsourced?", "Yes\nNo");
   addRow(data, "Outsourced: Security / EDR / SOC", "Is security / EDR / SOC outsourced?", "Yes\nNo");
   addRow(data, "Outsourced: Patching & Updates", "Is patching and updates outsourced?", "Yes\nNo");
-  addRow(data, "Outsourced: Helpdesk / Tier 1 Support", "Is helpdesk / Tier 1 support outsourced?", "Yes\nNo");
+  addRow(data, "Outsourced: Tier 1 Support / Helpdesk", "Is Tier 1 support / helpdesk outsourced?", "Yes\nNo");
   addRow(data, "Outsourced: Tier 2+ Support / Engineering", "Is Tier 2+ support / engineering outsourced?", "Yes\nNo");
   addRow(data, "Outsourced: Other", "Are any other EUC functions outsourced?", "Yes\nNo");
   addRow(data, "Other Outsourced Description", "If 'Other' is Yes, describe what's outsourced", "Text");
@@ -354,6 +354,7 @@ function classifyMspField(label: string): string | null {
     "outsourced: security / edr / soc": "outsourcedSecurity",
     "outsourced: patching & updates": "outsourcedPatching",
     "outsourced: helpdesk / tier 1 support": "outsourcedHelpdesk",
+    "outsourced: tier 1 support / helpdesk": "outsourcedHelpdesk",
     "outsourced: tier 2+ support / engineering": "outsourcedTier2Plus",
     "outsourced: other": "outsourcedOther",
     "other outsourced description": "otherDescription",

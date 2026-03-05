@@ -714,9 +714,9 @@ export default function TcoBaseline() {
       action: () => setActiveTab("summary"),
     },
     {
-      target: "[data-testid='button-export-json']",
+      target: "[data-testid='button-export-csv']",
       title: "Export Your Baseline",
-      content: "Download your baseline in multiple formats: JSON for data interchange, CSV for spreadsheets, PDF for presentations, or full Audit Trail.",
+      content: "Download your baseline in multiple formats: CSV for spreadsheets, PDF for presentations, or full Audit Trail.",
       placement: "left" as const,
     },
   ], []);
@@ -861,8 +861,8 @@ export default function TcoBaseline() {
     if (inputs.managedServices.outsourcedEndpointMgmt) outsourcedServices.push("Endpoint Management");
     if (inputs.managedServices.outsourcedSecurity) outsourcedServices.push("Security/EDR");
     if (inputs.managedServices.outsourcedPatching) outsourcedServices.push("Patching");
-    if (inputs.managedServices.outsourcedHelpdesk) outsourcedServices.push("Helpdesk/Tier 1");
-    if (inputs.managedServices.outsourcedTier2Plus) outsourcedServices.push("Tier 2+ Support");
+    if (inputs.managedServices.outsourcedHelpdesk) outsourcedServices.push("Tier 1 Support / Helpdesk");
+    if (inputs.managedServices.outsourcedTier2Plus) outsourcedServices.push("Tier 2+ Support / Engineering");
     if (inputs.managedServices.outsourcedOther) outsourcedServices.push(inputs.managedServices.otherDescription || "Other");
 
     const mspProviders: string[] = [];
@@ -954,73 +954,6 @@ export default function TcoBaseline() {
     localStorage.setItem("tco-dark-mode", String(dark));
   }, [dark]);
 
-  const getJsonContent = useCallback(() => {
-    const payload = {
-      tool: "tco-baseline-micro-assessment",
-      version: "0.3-excel-aligned",
-      generatedAt: new Date().toISOString(),
-      project: {
-        clientName: inputs.project.clientName ?? null,
-        assessmentDate: inputs.project.assessmentDate ?? null,
-        customerChampion: inputs.project.customerChampion ?? null,
-        engineerName: inputs.project.engineerName ?? null,
-        clientLogoIncluded: !!clientLogo,
-      },
-      inputs,
-      assumptions,
-      derived: {
-        endpoints: derived.endpoints,
-        userCount: derived.userCount,
-        vdiPresent: derived.vdiPresent,
-        vdiUserCount: derived.vdiUserCount,
-        totals: {
-          endUserDevices: derived.endUserDevicesValue,
-          supportOps: derived.supportOpsValue,
-          licensing: derived.licensingValue,
-          mgmtSecurity: derived.mgmtSecurityValue,
-          vdiDaas: derived.vdiDaasValue,
-          overhead: derived.overheadValue,
-          managedServices: derived.mspSpend,
-          totalAnnualTco: derived.totalAnnualTco,
-          costPerEndpoint: derived.costPerEndpoint,
-          costPerUser: derived.costPerUser,
-          vdiCostPerVdiUser: derived.vdiCostPerVdiUser,
-          nonVdiCostPerUser: derived.nonVdiCostPerUser,
-        },
-        trace: {
-          categoryLines: derived.categoryLines,
-          managedServicesLines: derived.managedServicesLines,
-        },
-        eucPillars: {
-          total: derived.hexagridTotal,
-          byPillar: {
-            endpointHardwareOs: derived.hexHardware,
-            access: derived.hexAccess,
-            virtualDesktops: derived.hexVdi,
-            deviceManagement: derived.hexMgmt,
-            security: derived.hexSecurity,
-            appManagement: derived.hexAppMgmt,
-            collaborationAi: derived.hexCollab,
-          },
-          entries: inputs.hexagridEntries,
-        },
-      },
-    };
-
-    return JSON.stringify(payload, null, 2);
-  }, [inputs, assumptions, derived, clientLogo]);
-
-  const exportJson = () => {
-    const content = getJsonContent();
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tco-baseline-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const exportAuditTrail = () => {
     const lines: string[] = [];
     const hr = "═".repeat(70);
@@ -1109,8 +1042,8 @@ export default function TcoBaseline() {
     lines.push(`    Endpoint Mgmt:    ${inputs.managedServices.outsourcedEndpointMgmt ? "Yes" : "No"}`);
     lines.push(`    Security/EDR:     ${inputs.managedServices.outsourcedSecurity ? "Yes" : "No"}`);
     lines.push(`    Patching:         ${inputs.managedServices.outsourcedPatching ? "Yes" : "No"}`);
-    lines.push(`    Helpdesk/Tier 1:  ${inputs.managedServices.outsourcedHelpdesk ? "Yes" : "No"}`);
-    lines.push(`    Tier 2+ Support:  ${inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"}`);
+    lines.push(`    Tier 1 Support / Helpdesk:  ${inputs.managedServices.outsourcedHelpdesk ? "Yes" : "No"}`);
+    lines.push(`    Tier 2+ Support / Engineering:  ${inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"}`);
     lines.push(`    Other:            ${inputs.managedServices.outsourcedOther ? "Yes" : "No"}`);
     lines.push(`    Other Description: ${inputs.managedServices.otherDescription ?? "(none)"}`);
     lines.push("  MSP Providers:");
@@ -1456,8 +1389,8 @@ export default function TcoBaseline() {
     rows.push(["Outsourced Endpoint Management", inputs.managedServices.outsourcedEndpointMgmt ? "Yes" : "No"]);
     rows.push(["Outsourced Security/EDR", inputs.managedServices.outsourcedSecurity ? "Yes" : "No"]);
     rows.push(["Outsourced Patching", inputs.managedServices.outsourcedPatching ? "Yes" : "No"]);
-    rows.push(["Outsourced Helpdesk/Tier 1", inputs.managedServices.outsourcedHelpdesk ? "Yes" : "No"]);
-    rows.push(["Outsourced Tier 2+ Support", inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"]);
+    rows.push(["Outsourced Tier 1 Support / Helpdesk", inputs.managedServices.outsourcedHelpdesk ? "Yes" : "No"]);
+    rows.push(["Outsourced Tier 2+ Support / Engineering", inputs.managedServices.outsourcedTier2Plus ? "Yes" : "No"]);
     rows.push(["Outsourced Other", inputs.managedServices.outsourcedOther ? "Yes" : "No"]);
     rows.push(["Other Description", inputs.managedServices.otherDescription ?? ""]);
     rows.push(["MSP Provider: XenTegra", inputs.managedServices.mspXentegra ? "Yes" : "No"]);
@@ -1849,7 +1782,6 @@ export default function TcoBaseline() {
     const clientSlug = (inputs.project.clientName ?? "Baseline").replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_");
     const folderName = `${dateStr}_${clientSlug}_TCO Micro-Assessment_Export`;
 
-    zip.file(`${folderName}/tco-baseline.json`, getJsonContent());
     zip.file(`${folderName}/tco-baseline.csv`, getCsvContent());
     zip.file(`${folderName}/tco-audit-trail.txt`, getAuditTrailContent());
     zip.file(`${folderName}/tco-assumption-justifications.txt`, getJustificationContent());
@@ -1884,172 +1816,30 @@ export default function TcoBaseline() {
   };
 
   const generateIntakeForm = useCallback(() => {
-    const dateStr = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    const form = {
-      _formType: "tco-intake-form",
-      _version: "1.0",
-      _generatedAt: new Date().toISOString(),
-      _instructions: "Please complete as many fields as possible before the assessment meeting. Leave blank any items you are unsure of. Save this file and send it to your XenTegra engineer, or use 'Import Intake Data' in the tool to load it directly.",
-      project: {
-        clientName: "",
-        assessmentDate: "",
-        customerChampion: "",
-        engineerName: "",
-      },
-      environment: {
-        userCount: null as number | null,
-        laptopCount: null as number | null,
-        desktopCount: null as number | null,
-        thinClientCount: null as number | null,
-      },
-      vdiDaas: {
-        vdiPresent: "unknown",
-        vdiPctOfUsers: null as number | null,
-        notes: "",
-      },
-      eucPillars: {
-        _instructions: "For each category, list the vendors/platforms in use and their approximate annual cost. If you don't know the cost, leave it blank.",
-        access: {
-          workspacePortals: { vendors: "", annualCost: null as number | null },
-          identitySSO: { vendors: "", annualCost: null as number | null },
-          mfaZeroTrust: { vendors: "", annualCost: null as number | null },
-        },
-        virtualDesktopsAndApplications: {
-          vdiPlatforms: { vendors: "", annualCost: null as number | null },
-          daas: { vendors: "", annualCost: null as number | null },
-          appVirtualization: { vendors: "", annualCost: null as number | null },
-        },
-        deviceOsUserManagement: {
-          uemMdm: { vendors: "", annualCost: null as number | null },
-          osDeployment: { vendors: "", annualCost: null as number | null },
-          patchManagement: { vendors: "", annualCost: null as number | null },
-        },
-        security: {
-          endpointProtection: { vendors: "", annualCost: null as number | null },
-          edrXdr: { vendors: "", annualCost: null as number | null },
-          dlp: { vendors: "", annualCost: null as number | null },
-        },
-        appManagement: {
-          appPackaging: { vendors: "", annualCost: null as number | null },
-          appLifecycle: { vendors: "", annualCost: null as number | null },
-          appCompatibility: { vendors: "", annualCost: null as number | null },
-        },
-        collaborationAiApplications: {
-          productivitySuites: { vendors: "", annualCost: null as number | null },
-          ucaas: { vendors: "", annualCost: null as number | null },
-          aiCopilots: { vendors: "", annualCost: null as number | null },
-        },
-      },
-      costOverrides: {
-        _instructions: "If you know the total annual spend for any of these categories, enter them here. These will take priority over individual vendor costs.",
-        endUserDevicesAnnual: null as number | null,
-        supportOpsAnnual: null as number | null,
-        licensingAnnual: null as number | null,
-        mgmtSecurityAnnual: null as number | null,
-        vdiDaasAnnual: null as number | null,
-        overheadAnnual: null as number | null,
-      },
-      additionalNotes: "",
-    };
-    const content = JSON.stringify(form, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const clientSlug = (inputs.project.clientName ?? "Client").replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_");
-    a.download = `${dateStr.replace(/[, ]+/g, "_")}_${clientSlug}_TCO_Intake_Form.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    setExcelClientName(inputs.project.clientName ?? "");
+    setExcelProjectName("");
+    setExcelExportOpen(true);
   }, [inputs.project.clientName]);
 
   const importIntakeData = useCallback(() => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = ".json,.xlsx,.csv";
+    fileInput.accept = ".xlsx,.csv";
     fileInput.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
-      if (file.name.endsWith(".xlsx") || file.name.endsWith(".csv")) {
-        try {
-          const buf = await file.arrayBuffer();
-          const result = parseIntakeImport(buf, file.name);
-          setExcelImportResult(result);
-          setExcelImportOpen(true);
-          setExcelImportError(null);
-        } catch {
-          setExcelImportError(
-            "This file doesn't match the expected intake form template. Please ensure you're uploading a completed TCO Intake Form.",
-          );
-        }
-        return;
+      try {
+        const buf = await file.arrayBuffer();
+        const result = parseIntakeImport(buf, file.name);
+        setExcelImportResult(result);
+        setExcelImportOpen(true);
+        setExcelImportError(null);
+      } catch {
+        setExcelImportError(
+          "This file doesn't match the expected intake form template. Please ensure you're uploading a completed TCO Intake Form.",
+        );
       }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(reader.result as string);
-          if (data._formType !== "tco-intake-form") {
-            alert("This doesn't appear to be a valid TCO Intake Form. Please select the correct JSON file.");
-            return;
-          }
-          setInputs((prev) => {
-            const updated = { ...prev };
-            if (data.project) {
-              updated.project = {
-                ...updated.project,
-                ...(data.project.clientName && { clientName: data.project.clientName }),
-                ...(data.project.assessmentDate && { assessmentDate: data.project.assessmentDate }),
-                ...(data.project.customerChampion && { customerChampion: data.project.customerChampion }),
-                ...(data.project.engineerName && { engineerName: data.project.engineerName }),
-              };
-            }
-            if (data.environment) {
-              updated.environment = {
-                ...updated.environment,
-                ...(data.environment.userCount != null && { userCount: data.environment.userCount }),
-                ...(data.environment.laptopCount != null && { laptopCount: data.environment.laptopCount }),
-                ...(data.environment.desktopCount != null && { desktopCount: data.environment.desktopCount }),
-                ...(data.environment.thinClientCount != null && { thinClientCount: data.environment.thinClientCount }),
-              };
-            }
-            if (data.costOverrides) {
-              updated.categoryRollups = {
-                ...updated.categoryRollups,
-                ...(data.costOverrides.endUserDevicesAnnual != null && { endUserDevicesAnnual: data.costOverrides.endUserDevicesAnnual }),
-                ...(data.costOverrides.supportOpsAnnual != null && { supportOpsAnnual: data.costOverrides.supportOpsAnnual }),
-                ...(data.costOverrides.licensingAnnual != null && { licensingAnnual: data.costOverrides.licensingAnnual }),
-                ...(data.costOverrides.mgmtSecurityAnnual != null && { mgmtSecurityAnnual: data.costOverrides.mgmtSecurityAnnual }),
-                ...(data.costOverrides.vdiDaasAnnual != null && { vdiDaasAnnual: data.costOverrides.vdiDaasAnnual }),
-                ...(data.costOverrides.overheadAnnual != null && { overheadAnnual: data.costOverrides.overheadAnnual }),
-              };
-            }
-            if (data.vdiDaas) {
-              if (data.vdiDaas.vdiPresent === "yes" || data.vdiDaas.vdiPresent === "no") {
-                updated.vdiDaas = { ...updated.vdiDaas, vdiPresent: data.vdiDaas.vdiPresent };
-              }
-              if (data.vdiDaas.vdiPctOfUsers != null) {
-                updated.vdiDaas = { ...updated.vdiDaas, vdiPctOfUsers: data.vdiDaas.vdiPctOfUsers };
-              }
-            }
-            if (data.additionalNotes) {
-              if (data.additionalNotes?.trim()) {
-                updated.observations = { ...updated.observations, notes: [{ observation: data.additionalNotes, details: "" }] };
-              }
-            }
-            return updated;
-          });
-          if (!currentDraftId) {
-            const id = createDraft();
-            setCurrentDraftId(id);
-          }
-          setActiveTab("inputs");
-          alert("Intake data imported successfully! Review the Inputs tab to verify the imported values.");
-        } catch {
-          alert("Could not read the file. Please make sure it's a valid JSON intake form.");
-        }
-      };
-      reader.readAsText(file);
     };
     fileInput.click();
   }, []);
@@ -3060,8 +2850,8 @@ export default function TcoBaseline() {
                             { k: "outsourcedEndpointMgmt", label: "Endpoint management (UEM, imaging, lifecycle)" },
                             { k: "outsourcedSecurity", label: "Security / EDR / SOC" },
                             { k: "outsourcedPatching", label: "Patching & updates" },
-                            { k: "outsourcedHelpdesk", label: "Helpdesk / Tier 1 support" },
-                            { k: "outsourcedTier2Plus", label: "Tier 2+ support / engineering" },
+                            { k: "outsourcedHelpdesk", label: "Tier 1 Support / Helpdesk" },
+                            { k: "outsourcedTier2Plus", label: "Tier 2+ Support / Engineering" },
                             { k: "outsourcedOther", label: "Other" },
                           ] as const).map((row) => (
                             <div
@@ -3934,14 +3724,6 @@ export default function TcoBaseline() {
                         <Button
                           variant="outline"
                           className="w-full gap-2 justify-start"
-                          onClick={exportJson}
-                          data-testid="button-export-json"
-                        >
-                          <FileDown className="h-4 w-4" /> JSON (data interchange)
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full gap-2 justify-start"
                           onClick={downloadCSV}
                           data-testid="button-export-csv"
                         >
@@ -4198,7 +3980,7 @@ export default function TcoBaseline() {
                         <div>
                           <h4 className="font-semibold text-sm" data-testid="text-qs-step8-title">Review the Summary (Summary Tab)</h4>
                           <p className="text-sm text-muted-foreground mt-1" data-testid="text-qs-step8-desc">
-                            The Summary tab presents your <strong>Total Annual Baseline</strong>, <strong>Cost per Endpoint</strong>, <strong>Cost per User</strong>, and VDI-specific metrics. Five interactive charts visualize your data: Endpoint Mix, Where Money Goes, Cost by Category, VDI vs. Non-VDI Comparison, and Cost Source Composition. Use the export options to download your results as JSON, CSV, PDF, Audit Trail, or a bundled zip file.
+                            The Summary tab presents your <strong>Total Annual Baseline</strong>, <strong>Cost per Endpoint</strong>, <strong>Cost per User</strong>, and VDI-specific metrics. Five interactive charts visualize your data: Endpoint Mix, Where Money Goes, Cost by Category, VDI vs. Non-VDI Comparison, and Cost Source Composition. Use the export options to download your results as CSV, PDF, Audit Trail, or a bundled zip file.
                           </p>
                         </div>
                       </div>
@@ -4352,7 +4134,7 @@ export default function TcoBaseline() {
                 <span>UI Library</span><span className="font-mono">shadcn/ui + Radix</span>
                 <span>Charts</span><span className="font-mono">Recharts</span>
                 <span>Data Storage</span><span className="font-mono">Client-side (localStorage)</span>
-                <span>Export Formats</span><span className="font-mono">JSON, CSV, PDF, Audit Trail</span>
+                <span>Export Formats</span><span className="font-mono">CSV, PDF, Audit Trail</span>
               </div>
             </div>
 

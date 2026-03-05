@@ -339,8 +339,8 @@ function buildTraceCards(inputs: Inputs, assumptions: Assumptions, intakeFields:
     { key: "outsourcedEndpointMgmt", label: "Outsourced: Endpoint Management" },
     { key: "outsourcedSecurity", label: "Outsourced: Security / EDR / SOC" },
     { key: "outsourcedPatching", label: "Outsourced: Patching & Updates" },
-    { key: "outsourcedHelpdesk", label: "Outsourced: Helpdesk / Tier 1" },
-    { key: "outsourcedTier2Plus", label: "Outsourced: Tier 2+ Support" },
+    { key: "outsourcedHelpdesk", label: "Outsourced: Tier 1 Support / Helpdesk" },
+    { key: "outsourcedTier2Plus", label: "Outsourced: Tier 2+ Support / Engineering" },
     { key: "outsourcedOther", label: "Outsourced: Other" },
   ];
 
