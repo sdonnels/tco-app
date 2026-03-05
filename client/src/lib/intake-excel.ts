@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx-js-style";
+import ExcelJS from "exceljs";
 import vendorsData from "@/data/vendors.json";
 
 type PillarDef = {
@@ -24,20 +25,18 @@ const typedVendors = vendorsData as PillarDef[];
 
 const LICENSE_EXCLUDED = new Set(["PC and Mobile Devices"]);
 const VDI_SUBPILLARS = ["DaaS (Cloud PC / Hosted Desktop)", "VDI (On-Premises)"];
-
-export interface IntakeSections {
-  environmentFacts: boolean;
-  eucPillars: boolean;
-  platformCostOverrides: boolean;
-  managedServices: boolean;
-}
-
-const ALL_SECTIONS: IntakeSections = {
-  environmentFacts: true,
-  eucPillars: true,
-  platformCostOverrides: true,
-  managedServices: true,
-};
+const VERSION_SUBPILLARS = ["VDI (On-Premises)"];
+const USER_COUNT_SUBPILLARS = VDI_SUBPILLARS;
+const PLATFORM_SUBPILLARS = new Set([
+  "PC and Mobile Devices",
+  "Endpoint OS",
+  "Secure Enterprise Browser",
+  "VPN",
+  "DaaS (Cloud PC / Hosted Desktop)",
+  "VDI (On-Premises)",
+  "Unified Endpoint Mgmt (UEM)",
+  "Unified Comms & Collab",
+]);
 
 const BRAND = {
   navy: "002D56",
@@ -49,423 +48,434 @@ const BRAND = {
   altRowGray: "F8F9FA",
   instructionBg: "F5F5F5",
   gridBorder: "D0D0D0",
+  slotHeaderBlue: "E8F4F8",
 };
 
-const THIN_BORDER = { style: "thin", color: { rgb: BRAND.gridBorder } } as const;
-const ALL_THIN_BORDERS = { top: THIN_BORDER, bottom: THIN_BORDER, left: THIN_BORDER, right: THIN_BORDER };
-const BLUE_SIDE_BORDER = { style: "thin", color: { rgb: BRAND.lightBlue } } as const;
+const NUM_SLOTS = 3;
 
-function setColWidths(ws: XLSX.WorkSheet, widths: number[]) {
-  ws["!cols"] = widths.map((w) => ({ wch: w }));
+function argb(hex: string): string {
+  return `FF${hex}`;
 }
 
-function setRowHeight(ws: XLSX.WorkSheet, row: number, hpt: number) {
-  if (!ws["!rows"]) ws["!rows"] = [];
-  ws["!rows"][row] = { hpt };
+const THIN_BORDER: ExcelJS.Border = { style: "thin", color: { argb: argb(BRAND.gridBorder) } };
+const ALL_THIN: Partial<ExcelJS.Borders> = { top: THIN_BORDER, bottom: THIN_BORDER, left: THIN_BORDER, right: THIN_BORDER };
+const BLUE_SIDE: ExcelJS.Border = { style: "thin", color: { argb: argb(BRAND.lightBlue) } };
+
+function applyHeaderRow(ws: ExcelJS.Worksheet) {
+  const headerRow = ws.getRow(1);
+  headerRow.values = ["Field Label", "Description", "Your Response", "Valid Options"];
+  headerRow.height = 28;
+  headerRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+    if (colNumber > 4) return;
+    cell.font = { bold: true, size: 10, color: { argb: argb(BRAND.white) } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.lightBlue) } };
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = { ...ALL_THIN, bottom: { style: "medium", color: { argb: argb(BRAND.navy) } } };
+  });
+  ws.views = [{ state: "frozen", ySplit: 1, xSplit: 0 }];
 }
 
-function setCell(ws: XLSX.WorkSheet, ref: string, value: string | number | null, style: Record<string, unknown>) {
-  const cell: Record<string, unknown> = { v: value ?? "", t: typeof value === "number" ? "n" : "s", s: style };
-  ws[ref] = cell;
+function setStandardWidths(ws: ExcelJS.Worksheet) {
+  ws.getColumn(1).width = 45;
+  ws.getColumn(2).width = 40;
+  ws.getColumn(3).width = 25;
+  ws.getColumn(4).width = 40;
 }
 
-function getRange(ws: XLSX.WorkSheet): { s: { r: number; c: number }; e: { r: number; c: number } } {
-  const ref = ws["!ref"];
-  if (!ref) return { s: { r: 0, c: 0 }, e: { r: 0, c: 0 } };
-  return XLSX.utils.decode_range(ref);
+function styleDataRow(ws: ExcelJS.Worksheet, rowNum: number, dataIdx: number) {
+  const isOdd = dataIdx % 2 === 1;
+  const bgColor = isOdd ? BRAND.altRowGray : BRAND.white;
+  const row = ws.getRow(rowNum);
+
+  const cellA = row.getCell(1);
+  cellA.font = { bold: true, size: 10, color: { argb: argb(BRAND.black) } };
+  cellA.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(bgColor) } };
+  cellA.border = ALL_THIN;
+
+  const cellB = row.getCell(2);
+  cellB.font = { italic: true, size: 9, color: { argb: argb(BRAND.gray) } };
+  cellB.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(bgColor) } };
+  cellB.alignment = { wrapText: true };
+  cellB.border = ALL_THIN;
+
+  const cellC = row.getCell(3);
+  cellC.font = { size: 10, color: { argb: argb(BRAND.black) } };
+  cellC.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.responseYellow) } };
+  cellC.border = { ...ALL_THIN, left: BLUE_SIDE, right: BLUE_SIDE };
+  cellC.protection = { locked: false };
+
+  const cellD = row.getCell(4);
+  cellD.font = { size: 9, color: { argb: argb(BRAND.gray) } };
+  cellD.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(bgColor) } };
+  cellD.alignment = { wrapText: true };
+  cellD.border = ALL_THIN;
 }
 
-function colLetter(c: number): string {
-  return XLSX.utils.encode_col(c);
+function addSectionHeader(ws: ExcelJS.Worksheet, rowNum: number, text: string) {
+  const row = ws.getRow(rowNum);
+  row.getCell(1).value = text;
+  row.height = 28;
+  for (let c = 1; c <= 4; c++) {
+    const cell = row.getCell(c);
+    cell.font = { bold: true, size: 11, color: { argb: argb(BRAND.white) } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.navy) } };
+    cell.alignment = { vertical: "middle" };
+  }
+  ws.mergeCells(rowNum, 1, rowNum, 4);
 }
 
-function addRow(
-  data: (string | number | null)[][],
+function addSlotHeader(ws: ExcelJS.Worksheet, rowNum: number, slotNum: number) {
+  const row = ws.getRow(rowNum);
+  const suffix = slotNum > 1 ? "  (leave blank if not applicable)" : "";
+  row.getCell(1).value = `▸ Entry ${slotNum}${suffix}`;
+  row.height = 22;
+  for (let c = 1; c <= 4; c++) {
+    const cell = row.getCell(c);
+    cell.font = { bold: true, size: 9, color: { argb: argb(BRAND.lightBlue) } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.slotHeaderBlue) } };
+    cell.alignment = { vertical: "middle" };
+  }
+  ws.mergeCells(rowNum, 1, rowNum, 4);
+}
+
+function addDataRow(
+  ws: ExcelJS.Worksheet,
+  rowNum: number,
+  dataIdx: number,
   label: string,
   description: string,
-  validOptions?: string,
-  response: string | number | null = null,
+  validOptions: string,
+  dropdown?: string[],
 ) {
-  data.push([label, description, response, validOptions ?? ""]);
-}
-
-function buildCoverSheet(clientName: string, projectName: string): XLSX.WorkSheet {
-  const rows: (string | null)[][] = [
-    ["TCO Assessment \u2014 Intake Form", null],
-    [null, null],
-    [null, null],
-    ["Client Name", clientName],
-    ["Project Name", projectName || "(not specified)"],
-    ["Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
-    ["Prepared By", "XenTegra"],
-    [null, null],
-    [null, null],
-    [
-      "Please fill in what you know in the highlighted 'Your Response' column on each tab.\nLeave anything you're unsure about blank \u2014 assumptions will be made explicit.\nReturn this file to your consultant when complete.",
-      null,
-    ],
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  setColWidths(ws, [25, 50]);
-
-  ws["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-    { s: { r: 9, c: 0 }, e: { r: 9, c: 1 } },
-  ];
-
-  setCell(ws, "A1", rows[0][0], {
-    font: { bold: true, sz: 18, color: { rgb: BRAND.white } },
-    fill: { fgColor: { rgb: BRAND.navy } },
-    alignment: { vertical: "center", horizontal: "center" },
-  });
-  setCell(ws, "B1", null, {
-    fill: { fgColor: { rgb: BRAND.navy } },
-  });
-  setRowHeight(ws, 0, 40);
-
-  for (let r = 3; r <= 6; r++) {
-    const rowData = rows[r];
-    setCell(ws, `A${r + 1}`, rowData[0], {
-      font: { bold: true, sz: 11, color: { rgb: BRAND.navy } },
-      alignment: { vertical: "center" },
-    });
-    setCell(ws, `B${r + 1}`, rowData[1], {
-      font: { sz: 11, color: { rgb: BRAND.black } },
-      alignment: { vertical: "center" },
-    });
-  }
-
-  setCell(ws, "A10", rows[9][0], {
-    font: { italic: true, sz: 10, color: { rgb: BRAND.gray } },
-    fill: { fgColor: { rgb: BRAND.instructionBg } },
-    alignment: { wrapText: true, vertical: "top" },
-    border: { left: { style: "medium", color: { rgb: BRAND.lightBlue } } },
-  });
-  setCell(ws, "B10", null, {
-    fill: { fgColor: { rgb: BRAND.instructionBg } },
-    border: {},
-  });
-  setRowHeight(ws, 9, 60);
-
-  return ws;
-}
-
-function applyColumnHeaderStyle(ws: XLSX.WorkSheet) {
-  const headers = ["A1", "B1", "C1", "D1"];
-  const headerStyle = {
-    font: { bold: true, sz: 10, color: { rgb: BRAND.white } },
-    fill: { fgColor: { rgb: BRAND.lightBlue } },
-    alignment: { horizontal: "center" as const, vertical: "center" as const, wrapText: true },
-    border: {
-      ...ALL_THIN_BORDERS,
-      bottom: { style: "medium" as const, color: { rgb: BRAND.navy } },
-    },
-  };
-  for (const ref of headers) {
-    const cell = ws[ref];
-    if (cell) cell.s = headerStyle;
-  }
-  setRowHeight(ws, 0, 28);
-}
-
-type RowType = "data" | "section-header" | "spacer";
-
-function applySectionDataStyles(ws: XLSX.WorkSheet, rowTypes: RowType[]) {
-  const range = getRange(ws);
-  let dataRowIndex = 0;
-
-  for (let r = 1; r <= range.e.r; r++) {
-    const rt = rowTypes[r - 1] || "data";
-
-    if (rt === "section-header") {
-      for (let c = 0; c <= range.e.c; c++) {
-        const ref = `${colLetter(c)}${r + 1}`;
-        const cell = ws[ref];
-        const style = {
-          font: { bold: true, sz: 11, color: { rgb: BRAND.white } },
-          fill: { fgColor: { rgb: BRAND.navy } },
-          alignment: { vertical: "center" as const },
-        };
-        if (cell) {
-          cell.s = style;
-        } else {
-          ws[ref] = { v: "", t: "s", s: style };
-        }
-      }
-      ws["!merges"] = ws["!merges"] || [];
-      ws["!merges"].push({ s: { r, c: 0 }, e: { r, c: range.e.c } });
-      setRowHeight(ws, r, 26);
-      continue;
-    }
-
-    if (rt === "spacer") {
-      continue;
-    }
-
-    const isOdd = dataRowIndex % 2 === 1;
-    const rowBg = isOdd ? BRAND.altRowGray : BRAND.white;
-    dataRowIndex++;
-
-    for (let c = 0; c <= range.e.c; c++) {
-      const ref = `${colLetter(c)}${r + 1}`;
-      const cell = ws[ref];
-      let style: Record<string, unknown> = { border: ALL_THIN_BORDERS };
-
-      if (c === 0) {
-        style = {
-          ...style,
-          font: { bold: true, sz: 10, color: { rgb: BRAND.black } },
-          fill: { fgColor: { rgb: rowBg } },
-        };
-      } else if (c === 1) {
-        style = {
-          ...style,
-          font: { italic: true, sz: 9, color: { rgb: BRAND.gray } },
-          fill: { fgColor: { rgb: rowBg } },
-          alignment: { wrapText: true },
-        };
-      } else if (c === 2) {
-        style = {
-          ...style,
-          font: { sz: 10, color: { rgb: BRAND.black } },
-          fill: { fgColor: { rgb: BRAND.responseYellow } },
-          border: {
-            ...ALL_THIN_BORDERS,
-            left: BLUE_SIDE_BORDER,
-            right: BLUE_SIDE_BORDER,
-          },
-        };
-      } else if (c === 3) {
-        style = {
-          ...style,
-          font: { sz: 9, color: { rgb: BRAND.gray } },
-          fill: { fgColor: { rgb: rowBg } },
-          alignment: { wrapText: true },
-        };
-      }
-
-      if (cell) {
-        cell.s = style;
-      } else {
-        ws[ref] = { v: "", t: "s", s: style };
-      }
+  const row = ws.getRow(rowNum);
+  row.getCell(1).value = label;
+  row.getCell(2).value = description;
+  row.getCell(3).value = "";
+  row.getCell(4).value = validOptions;
+  styleDataRow(ws, rowNum, dataIdx);
+  if (dropdown && dropdown.length >= 2) {
+    const joined = dropdown.join(",");
+    if (joined.length <= 255) {
+      row.getCell(3).dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: [`"${joined}"`],
+        showErrorMessage: true,
+        errorTitle: "Invalid Selection",
+        error: "Please select from the dropdown list or choose Other.",
+      };
     }
   }
 }
 
-function applyPrintSetup(ws: XLSX.WorkSheet) {
-  (ws as Record<string, unknown>)["!pageSetup"] = {
+function applyPrintSetup(ws: ExcelJS.Worksheet) {
+  ws.pageSetup = {
     orientation: "landscape",
+    fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
-    scale: 100,
     paperSize: 1,
-    showGridLines: true,
+    margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
   };
-  ws["!margins"] = {
-    left: 0.5,
-    right: 0.5,
-    top: 0.5,
-    bottom: 0.5,
-    header: 0.3,
-    footer: 0.3,
+  ws.headerFooter = {
+    oddHeader: "&L&\"Calibri,Regular\"TCO Assessment \u2014 Intake Form&R&\"Calibri,Regular\"Page &P of &N",
+    oddFooter: "&C&\"Calibri,Regular\"XenTegra | Confidential",
   };
 }
 
-function buildHeaderRow(): [string, string, string, string][] {
-  return [["Field Label", "Description", "Your Response", "Valid Options"]];
+function applySheetProtection(ws: ExcelJS.Worksheet) {
+  ws.protect("", {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    formatColumns: false,
+    formatRows: false,
+    insertColumns: false,
+    insertRows: false,
+    deleteColumns: false,
+    deleteRows: false,
+    sort: true,
+    autoFilter: true,
+  });
 }
 
-function buildEnvironmentSheet(): XLSX.WorkSheet {
-  const data: (string | number | null)[][] = [...buildHeaderRow()];
-  const rowTypes: RowType[] = [];
-  addRow(data, "Total Users", "Total number of end users in the environment", "Numeric");
-  rowTypes.push("data");
-  addRow(data, "Laptops", "Number of managed laptops", "Numeric");
-  rowTypes.push("data");
-  addRow(data, "Desktops", "Number of managed desktops", "Numeric");
-  rowTypes.push("data");
-  addRow(data, "Thin Clients", "Number of thin client devices", "Numeric");
-  rowTypes.push("data");
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [45, 40, 25, 35]);
-  applyColumnHeaderStyle(ws);
-  applySectionDataStyles(ws, rowTypes);
+function buildCoverSheet(wb: ExcelJS.Workbook, clientName: string, projectName: string) {
+  const ws = wb.addWorksheet("Cover Sheet", {
+    properties: { tabColor: { argb: argb(BRAND.navy) } },
+  });
+  ws.getColumn(1).width = 25;
+  ws.getColumn(2).width = 55;
+
+  const titleRow = ws.getRow(1);
+  titleRow.height = 50;
+  ws.mergeCells("A1:B1");
+  const titleCell = titleRow.getCell(1);
+  titleCell.value = "TCO Assessment \u2014 Intake Form";
+  titleCell.font = { bold: true, size: 18, color: { argb: argb(BRAND.white) } };
+  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.navy) } };
+  titleCell.alignment = { horizontal: "center", vertical: "middle" };
+  titleRow.getCell(2).fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.navy) } };
+
+  ws.getRow(2).height = 10;
+
+  const metaFields = [
+    ["Client Name", clientName, true],
+    ["Project Name", projectName || "(not specified)", true],
+    ["Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), false],
+    ["Prepared By", "XenTegra", false],
+  ] as const;
+  for (let i = 0; i < metaFields.length; i++) {
+    const r = i + 3;
+    const row = ws.getRow(r);
+    row.height = 22;
+    const cellA = row.getCell(1);
+    cellA.value = metaFields[i][0];
+    cellA.font = { bold: true, size: 11, color: { argb: argb(BRAND.navy) } };
+    cellA.alignment = { vertical: "middle" };
+    const cellB = row.getCell(2);
+    cellB.value = metaFields[i][1];
+    cellB.font = { size: 11, color: { argb: argb(BRAND.black) } };
+    cellB.alignment = { vertical: "middle" };
+    if (metaFields[i][2]) {
+      cellB.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.responseYellow) } };
+      cellB.protection = { locked: false };
+    }
+  }
+
+  ws.getRow(7).height = 8;
+  ws.getRow(8).height = 8;
+
+  ws.mergeCells("A9:B12");
+  const instrCell = ws.getRow(9).getCell(1);
+  instrCell.value =
+    "Please fill in what you know in the highlighted 'Your Response' column on each tab.\nLeave anything you're unsure about blank \u2014 assumptions will be made explicit.\nReturn this file to your XenTegra consultant when complete.";
+  instrCell.font = { italic: true, size: 10, color: { argb: argb(BRAND.gray) } };
+  instrCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.instructionBg) } };
+  instrCell.alignment = { wrapText: true, vertical: "top" };
+  instrCell.border = { left: { style: "medium", color: { argb: argb(BRAND.lightBlue) } } };
+  for (let r = 9; r <= 12; r++) {
+    const cellB = ws.getRow(r).getCell(2);
+    cellB.fill = { type: "pattern", pattern: "solid", fgColor: { argb: argb(BRAND.instructionBg) } };
+  }
+
+  ws.getRow(13).height = 8;
+
+  const guideRow = ws.getRow(14);
+  guideRow.getCell(1).value = "QUICK GUIDE";
+  guideRow.getCell(1).font = { bold: true, size: 10, color: { argb: argb(BRAND.navy) } };
+
+  const guideItems: [string, string][] = [
+    ["Yellow cells", "These are where you enter your responses"],
+    ["Dropdowns", "Click a yellow cell to see a dropdown list of options"],
+    ["Other", "If your vendor/product isn't listed, select 'Other'"],
+    ["Numbers", "Enter whole numbers only (no commas or currency symbols)"],
+    ["Multiple vendors?", "Each section has Entry 1, 2, and 3 \u2014 fill one per vendor"],
+    ["License Type / SKU", 'Enter the license tier or entitlement (e.g., "M365 E3", "Citrix Platform License (CPL)")'],
+    ["Notes", "Use the Notes field in each entry for questions, clarifications, or context"],
+    ["Skip anything", "Leave blank if you're unsure \u2014 we'll discuss it together"],
+  ];
+  for (let i = 0; i < guideItems.length; i++) {
+    const r = 15 + i;
+    const row = ws.getRow(r);
+    row.height = 22;
+    const cellA = row.getCell(1);
+    cellA.value = guideItems[i][0];
+    cellA.font = { bold: true, size: 10, color: { argb: argb(BRAND.navy) } };
+    cellA.alignment = { vertical: "middle" };
+    const cellB = row.getCell(2);
+    cellB.value = guideItems[i][1];
+    cellB.font = { size: 10, color: { argb: argb(BRAND.gray) } };
+    cellB.alignment = { vertical: "middle", wrapText: true };
+  }
+
+  for (let c = 1; c <= 2; c++) {
+    for (let r = 1; r <= 22; r++) {
+      const cell = ws.getRow(r).getCell(c);
+      if (!cell.protection) cell.protection = { locked: true };
+    }
+  }
+
   applyPrintSetup(ws);
-  ws["!autofilter"] = { ref: "A1:D1" };
-  return ws;
+  applySheetProtection(ws);
 }
 
-function buildEucPillarsSheet(): XLSX.WorkSheet {
-  const data: (string | number | null)[][] = [...buildHeaderRow()];
-  const rowTypes: RowType[] = [];
+function buildEnvironmentSheet(wb: ExcelJS.Workbook) {
+  const ws = wb.addWorksheet("Environment Facts", {
+    properties: { tabColor: { argb: argb(BRAND.lightBlue) } },
+  });
+  setStandardWidths(ws);
+  applyHeaderRow(ws);
+
+  const fields: [string, string, string][] = [
+    ["Total Users", "How many total end users are in your environment?", "Number"],
+    ["Laptops", "Total laptop count across your organization", "Number"],
+    ["Desktops", "Total desktop / workstation count", "Number"],
+    ["Thin Clients", "Total thin client / zero client count", "Number"],
+  ];
+
+  for (let i = 0; i < fields.length; i++) {
+    const rowNum = i + 2;
+    addDataRow(ws, rowNum, i, fields[i][0], fields[i][1], fields[i][2]);
+  }
+
+  applyPrintSetup(ws);
+  applySheetProtection(ws);
+}
+
+function getSubPillarNumber(pillarDef: PillarDef, sp: PillarDef["sub_pillars"][0]): string {
+  const pillarIdx = typedVendors.indexOf(pillarDef);
+  const spIdx = pillarDef.sub_pillars.indexOf(sp);
+  return `${pillarIdx + 1}.${spIdx + 1}`;
+}
+
+function buildEucPillarsSheet(wb: ExcelJS.Workbook) {
+  const ws = wb.addWorksheet("EUC Pillars", {
+    properties: { tabColor: { argb: argb(BRAND.lightBlue) } },
+  });
+  setStandardWidths(ws);
+  applyHeaderRow(ws);
+
+  let rowNum = 2;
+  let dataIdx = 0;
 
   for (const pillar of typedVendors) {
-    data.push([pillar.pillar, pillar.description, null, ""]);
-    rowTypes.push("section-header");
     for (const sp of pillar.sub_pillars) {
-      const allVendorNames = sp.vendors.map((v) => v.name);
-      allVendorNames.push("Other");
-      const vendorOptions = allVendorNames.join("\n");
+      const spNum = getSubPillarNumber(pillar, sp);
+      const sectionTitle = `Pillar ${typedVendors.indexOf(pillar) + 1}: ${pillar.pillar} \u2014 ${spNum} ${sp.name}`;
+      addSectionHeader(ws, rowNum, sectionTitle);
+      rowNum++;
 
-      const allPlatforms: string[] = [];
-      for (const v of sp.vendors) {
-        for (const p of v.platforms) {
-          allPlatforms.push(`${v.name} \u2014 ${p.name}`);
+      const vendorNames = sp.vendors.map((v) => v.name);
+      vendorNames.push("Other");
+
+      const hasPlatform = PLATFORM_SUBPILLARS.has(sp.name);
+      const hasVersion = VERSION_SUBPILLARS.includes(sp.name);
+      const hasUserCount = USER_COUNT_SUBPILLARS.includes(sp.name);
+      const hasLicense = !LICENSE_EXCLUDED.has(sp.name);
+
+      const platformNames: string[] = [];
+      if (hasPlatform) {
+        for (const v of sp.vendors) {
+          for (const p of v.platforms) {
+            platformNames.push(`${v.name} \u2014 ${p.name}`);
+          }
         }
+        platformNames.push("Other");
       }
-      allPlatforms.push("Other");
-      const platformOptions = allPlatforms.join("\n");
 
-      const allVersions: string[] = [];
-      for (const v of sp.vendors) {
-        for (const p of v.platforms) {
-          if (p.versions) {
-            for (const ver of p.versions) {
-              allVersions.push(`${v.name} \u2014 ${p.name} \u2014 ${ver.name}`);
+      const versionNames: string[] = [];
+      if (hasVersion) {
+        for (const v of sp.vendors) {
+          for (const p of v.platforms) {
+            if (p.versions) {
+              for (const ver of p.versions) {
+                versionNames.push(`${v.name} \u2014 ${p.name} \u2014 ${ver.name}`);
+              }
             }
           }
         }
+        if (versionNames.length > 0) versionNames.push("Other");
       }
-      if (allVersions.length > 0) allVersions.push("Other");
 
-      addRow(data, `${sp.name} \u2014 Vendor`, sp.description, vendorOptions);
-      rowTypes.push("data");
-      addRow(data, `${sp.name} \u2014 Other Vendor Name`, "If you selected 'Other' above, specify the vendor name", "Text");
-      rowTypes.push("data");
-      addRow(data, `${sp.name} \u2014 Platform`, "Select the product/platform in use", platformOptions);
-      rowTypes.push("data");
-      addRow(data, `${sp.name} \u2014 Other Platform Name`, "If you selected 'Other' above, specify the platform name", "Text");
-      rowTypes.push("data");
-      if (allVersions.length > 0) {
-        addRow(data, `${sp.name} \u2014 Version`, "Select the version in use", allVersions.join("\n"));
-        rowTypes.push("data");
-        addRow(data, `${sp.name} \u2014 Other Version`, "If you selected 'Other' above, specify the version", "Text");
-        rowTypes.push("data");
+      for (let slot = 1; slot <= NUM_SLOTS; slot++) {
+        addSlotHeader(ws, rowNum, slot);
+        rowNum++;
+
+        addDataRow(ws, rowNum, dataIdx++, `Vendor ${slot}`, "Primary vendor", vendorNames.join(", "), vendorNames);
+        rowNum++;
+
+        if (hasPlatform) {
+          addDataRow(ws, rowNum, dataIdx++, `Platform ${slot}`, "Specific product or platform", platformNames.join(", "), platformNames);
+          rowNum++;
+        }
+
+        if (hasVersion && versionNames.length > 0) {
+          addDataRow(ws, rowNum, dataIdx++, `Version ${slot}`, "Currently deployed version", versionNames.join(", "), versionNames);
+          rowNum++;
+        }
+
+        if (hasUserCount) {
+          const ucLabel = sp.name.toLowerCase().includes("daas") ? "How many DaaS users on this platform?" : "How many VDI users on this platform?";
+          addDataRow(ws, rowNum, dataIdx++, `User Count ${slot}`, ucLabel, "Whole number");
+          rowNum++;
+        }
+
+        if (hasLicense) {
+          addDataRow(ws, rowNum, dataIdx++, `License Count ${slot}`, "Total number of licenses held", "Whole number");
+          rowNum++;
+          addDataRow(
+            ws,
+            rowNum,
+            dataIdx++,
+            `License Type / SKU ${slot}`,
+            'License tier, entitlement, or SKU \u2014 e.g., "Citrix Platform License (CPL)" or "M365 E3"',
+            "Text",
+          );
+          rowNum++;
+        }
+
+        addDataRow(ws, rowNum, dataIdx++, `Notes ${slot}`, "Clarifications, questions, or anything else about this entry", "Free text");
+        rowNum++;
       }
-      addRow(data, `${sp.name} \u2014 Annual Cost`, "Approximate annual cost for this platform", "Numeric (dollars)");
-      rowTypes.push("data");
-      if (!LICENSE_EXCLUDED.has(sp.name)) {
-        addRow(data, `${sp.name} \u2014 License Count`, "Number of licenses for this platform", "Numeric");
-        rowTypes.push("data");
-        addRow(data, `${sp.name} \u2014 License SKU`, "License SKU or plan name", "Text");
-        rowTypes.push("data");
-      }
-      if (VDI_SUBPILLARS.includes(sp.name)) {
-        addRow(data, `${sp.name} \u2014 User Count`, "Number of users on this VDI/DaaS platform", "Numeric");
-        rowTypes.push("data");
-      }
-      addRow(data, "", "", "");
-      rowTypes.push("spacer");
     }
   }
 
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [45, 40, 25, 35]);
-  applyColumnHeaderStyle(ws);
-  applySectionDataStyles(ws, rowTypes);
   applyPrintSetup(ws);
-  return ws;
+  applySheetProtection(ws);
 }
 
-function buildOverridesSheet(): XLSX.WorkSheet {
-  const data: (string | number | null)[][] = [...buildHeaderRow()];
-  const rowTypes: RowType[] = [];
-  addRow(data, "End-User Devices (Annual)", "Total annual spend on end-user device hardware refresh", "Numeric (dollars)");
-  rowTypes.push("data");
-  addRow(data, "Support & Ops (Annual)", "Total annual spend on support and operations", "Numeric (dollars)");
-  rowTypes.push("data");
-  addRow(data, "Licensing (Annual)", "Total annual spend on collaboration, AI & app licensing", "Numeric (dollars)");
-  rowTypes.push("data");
-  addRow(data, "Device, OS & User Mgmt + Security (Annual)", "Total annual spend on device management and security", "Numeric (dollars)");
-  rowTypes.push("data");
-  addRow(data, "Virtual Desktops & Applications (Annual)", "Total annual spend on VDI/DaaS platforms", "Numeric (dollars)");
-  rowTypes.push("data");
-  addRow(data, "Overhead (Annual)", "Total annual overhead costs", "Numeric (dollars)");
-  rowTypes.push("data");
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [45, 40, 25, 35]);
-  applyColumnHeaderStyle(ws);
-  applySectionDataStyles(ws, rowTypes);
+function buildManagedServicesSheet(wb: ExcelJS.Workbook) {
+  const ws = wb.addWorksheet("Managed Services", {
+    properties: { tabColor: { argb: argb(BRAND.lightBlue) } },
+  });
+  setStandardWidths(ws);
+  applyHeaderRow(ws);
+
+  const mspOptions = ["XenTegra", "Other", "XenTegra + Other"];
+  const tierOptions = ["Yes \u2014 Fully Outsourced", "Yes \u2014 Partially Outsourced", "No \u2014 In-House"];
+
+  const fields: [string, string, string, string[]?][] = [
+    ["MSP Provider", "Do you use a Managed Services Provider? Select all that apply.", mspOptions.join(", "), mspOptions],
+    ["MSP Provider Name (Other)", "If Other, who is your MSP provider? Separate names with commas.", "Text"],
+    ["Tier 1 Support / Helpdesk", "Do you outsource first-line / helpdesk support?", tierOptions.join(", "), tierOptions],
+    ["Tier 1 FTEs", "How many Tier 1 / Helpdesk support staff (full-time equivalents)?", "Number"],
+    ["Tier 2/3 Support", "Do you outsource escalation / engineering support?", tierOptions.join(", "), tierOptions],
+    ["Additional Notes", "Anything else about your managed services arrangements?", "Free text"],
+  ];
+
+  for (let i = 0; i < fields.length; i++) {
+    const rowNum = i + 2;
+    addDataRow(ws, rowNum, i, fields[i][0], fields[i][1], fields[i][2], fields[i][3]);
+  }
+
   applyPrintSetup(ws);
-  return ws;
+  applySheetProtection(ws);
 }
 
-function buildManagedServicesSheet(): XLSX.WorkSheet {
-  const data: (string | number | null)[][] = [...buildHeaderRow()];
-  const rowTypes: RowType[] = [];
-  addRow(data, "Total MSP / Managed Services Spend", "Total annual spend on managed services or MSP providers", "Numeric (dollars)");
-  rowTypes.push("data");
-  addRow(data, "", "", "");
-  rowTypes.push("spacer");
-  addRow(data, "Outsourced: Endpoint Management", "Is endpoint management (UEM, imaging, lifecycle) outsourced?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Outsourced: Security / EDR / SOC", "Is security / EDR / SOC outsourced?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Outsourced: Patching & Updates", "Is patching and updates outsourced?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Outsourced: Tier 1 Support / Helpdesk", "Is Tier 1 support / helpdesk outsourced?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Outsourced: Tier 2+ Support / Engineering", "Is Tier 2+ support / engineering outsourced?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Outsourced: Other", "Are any other EUC functions outsourced?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Other Outsourced Description", "If 'Other' is Yes, describe what's outsourced", "Text");
-  rowTypes.push("data");
-  addRow(data, "", "", "");
-  rowTypes.push("spacer");
-  addRow(data, "MSP Provider: XenTegra", "Is XenTegra a managed services provider?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "MSP Provider: Other", "Do you use another MSP provider?", "Yes\nNo");
-  rowTypes.push("data");
-  addRow(data, "Other MSP Provider Names", "If 'Other' is Yes, list provider names separated by commas", "Text");
-  rowTypes.push("data");
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  setColWidths(ws, [45, 40, 25, 35]);
-  applyColumnHeaderStyle(ws);
-  applySectionDataStyles(ws, rowTypes);
-  applyPrintSetup(ws);
-  return ws;
-}
+export async function exportIntakeForm(clientName: string, projectName: string) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "XenTegra TCO Tool";
+  wb.created = new Date();
 
-export function exportIntakeForm(clientName: string, projectName: string, sections: IntakeSections = ALL_SECTIONS) {
-  const wb = XLSX.utils.book_new();
+  buildCoverSheet(wb, clientName, projectName);
+  buildEnvironmentSheet(wb);
+  buildEucPillarsSheet(wb);
+  buildManagedServicesSheet(wb);
 
-  XLSX.utils.book_append_sheet(wb, buildCoverSheet(clientName, projectName), "Cover");
-
-  if (sections.environmentFacts) {
-    XLSX.utils.book_append_sheet(wb, buildEnvironmentSheet(), "Environment Facts");
-  }
-  if (sections.platformCostOverrides) {
-    XLSX.utils.book_append_sheet(wb, buildOverridesSheet(), "Platform Cost Overrides");
-  }
-  if (sections.eucPillars) {
-    XLSX.utils.book_append_sheet(wb, buildEucPillarsSheet(), "EUC Pillars");
-  }
-  if (sections.managedServices) {
-    XLSX.utils.book_append_sheet(wb, buildManagedServicesSheet(), "Managed Services");
-  }
-
-  const sheetTabColors: Record<string, string> = {
-    Cover: BRAND.navy,
-    "Environment Facts": BRAND.lightBlue,
-    "EUC Pillars": BRAND.lightBlue,
-    "Platform Cost Overrides": BRAND.gray,
-    "Managed Services": BRAND.lightBlue,
-  };
-  for (const name of wb.SheetNames) {
-    const color = sheetTabColors[name];
-    if (color) {
-      const ws = wb.Sheets[name];
-      if (ws) (ws as Record<string, unknown>)["!tabColor"] = { rgb: color };
-    }
-  }
-
-  const dateStr = new Date().toISOString().slice(0, 10);
   const slug = clientName.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") || "Client";
-  const filename = `TCO_Intake_${slug}_${dateStr}.xlsx`;
+  const projSlug = projectName.trim() ? "_" + projectName.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_") : "";
+  const filename = `TCO_Intake_Form_${slug}${projSlug}.xlsx`;
 
-  XLSX.writeFile(wb, filename);
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 export type MappedField = {
@@ -546,16 +556,16 @@ const EUC_SECTION_RULES: [RegExp, string][] = [
   [/workspace\s*ai/i, "Workspace AI"],
   [/daas|cloud\s*pc|hosted\s*desktop/i, "DaaS (Cloud PC / Hosted Desktop)"],
   [/vdi|on.prem/i, "VDI (On-Premises)"],
-  [/unified\s*endpoint\s*management|\buem\b/i, "UEM"],
-  [/digital\s*employee\s*experience|\bdex\b/i, "DEX"],
+  [/unified\s*endpoint\s*management|\buem\b/i, "Unified Endpoint Mgmt (UEM)"],
+  [/digital\s*employee\s*experience|\bdex\b/i, "Digital Employee Experience (DEX)"],
   [/endpoint\s*security/i, "Endpoint Security"],
-  [/identity.*access|access.*management|\biam\b/i, "IAM"],
-  [/secure\s*access\s*service\s*edge|\bsase\b/i, "SASE"],
+  [/identity.*access|access.*management|\biam\b/i, "Identity & Access Mgmt (IAM)"],
+  [/secure\s*access\s*service\s*edge|\bsase\b/i, "Secure Access Service Edge (SASE)"],
   [/secure.*browser|enterprise\s*browser/i, "Secure Enterprise Browser"],
   [/endpoint\s*os/i, "Endpoint OS"],
-  [/app\s*layering|streaming/i, "App Layering"],
-  [/app(?:lication)?\s*readiness|app.*packaging/i, "App Readiness"],
-  [/apps?\s*config|asset\s*management/i, "Apps Config"],
+  [/app\s*layering|streaming/i, "App Layering & Streaming"],
+  [/app(?:lication)?\s*readiness|app.*packaging/i, "Application Readiness & Packaging"],
+  [/apps?\s*config|asset\s*management/i, "Apps Config & Asset Management"],
   [/unified\s*comm|collaboration|communications/i, "Unified Comms & Collab"],
   [/\buc\b|\bucc\b|\buc&c\b/i, "Unified Comms & Collab"],
   [/\bvpn\b/i, "VPN"],
@@ -577,6 +587,14 @@ function resolveSubPillar(sectionText: string): string | null {
   return null;
 }
 
+function stripSlotNumber(label: string): { base: string; slot: number } {
+  const m = label.match(/^(.+?)\s+(\d)$/);
+  if (m && parseInt(m[2]) >= 1 && parseInt(m[2]) <= 3) {
+    return { base: m[1].trim(), slot: parseInt(m[2]) };
+  }
+  return { base: label, slot: 1 };
+}
+
 function classifyEucField(label: string): string | null {
   const l = label.toLowerCase().trim();
   if (l === "vendor") return "Vendor";
@@ -584,15 +602,18 @@ function classifyEucField(label: string): string | null {
   if (l === "version") return "Version";
   if (l === "license count") return "License Count";
   if (l === "license sku") return "License SKU";
+  if (l === "license type / sku") return "License SKU";
   if (l === "user count") return "User Count";
   if (l === "annual cost") return "Annual Cost";
+  if (l === "notes") return "Notes";
   if (/user\s*count|how\s+many\s+.*users|number\s*of\s*users/.test(l)) return "User Count";
   if (/license\s*count|how\s+many\s+.*licen[sc]es|number\s*of\s*licen[sc]es/.test(l)) return "License Count";
-  if (/licen[sc]e\s*sku|\bsku\b|part\s*number/.test(l)) return "License SKU";
+  if (/licen[sc]e\s*type|licen[sc]e\s*sku|\bsku\b|part\s*number|entitlement/.test(l)) return "License SKU";
   if (/vendor|provider|which.*(?:vendor|company|manufacturer)|who\s/.test(l) && !/platform|product|version|licen|cost|sku|user/.test(l)) return "Vendor";
   if (/product|platform|device\s*type|what.*(?:device|product|platform|type)/.test(l) && !/vendor|version|licen|cost|sku/.test(l)) return "Platform";
   if (/version|release/.test(l) && !/vendor|platform|licen|cost|sku/.test(l)) return "Version";
   if (/annual\s*cost|cost|spend|price/.test(l) && !/licen|sku/.test(l)) return "Annual Cost";
+  if (/\bnotes?\b|clarification|comment/.test(l)) return "Notes";
   return null;
 }
 
@@ -747,13 +768,13 @@ function processEucField(
       mapped.push({ field: label, value: val, target: `euc.${currentSpName}.vendor`, status: "mapped" });
       break;
     case "Platform": {
-      const parts = val.split(" — ");
+      const parts = val.split(" \u2014 ");
       entry.platform = parts.length > 1 ? parts[parts.length - 1] : val;
       mapped.push({ field: label, value: val, target: `euc.${currentSpName}.platform`, status: "mapped" });
       break;
     }
     case "Version": {
-      const parts = val.split(" — ");
+      const parts = val.split(" \u2014 ");
       entry.version = parts[parts.length - 1];
       mapped.push({ field: label, value: val, target: `euc.${currentSpName}.version`, status: "mapped" });
       break;
@@ -788,11 +809,15 @@ function processEucField(
         errors.push({ field: label, value: val, target: `euc.${currentSpName}.userCount`, status: "error", errorMsg: "Expected a number" });
       } else {
         const key = currentSpName.toLowerCase().includes("daas") ? "daas" : "vdi";
-        vdiUserCounts[key] = num;
+        vdiUserCounts[key] = (vdiUserCounts[key] || 0) + num;
         mapped.push({ field: label, value: num, target: `vdiUserCounts.${key}`, status: "mapped" });
       }
       break;
     }
+    case "Notes":
+      entry.notes = val;
+      mapped.push({ field: label, value: val, target: `euc.${currentSpName}.notes`, status: "mapped" });
+      break;
   }
 }
 
@@ -830,6 +855,14 @@ function getFirstColumnLabel(row: Record<string, unknown>): string {
 
 function isBlank(val: unknown): boolean {
   return val === null || val === undefined || val === "" || (typeof val === "string" && val.trim() === "");
+}
+
+function isSlotSubHeader(label: string): boolean {
+  return /^▸\s*Entry\s+\d/.test(label);
+}
+
+function isSectionHeader(label: string): boolean {
+  return /^Pillar\s+\d+:/i.test(label);
 }
 
 function parseXlsxIntake(wb: XLSX.WorkBook): ImportResult {
@@ -943,30 +976,57 @@ function parseXlsxIntake(wb: XLSX.WorkBook): ImportResult {
     const eucData = XLSX.utils.sheet_to_json<Record<string, unknown>>(eucSheet);
     const hexEntries: Record<string, unknown>[] = [];
     let currentSpName = "";
-    let currentSp = "";
-    let entry: Record<string, unknown> = {};
+    let currentPillarName = "";
+    const slotEntries: Map<number, Record<string, unknown>> = new Map();
     const vdiUserCounts: Record<string, number> = {};
+
+    function flushSlots() {
+      for (const [, entry] of slotEntries) {
+        if (entry.vendor) {
+          hexEntries.push({ ...entry });
+        }
+      }
+      slotEntries.clear();
+    }
 
     for (const row of eucData) {
       const label = getFirstColumnLabel(row);
       const response = getResponseColumn(row);
       if (!label) continue;
       if (label.startsWith("---")) continue;
+      if (isSlotSubHeader(label)) continue;
 
-      const spMatch = label.match(/^(.+?)\s*—\s*(Vendor|Platform|Version|Annual Cost|License Count|License SKU|User Count|Other Vendor Name|Other Platform Name|Other Version)$/);
-
-      if (spMatch) {
-        const sp = spMatch[1];
-        const fieldType = spMatch[2];
-
-        if (sp !== currentSp) {
-          if (currentSp && entry.vendor) hexEntries.push({ ...entry });
-          currentSp = sp;
-          currentSpName = sp;
-          entry = { subPillar: sp };
-          const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === sp));
-          if (pillarDef) entry.pillar = pillarDef.pillar;
+      if (isSectionHeader(label)) {
+        flushSlots();
+        const spMatch = label.match(/\u2014\s*(\d+\.\d+)\s+(.+)/);
+        if (spMatch) {
+          const resolved = resolveSubPillar(spMatch[2]);
+          currentSpName = resolved || spMatch[2].trim();
+        } else {
+          const resolved = resolveSubPillar(label);
+          if (resolved) currentSpName = resolved;
         }
+        const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === currentSpName));
+        if (pillarDef) currentPillarName = pillarDef.pillar;
+        continue;
+      }
+
+      const oldFormatMatch = label.match(/^(.+?)\s*\u2014\s*(Vendor|Platform|Version|Annual Cost|License Count|License SKU|User Count|Other Vendor Name|Other Platform Name|Other Version|Notes)$/);
+      if (oldFormatMatch) {
+        const sp = oldFormatMatch[1];
+        const fieldType = oldFormatMatch[2];
+
+        if (sp !== currentSpName) {
+          flushSlots();
+          currentSpName = sp;
+          const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === sp));
+          if (pillarDef) currentPillarName = pillarDef.pillar;
+        }
+
+        if (!slotEntries.has(1)) {
+          slotEntries.set(1, { subPillar: currentSpName, pillar: currentPillarName });
+        }
+        const entry = slotEntries.get(1)!;
 
         if (isBlank(response)) {
           blankCount++;
@@ -986,22 +1046,10 @@ function parseXlsxIntake(wb: XLSX.WorkBook): ImportResult {
             entry.vendor = val;
             mapped.push({ field: label, value: val, target: `euc.${sp}.customVendor`, status: "mapped" });
             break;
-          case "Platform": {
-            const parts = val.split(" — ");
-            entry.platform = parts.length > 1 ? parts[parts.length - 1] : val;
-            mapped.push({ field: label, value: val, target: `euc.${sp}.platform`, status: "mapped" });
-            break;
-          }
           case "Other Platform Name":
             entry.platform = val;
             mapped.push({ field: label, value: val, target: `euc.${sp}.customPlatform`, status: "mapped" });
             break;
-          case "Version": {
-            const parts = val.split(" — ");
-            entry.version = parts[parts.length - 1];
-            mapped.push({ field: label, value: val, target: `euc.${sp}.version`, status: "mapped" });
-            break;
-          }
           case "Other Version":
             entry.version = val;
             mapped.push({ field: label, value: val, target: `euc.${sp}.customVersion`, status: "mapped" });
@@ -1013,15 +1061,31 @@ function parseXlsxIntake(wb: XLSX.WorkBook): ImportResult {
         continue;
       }
 
+      const { base, slot } = stripSlotNumber(label);
+      const fieldType = classifyEucField(base);
+
+      if (fieldType && currentSpName) {
+        if (!slotEntries.has(slot)) {
+          slotEntries.set(slot, { subPillar: currentSpName, pillar: currentPillarName });
+        }
+        const entry = slotEntries.get(slot)!;
+
+        if (isBlank(response)) {
+          blankCount++;
+          continue;
+        }
+
+        processEucField(fieldType, response, label, currentSpName, entry, vdiUserCounts, mapped, errors);
+        continue;
+      }
+
       const sectionMatch = label.match(EUC_SECTION_PATTERN);
       if (sectionMatch) {
-        if (currentSpName && entry.vendor) hexEntries.push({ ...entry });
+        flushSlots();
         const resolved = resolveSubPillar(label);
         currentSpName = resolved || sectionMatch[2].trim();
-        currentSp = currentSpName;
-        entry = { subPillar: currentSpName };
         const pillarDef = typedVendors.find((p) => p.sub_pillars.some((s) => s.name === currentSpName));
-        if (pillarDef) entry.pillar = pillarDef.pillar;
+        if (pillarDef) currentPillarName = pillarDef.pillar;
         continue;
       }
 
@@ -1033,16 +1097,12 @@ function parseXlsxIntake(wb: XLSX.WorkBook): ImportResult {
         continue;
       }
 
-      const fieldType = classifyEucField(label);
       if (!fieldType) {
         unmapped.push({ field: label, value: String(response), target: "", status: "unmapped" });
-        continue;
       }
-
-      processEucField(fieldType, response, label, currentSpName, entry, vdiUserCounts, mapped, errors);
     }
 
-    if (currentSpName && entry.vendor) hexEntries.push({ ...entry });
+    flushSlots();
 
     if (hexEntries.length > 0) inputs.hexagridEntries = buildHexEntries(hexEntries);
     if (Object.keys(vdiUserCounts).length > 0) inputs.vdiUserCounts = vdiUserCounts;
@@ -1147,7 +1207,8 @@ function parseCsvIntake(file: ArrayBuffer): ImportResult {
 
     for (const col of cols) {
       const response = dataRow[col.colIdx];
-      const fieldType = classifyEucField(col.field);
+      const { base } = stripSlotNumber(col.field);
+      const fieldType = classifyEucField(base);
 
       if (!fieldType) {
         if (!isBlank(response)) {

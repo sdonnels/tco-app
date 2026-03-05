@@ -112,7 +112,8 @@ Preferred communication style: Simple, everyday language.
 - `class-variance-authority` - Component variant management
 - `react-hook-form` / `@hookform/resolvers` - Form handling
 - `date-fns` - Date utilities
-- `xlsx-js-style` - Excel file handling with cell styling support (branded intake form export, audit trace export)
+- `xlsx-js-style` - Excel file reading (intake import parser, audit trace export)
+- `exceljs` - Excel file generation with native data validation, sheet protection, and styling (branded intake form export)
 
 ## Documentation
 
@@ -136,17 +137,23 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 ### Tools Tab (formerly ReadMe)
 - **Customer Intake** card with four action buttons in 2x2 grid, plus collapsible guidance note
   - **"Which intake method should I use?"** — Collapsible guidance note (default expanded, remembers state in `tco-intake-guidance-collapsed` localStorage key) explaining Google Form vs Excel vs direct entry
-  - **Export Intake Form** — Generates a structured .xlsx workbook to send to customers for pre-meeting data collection
-    - Setup dialog collects Client Name (required), Project Name (optional), and section toggles
-    - Generates Cover Sheet with branding + instructions, plus one tab per selected section
-    - Sections: Environment Facts, Platform Cost Overrides, EUC Pillars, Managed Services
-    - Filename: `TCO_Intake_[ClientName]_[Date].xlsx`
-    - Implementation: `client/src/lib/intake-excel.ts`
+  - **Export Intake Form** — Generates a branded multi-vendor .xlsx workbook (ExcelJS) for pre-meeting data collection
+    - Setup dialog collects Client Name (required) and Project Name (optional)
+    - 4-tab workbook: Cover Sheet (branding + quick guide), Environment Facts, EUC Pillars, Managed Services
+    - EUC Pillars: 16 sub-pillars × 3 entry slots each (Vendor/Platform/Version/User Count/License Count/License Type-SKU/Notes per slot)
+    - Excel data validation dropdowns on Vendor/Platform/Version cells (skipped if > 255 chars)
+    - Sheet protection: all cells locked except Column C (Your Response) and Cover Sheet metadata
+    - Freeze panes at row 1, print setup with headers/footers
+    - Filename: `TCO_Intake_Form_[CustomerName]_[Project].xlsx`
+    - Implementation: `client/src/lib/intake-excel.ts` (ExcelJS for export, xlsx-js-style for import)
   - **Import Intake Responses** — Uploads completed .xlsx or .csv, parses responses, creates a pre-filled draft
-    - Dual-label parser: exact short export labels first (e.g., "Vendor", "License Count"), then keyword regex for long Forms labels (e.g., "Which hardware vendor(s) do you use?")
+    - Multi-format parser: slot-numbered labels (`Vendor 1`, `Platform 2`), old `SubPillar — Field` format, and short/long labels
+    - `License Type / SKU` maps to same field as legacy `License SKU`; `Notes` recognized per entry
+    - Slot sub-headers (`▸ Entry N`) and section headers (`Pillar N:`) auto-skipped
+    - Empty slots (blank Vendor) skipped; multiple populated slots create separate entries
     - CSV parsing: bracket-prefixed headers `[1.1 PC / AI / Mobile Hardware] Vendor` → section + field; first 3 cols are Timestamp, Client Name, Project Name; handles UTF-8 BOM
     - Canonical field map for Managed Services: classifyMspField() with exact map + regex fallback
-    - Ordered section resolution: 15 sub-pillars with regex priority to avoid "ai"/"pc" false matches
+    - Ordered section resolution: 16 sub-pillars with regex priority to avoid "ai"/"pc" false matches
     - Unified entry: `parseIntakeImport(file, filename)` dispatches to xlsx or csv parser
     - Summary/review dialog shows mapped fields (green), blank count, and errors (red)
     - Creates draft with "intake received" status (blue badge in Recent Activity)

@@ -54,7 +54,6 @@ import { getDraftIndex, createDraft, saveDraftData, loadDraftData, deleteDraft, 
 import {
   exportIntakeForm,
   parseIntakeImport,
-  type IntakeSections,
   type ImportResult,
 } from "@/lib/intake-excel";
 import TcoHome from "@/pages/tco-home";
@@ -505,12 +504,6 @@ export default function TcoBaseline() {
   const [excelExportOpen, setExcelExportOpen] = useState(false);
   const [excelClientName, setExcelClientName] = useState("");
   const [excelProjectName, setExcelProjectName] = useState("");
-  const [excelSections, setExcelSections] = useState<IntakeSections>({
-    environmentFacts: true,
-    eucPillars: true,
-    platformCostOverrides: true,
-    managedServices: true,
-  });
   const [excelImportResult, setExcelImportResult] = useState<ImportResult | null>(null);
   const [excelImportOpen, setExcelImportOpen] = useState(false);
   const [excelImportError, setExcelImportError] = useState<string | null>(null);
@@ -1870,13 +1863,13 @@ export default function TcoBaseline() {
     fileInput.click();
   }, []);
 
-  const handleExcelExport = useCallback(() => {
+  const handleExcelExport = useCallback(async () => {
     if (!excelClientName.trim()) return;
-    exportIntakeForm(excelClientName.trim(), excelProjectName.trim(), excelSections);
+    await exportIntakeForm(excelClientName.trim(), excelProjectName.trim());
     setExcelExportOpen(false);
     setExcelClientName("");
     setExcelProjectName("");
-  }, [excelClientName, excelProjectName, excelSections]);
+  }, [excelClientName, excelProjectName]);
 
   const handleExcelFileSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1932,7 +1925,7 @@ export default function TcoBaseline() {
     }
   }, [googleFormUrlDraft, toast]);
 
-  const handleSendEmail = useCallback(() => {
+  const handleSendEmail = useCallback(async () => {
     const clientName = inputs.project.clientName || "[Client Name]";
     const engineerName = inputs.project.engineerName || "[XenTegra Engineer Name]";
     const dueDate = emailDueDate
@@ -1954,12 +1947,12 @@ export default function TcoBaseline() {
 
     if (emailMethod === "excel") {
       const clientName2 = inputs.project.clientName?.trim() || "Client";
-      exportIntakeForm(clientName2, "", excelSections);
+      await exportIntakeForm(clientName2, "");
     }
 
     window.open(mailto, "_self");
     setEmailDialogOpen(false);
-  }, [inputs.project.clientName, inputs.project.engineerName, emailDueDate, emailMethod, googleFormUrl, emailRecipient, excelSections]);
+  }, [inputs.project.clientName, inputs.project.engineerName, emailDueDate, emailMethod, googleFormUrl, emailRecipient]);
 
   const handleExcelCreateDraft = useCallback(() => {
     if (!excelImportResult) return;
@@ -4345,28 +4338,6 @@ export default function TcoBaseline() {
                 onChange={(e) => setExcelProjectName(e.target.value)}
                 data-testid="input-export-project"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Sections to include</Label>
-              <div className="rounded-lg border p-3 space-y-2">
-                {([
-                  { key: "environmentFacts" as const, label: "Environment Facts" },
-                  { key: "platformCostOverrides" as const, label: "Platform Cost Overrides" },
-                  { key: "eucPillars" as const, label: "EUC Pillars" },
-                  { key: "managedServices" as const, label: "Managed Services" },
-                ] as const).map((s) => (
-                  <label key={s.key} className="flex items-center gap-2 cursor-pointer text-sm">
-                    <input
-                      type="checkbox"
-                      checked={excelSections[s.key]}
-                      onChange={() => setExcelSections((prev) => ({ ...prev, [s.key]: !prev[s.key] }))}
-                      className="h-4 w-4 rounded accent-primary"
-                      data-testid={`checkbox-section-${s.key}`}
-                    />
-                    {s.label}
-                  </label>
-                ))}
-              </div>
             </div>
           </div>
           <DialogFooter>

@@ -590,13 +590,20 @@ Five export formats plus a bundled download:
 - "Cover Sheet" or "Cover" -> Client Name, Project Name
 - "Environment Facts" or "Environment" -> Environment fields
 - "EUC Pillars" or "Pillars" -> Vendor/platform data
-- "Platform Cost Overrides" or "Overrides" -> Cost override fields
+- "Platform Cost Overrides" or "Overrides" -> Cost override fields (legacy format)
 - "Managed Services" or "Services" -> MSP data
 
-**Field matching** (dual-label support):
-1. Exact match on short export labels (e.g., "Vendor", "License Count")
-2. Keyword match on long Forms labels (e.g., "Which hardware vendor(s) do you use?")
-3. If no match -> unmapped (shown with yellow warning)
+**Field matching** (multi-format support):
+1. Slot-numbered labels from new 3-slot format: `Vendor 1`, `Platform 2`, `License Type / SKU 3`, `Notes 1` — slot number stripped, base field matched
+2. Old single-vendor `SubPillar — Field` format: `PC and Mobile Devices — Vendor`, `Endpoint OS — Platform`
+3. Exact match on short labels: `Vendor`, `Platform`, `License Count`
+4. Keyword match on long Forms labels: "Which hardware vendor(s) do you use?"
+5. `License Type / SKU` maps to same field as legacy `License SKU`
+6. `Notes` field recognized per entry (not flagged as unmapped)
+7. Slot sub-header rows (`▸ Entry 1/2/3`) and section headers (`Pillar N:`) are skipped automatically
+8. Empty slots (blank Vendor) are skipped — no phantom entries created
+9. Multiple populated slots per sub-pillar create separate hex entries
+10. If no match -> unmapped (shown with yellow warning)
 
 ### CSV Intake Import (.csv)
 
@@ -649,7 +656,7 @@ Clicking "Create Draft Assessment" creates a new draft with status "intake recei
 
 **Customer Intake card** (2x2 grid layout with collapsible guidance note):
 - **"Which intake method should I use?"** - Collapsible guidance note (default expanded on first visit, remembers collapsed state in localStorage key `tco-intake-guidance-collapsed`). Explains Google Form vs Excel vs direct entry paths.
-- **Export Intake Form** - Setup dialog collects Client Name (required), Project Name (optional), and section toggles. Generates `.xlsx` workbook with Cover Sheet + selected section tabs. Filename: `TCO_Intake_{ClientName}_{Date}.xlsx`
+- **Export Intake Form** - Setup dialog collects Client Name (required) and Project Name (optional). Generates a branded `.xlsx` workbook with 4 tabs: Cover Sheet, Environment Facts, EUC Pillars (3 entry slots per sub-pillar for multi-vendor reporting), and Managed Services. Each sub-pillar has Vendor/Platform/Version/License Count/License Type-SKU/User Count/Notes fields as applicable, with Excel data validation dropdowns for vendor/platform/version selections. Sheets are protected with Column C (Your Response) unlocked. Filename: `TCO_Intake_Form_{CustomerName}_{Project}.xlsx`
 - **Copy Google Form Link** - Copies configurable Google Form URL to clipboard with toast confirmation. URL stored in localStorage as `tco-google-form-url`. Settings dialog accessible via gear icon. If no URL configured, prompts to set one up.
 - **Send via Email** - Opens dialog to compose pre-written intake request email. Includes recipient email field, intake method radio (Google Form / Excel), due date auto-calculated to 5 business days, email preview panel pre-populated with client name, engineer name, and due date. "Open in Email Client" opens mailto: link. Excel option also downloads `.xlsx` to attach manually.
 - **Import Intake Responses** - Accepts `.xlsx` or `.csv`, shows review dialog, creates pre-filled draft
@@ -932,6 +939,7 @@ All other data flows are client-side (localStorage, file downloads via Blob API)
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.5 | Mar 2026 | Multi-vendor branded intake form: 3 entry slots per sub-pillar, ExcelJS-based export with native data validation dropdowns, sheet protection (column C unlocked), freeze panes, XenTegra branding, cover sheet quick guide; renamed "License SKU" to "License Type / SKU"; added "Notes" field per entry; new filename scheme `TCO_Intake_Form_[CustomerName]_[Project].xlsx`; updated import parser for slot-numbered labels with backward compatibility; removed Platform Cost Overrides from intake form |
 | 2.4 | Mar 2026 | Removed JSON exports (consolidated to CSV/XLSX); normalized Managed Services labels to "Tier 1 Support / Helpdesk" and "Tier 2+ Support / Engineering"; added CSV import support for Google Forms responses; dual-label intake parser with canonical field map; comprehensive documentation refresh |
 | 2.3 | Feb 2026 | Added Tools menu, intake form workflow (Excel export/import), Help and About dialogs, Tools tab with documentation downloads and Quick Start Guide, client logo upload, Download All (.zip), dark mode from system preference |
 | 2.2 | Feb 2026 | EUC Pillars & Platforms (7 pillars, 17 sub-pillars, 60+ vendors), calculation priority chain, collapsible pillar cards, readiness tracker |
