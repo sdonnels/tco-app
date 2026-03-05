@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type { HexagridEntry } from "@/components/HexagridSection";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 type YesNo = "yes" | "no" | "unknown";
 

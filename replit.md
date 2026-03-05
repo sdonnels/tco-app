@@ -112,7 +112,7 @@ Preferred communication style: Simple, everyday language.
 - `class-variance-authority` - Component variant management
 - `react-hook-form` / `@hookform/resolvers` - Form handling
 - `date-fns` - Date utilities
-- `xlsx` - Excel file handling (for potential export features)
+- `xlsx-js-style` - Excel file handling with cell styling support (branded intake form export, audit trace export)
 
 ## Documentation
 
