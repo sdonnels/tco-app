@@ -8,14 +8,16 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  Copy,
   Download,
+  ExternalLink,
   FileDown,
   FileText,
   FileUp,
   HelpCircle,
   ImagePlus,
   Info,
-
+  Link2,
   Mail,
   Plus,
   Printer,
@@ -58,6 +60,7 @@ import {
 import TcoHome from "@/pages/tco-home";
 import AuditTracePage from "@/components/AuditTracePage";
 import { OnboardingTour, useTourState, type TourStep } from "@/components/OnboardingTour";
+import { useToast } from "@/hooks/use-toast";
 import xentegraLogoWhite from "@/assets/xentegra-white.webp";
 import xentegraLogoBlack from "@/assets/xentegra-black.webp";
 import {
@@ -512,6 +515,29 @@ export default function TcoBaseline() {
   const [excelImportOpen, setExcelImportOpen] = useState(false);
   const [excelImportError, setExcelImportError] = useState<string | null>(null);
   const excelFileInputRef = useRef<HTMLInputElement>(null);
+
+  const { toast } = useToast();
+  const [intakeGuidanceOpen, setIntakeGuidanceOpen] = useState(() => {
+    return localStorage.getItem("tco-intake-guidance-collapsed") !== "true";
+  });
+  const [googleFormUrl, setGoogleFormUrl] = useState(() => {
+    return localStorage.getItem("tco-google-form-url") ?? "";
+  });
+  const [googleFormDialogOpen, setGoogleFormDialogOpen] = useState(false);
+  const [googleFormSettingsOpen, setGoogleFormSettingsOpen] = useState(false);
+  const [googleFormUrlDraft, setGoogleFormUrlDraft] = useState("");
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState("");
+  const [emailMethod, setEmailMethod] = useState<"google" | "excel">("google");
+  const [emailDueDate, setEmailDueDate] = useState(() => {
+    const d = new Date();
+    let added = 0;
+    while (added < 5) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+    }
+    return d.toISOString().slice(0, 10);
+  });
 
   const migrateObservationsNotes = (obs: any): Inputs["observations"] => {
     if (!obs) return { notes: [] };
@@ -1875,6 +1901,65 @@ export default function TcoBaseline() {
     },
     [],
   );
+
+  const toggleIntakeGuidance = useCallback(() => {
+    setIntakeGuidanceOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem("tco-intake-guidance-collapsed", next ? "false" : "true");
+      return next;
+    });
+  }, []);
+
+  const handleCopyGoogleFormLink = useCallback(() => {
+    if (!googleFormUrl.trim()) {
+      setGoogleFormUrlDraft("");
+      setGoogleFormSettingsOpen(true);
+      return;
+    }
+    navigator.clipboard.writeText(googleFormUrl).then(
+      () => toast({ title: "Link copied!", description: "Google Form URL copied to clipboard." }),
+      () => toast({ title: "Copy failed", description: "Could not copy to clipboard. Try copying the URL manually.", variant: "destructive" }),
+    );
+  }, [googleFormUrl, toast]);
+
+  const handleSaveGoogleFormUrl = useCallback(() => {
+    const url = googleFormUrlDraft.trim();
+    setGoogleFormUrl(url);
+    localStorage.setItem("tco-google-form-url", url);
+    setGoogleFormSettingsOpen(false);
+    if (url) {
+      toast({ title: "Saved", description: "Google Form URL has been saved." });
+    }
+  }, [googleFormUrlDraft, toast]);
+
+  const handleSendEmail = useCallback(() => {
+    const clientName = inputs.project.clientName || "[Client Name]";
+    const engineerName = inputs.project.engineerName || "[XenTegra Engineer Name]";
+    const dueDate = emailDueDate
+      ? new Date(emailDueDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : "[DATE]";
+
+    let body = `Hi,\n\nWe're preparing a Total Cost of Ownership baseline assessment for ${clientName}'s end-user computing environment. To make the most of our engagement, we'd like to gather some information about your current environment ahead of our first working session.\n\n`;
+
+    if (emailMethod === "google" && googleFormUrl.trim()) {
+      body += `Please fill out this brief questionnaire at your convenience:\n${googleFormUrl}\n\nAll questions are optional — fill in what you know and leave the rest blank. We'll work through any gaps together.\n\n`;
+    } else {
+      body += `Please find the attached intake form (Excel). Fill in what you know in the highlighted "Your Response" column and return it to me when complete. All fields are optional.\n\n`;
+    }
+
+    body += `The form covers:\n• Environment basics (user counts, device counts)\n• Your current technology stack across 7 EUC pillars\n• Managed services and support arrangements\n\nThere are no wrong answers — approximate numbers and "best guess" responses are perfectly fine. Anything left blank, we'll address together with explicit assumptions.\n\nPlease return your responses by ${dueDate} so we can come prepared for our first session.\n\nThank you,\n${engineerName}\nXenTegra`;
+
+    const subject = `TCO Assessment — Intake Form for ${clientName}`;
+    const mailto = `mailto:${encodeURIComponent(emailRecipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    if (emailMethod === "excel") {
+      const clientName2 = inputs.project.clientName?.trim() || "Client";
+      exportIntakeForm(clientName2, "", excelSections);
+    }
+
+    window.open(mailto, "_self");
+    setEmailDialogOpen(false);
+  }, [inputs.project.clientName, inputs.project.engineerName, emailDueDate, emailMethod, googleFormUrl, emailRecipient, excelSections]);
 
   const handleExcelCreateDraft = useCallback(() => {
     if (!excelImportResult) return;
@@ -3767,10 +3852,30 @@ export default function TcoBaseline() {
                   <SectionHeader
                     icon={<FileSpreadsheet className="h-5 w-5 text-primary" />}
                     eyebrow="Customer Intake"
-                    title="Excel Intake Forms"
-                    description="Export a structured workbook for customer data collection, or import completed responses to pre-fill an assessment."
+                    title="Intake Forms"
+                    description="Collect customer environment data before an assessment — via Google Form, Excel workbook, or direct entry."
                     testId="header-intake"
                   />
+
+                  <div className="mt-4">
+                    <button
+                      onClick={toggleIntakeGuidance}
+                      className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      data-testid="button-toggle-intake-guidance"
+                    >
+                      <Info className="h-4 w-4 text-primary" />
+                      Which intake method should I use?
+                      <ChevronRight className={cn("h-4 w-4 transition-transform", intakeGuidanceOpen && "rotate-90")} />
+                    </button>
+                    {intakeGuidanceOpen && (
+                      <div className="mt-3 rounded-xl border bg-muted/40 p-4 text-sm space-y-2" data-testid="intake-guidance-box">
+                        <p><strong>Google Form</strong> — Best for most customers. They fill it out in their browser, works on mobile, no files to manage. You get responses as a .csv you can import directly.</p>
+                        <p><strong>Excel Template</strong> — Best for enterprise IT teams who prefer spreadsheets, need to circulate the form internally, or work offline. You email the .xlsx, they fill it out and return it.</p>
+                        <p><strong>Skip Intake</strong> — If you're running the assessment live in a meeting, enter data directly on the Inputs tab. No intake form needed.</p>
+                        <p className="text-muted-foreground">All paths feed the same import. Choose whichever fits your customer.</p>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
@@ -3787,7 +3892,64 @@ export default function TcoBaseline() {
                         onClick={() => setExcelExportOpen(true)}
                         data-testid="button-export-intake"
                       >
-                        <Download className="h-4 w-4" /> Export Intake Form
+                        <FileSpreadsheet className="h-4 w-4" /> Export Intake Form (.xlsx)
+                      </Button>
+                    </div>
+
+                    <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Link2 className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">Copy Google Form Link</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {googleFormUrl.trim()
+                          ? "Copy your Google Form intake link to send to customers. They fill it out online and you import the .csv responses."
+                          : "Set up your Google Form URL first, then copy the link to share with customers."}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          className="flex-1 gap-2"
+                          onClick={handleCopyGoogleFormLink}
+                          data-testid="button-copy-google-form"
+                        >
+                          <Copy className="h-4 w-4" /> {googleFormUrl.trim() ? "Copy Link" : "Set Up Google Form"}
+                        </Button>
+                        {googleFormUrl.trim() && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setGoogleFormUrlDraft(googleFormUrl);
+                              setGoogleFormSettingsOpen(true);
+                            }}
+                            data-testid="button-google-form-settings"
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border bg-card/60 p-5 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-sm">Send via Email</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Open your email client with a pre-written message and intake form link or attachment instructions.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => {
+                          setEmailRecipient("");
+                          setEmailMethod(googleFormUrl.trim() ? "google" : "excel");
+                          setEmailDialogOpen(true);
+                        }}
+                        data-testid="button-send-email"
+                      >
+                        <Mail className="h-4 w-4" /> Send via Email
                       </Button>
                     </div>
 
@@ -3797,7 +3959,7 @@ export default function TcoBaseline() {
                         <h3 className="font-semibold text-sm">Import Intake Responses</h3>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Upload a completed .xlsx intake form to parse responses and create a pre-filled draft assessment.
+                        Upload a completed .xlsx or .csv to parse responses and create a pre-filled draft assessment.
                       </p>
                       <Button
                         variant="outline"
@@ -4219,6 +4381,137 @@ export default function TcoBaseline() {
             >
               <FileSpreadsheet className="h-4 w-4" />
               Download .xlsx
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={googleFormSettingsOpen} onOpenChange={setGoogleFormSettingsOpen}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-google-form-settings">
+          <DialogHeader>
+            <DialogTitle>Google Form Template URL</DialogTitle>
+            <DialogDescription>
+              Paste the URL of your master Google Form template. This is the link that "Copy Google Form Link" will share.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="google-form-url">Google Form URL</Label>
+              <Input
+                id="google-form-url"
+                placeholder="https://docs.google.com/forms/d/..."
+                value={googleFormUrlDraft}
+                onChange={(e) => setGoogleFormUrlDraft(e.target.value)}
+                data-testid="input-google-form-url"
+              />
+              <p className="text-xs text-muted-foreground">
+                Duplicate the master form in Google Drive for each new customer, then paste the form URL here.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGoogleFormSettingsOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveGoogleFormUrl} data-testid="button-save-google-form-url">
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="sm:max-w-lg" data-testid="dialog-send-email">
+          <DialogHeader>
+            <DialogTitle>Send Intake Form via Email</DialogTitle>
+            <DialogDescription>
+              Compose a pre-written email to send the intake form to your customer contact.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="email-recipient">Recipient Email *</Label>
+              <Input
+                id="email-recipient"
+                type="email"
+                placeholder="contact@customer.com"
+                value={emailRecipient}
+                onChange={(e) => setEmailRecipient(e.target.value)}
+                data-testid="input-email-recipient"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-client">Client Name</Label>
+              <Input
+                id="email-client"
+                value={inputs.project.clientName ?? ""}
+                disabled
+                className="bg-muted/50"
+                data-testid="input-email-client"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Intake Method</Label>
+              <div className="rounded-lg border p-3 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="emailMethod"
+                    checked={emailMethod === "google"}
+                    onChange={() => setEmailMethod("google")}
+                    disabled={!googleFormUrl.trim()}
+                    className="accent-primary"
+                    data-testid="radio-method-google"
+                  />
+                  Google Form link
+                  {!googleFormUrl.trim() && <span className="text-xs text-muted-foreground">(no URL configured)</span>}
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="radio"
+                    name="emailMethod"
+                    checked={emailMethod === "excel"}
+                    onChange={() => setEmailMethod("excel")}
+                    className="accent-primary"
+                    data-testid="radio-method-excel"
+                  />
+                  Excel attachment
+                  <span className="text-xs text-muted-foreground">(downloads .xlsx to attach manually)</span>
+                </label>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email-due-date">Response Due Date</Label>
+              <Input
+                id="email-due-date"
+                type="date"
+                value={emailDueDate}
+                onChange={(e) => setEmailDueDate(e.target.value)}
+                data-testid="input-email-due-date"
+              />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="text-xs font-medium text-muted-foreground mb-1">Email Preview</div>
+              <div className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                <strong>Subject:</strong> TCO Assessment — Intake Form for {inputs.project.clientName || "[Client Name]"}{"\n\n"}
+                {emailMethod === "google" && googleFormUrl.trim()
+                  ? `Includes a link to your Google Form for the customer to fill out online.`
+                  : `Instructs the customer to fill out the attached Excel workbook and return it.`
+                }
+                {"\n\n"}Response due by {emailDueDate
+                  ? new Date(emailDueDate + "T00:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+                  : "[DATE]"}.
+                {"\n"}Signed by {inputs.project.engineerName || "[XenTegra Engineer Name]"}.
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={!emailRecipient.trim()}
+              className="gap-2"
+              data-testid="button-open-email-client"
+            >
+              <ExternalLink className="h-4 w-4" /> Open in Email Client
             </Button>
           </DialogFooter>
         </DialogContent>

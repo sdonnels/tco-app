@@ -134,7 +134,8 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
 - Results, export formats, and troubleshooting
 
 ### Tools Tab (formerly ReadMe)
-- **Customer Intake** card with Export Intake Form and Import Intake Responses buttons
+- **Customer Intake** card with four action buttons in 2x2 grid, plus collapsible guidance note
+  - **"Which intake method should I use?"** — Collapsible guidance note (default expanded, remembers state in `tco-intake-guidance-collapsed` localStorage key) explaining Google Form vs Excel vs direct entry
   - **Export Intake Form** — Generates a structured .xlsx workbook to send to customers for pre-meeting data collection
     - Setup dialog collects Client Name (required), Project Name (optional), and section toggles
     - Generates Cover Sheet with branding + instructions, plus one tab per selected section
@@ -150,6 +151,14 @@ FAQ file available at `docs/TCO_BASELINE_FAQ.md` (v1.0) with common questions ab
     - Summary/review dialog shows mapped fields (green), blank count, and errors (red)
     - Creates draft with "intake received" status (blue badge in Recent Activity)
     - Status auto-transitions to "draft" when consultant makes any edit
+  - **Copy Google Form Link** — Copies configurable Google Form URL to clipboard with toast confirmation
+    - URL stored in localStorage as `tco-google-form-url`
+    - Settings dialog to configure URL (accessible via gear icon or when no URL set)
+    - If no URL configured, prompts to set one up
+  - **Send via Email** — Opens dialog to compose pre-written intake request email
+    - Recipient email field, intake method radio (Google Form / Excel), due date (auto 5 business days)
+    - Email preview panel, pre-populated with client name, engineer name, due date
+    - "Open in Email Client" button opens mailto: link; Excel option also downloads .xlsx to attach manually
 - **Documentation & Resources** card with download buttons for Documentation and FAQ markdown files
 - **Quick Start Guide** with 9-step walkthrough covering: Home tab, Project Information, Environment Facts, EUC Pillars, Overrides, Assumptions, Observations, Summary, and Readiness Tracker
 - Files imported via Vite `?raw` suffix for client-side download generation

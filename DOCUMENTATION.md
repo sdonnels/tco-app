@@ -647,8 +647,11 @@ Clicking "Create Draft Assessment" creates a new draft with status "intake recei
 
 ### Tools Tab (tab value: "readme", displays as "Tools")
 
-**Customer Intake card:**
+**Customer Intake card** (2x2 grid layout with collapsible guidance note):
+- **"Which intake method should I use?"** - Collapsible guidance note (default expanded on first visit, remembers collapsed state in localStorage key `tco-intake-guidance-collapsed`). Explains Google Form vs Excel vs direct entry paths.
 - **Export Intake Form** - Setup dialog collects Client Name (required), Project Name (optional), and section toggles. Generates `.xlsx` workbook with Cover Sheet + selected section tabs. Filename: `TCO_Intake_{ClientName}_{Date}.xlsx`
+- **Copy Google Form Link** - Copies configurable Google Form URL to clipboard with toast confirmation. URL stored in localStorage as `tco-google-form-url`. Settings dialog accessible via gear icon. If no URL configured, prompts to set one up.
+- **Send via Email** - Opens dialog to compose pre-written intake request email. Includes recipient email field, intake method radio (Google Form / Excel), due date auto-calculated to 5 business days, email preview panel pre-populated with client name, engineer name, and due date. "Open in Email Client" opens mailto: link. Excel option also downloads `.xlsx` to attach manually.
 - **Import Intake Responses** - Accepts `.xlsx` or `.csv`, shows review dialog, creates pre-filled draft
 
 **Documentation & Resources card:**
