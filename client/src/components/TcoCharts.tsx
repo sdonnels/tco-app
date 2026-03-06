@@ -49,8 +49,9 @@ type CategoryData = {
 };
 
 type VdiComparisonData = {
-  vdiCostPerUser: number;
-  nonVdiCostPerUser: number;
+  baseCostPerUser: number;
+  vdiPlatformCostPerUser: number;
+  vdiUserCount: number;
 };
 
 type CostSourceData = {
@@ -192,17 +193,25 @@ export function CostByCategoryChart({ data }: { data: CategoryData }) {
 }
 
 export function VdiComparisonChart({ data }: { data: VdiComparisonData }) {
-  if (data.vdiCostPerUser === 0 && data.nonVdiCostPerUser === 0) {
+  if (data.vdiUserCount === 0) {
     return (
-      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm">
-        Enter user count and VDI % to see comparison
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm" data-testid="chart-vdi-comparison">
+        No VDI/DaaS users reported
+      </div>
+    );
+  }
+
+  if (data.baseCostPerUser === 0 && data.vdiPlatformCostPerUser === 0) {
+    return (
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm" data-testid="chart-vdi-comparison">
+        Enter user count and VDI data to see comparison
       </div>
     );
   }
 
   const chartData = [
-    { name: "Non-VDI User", value: data.nonVdiCostPerUser, fill: COLORS.nonVdi },
-    { name: "VDI User", value: data.vdiCostPerUser, fill: COLORS.vdi },
+    { name: "Non-VDI User", base: data.baseCostPerUser, platform: 0 },
+    { name: "VDI User", base: data.baseCostPerUser, platform: data.vdiPlatformCostPerUser },
   ];
 
   return (
@@ -211,12 +220,19 @@ export function VdiComparisonChart({ data }: { data: VdiComparisonData }) {
         <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
           <YAxis tickFormatter={(v) => `$${v.toLocaleString()}`} width={75} />
-          <Tooltip formatter={(value: number) => [fmtMoney(value), "Per User/Year"]} />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.fill} />
-            ))}
-          </Bar>
+          <Tooltip
+            formatter={(value: number, name: string) => [
+              fmtMoney(value),
+              name === "platform" ? "VDI Platform (incremental)" : "Base Costs (shared)",
+            ]}
+          />
+          <Legend
+            formatter={(value: string) =>
+              value === "platform" ? "VDI Platform (incremental)" : "Base Costs (shared)"
+            }
+          />
+          <Bar dataKey="base" stackId="cost" fill="#6b7280" />
+          <Bar dataKey="platform" stackId="cost" fill="#00B5E2" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

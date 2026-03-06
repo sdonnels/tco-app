@@ -80,9 +80,10 @@ Each assumption includes a justification citing its industry source (e.g., Gartn
 - **Total Annual Baseline** — Your complete EUC cost per year
 - **Cost per Endpoint** — Total divided by all devices
 - **Cost per User** — Total divided by all users
-- **VDI Cost per VDI User** — VDI-specific cost per VDI user
-- **Non-VDI Cost per User** — Cost per non-VDI user
-- **VDI User Premium** — How much more a VDI user costs vs. non-VDI
+- **Base Cost per User** — Shared costs (everything except VDI platform) per user
+- **Fully Loaded VDI Cost per User** — Base cost plus VDI platform cost per VDI user
+- **Non-VDI Cost per User** — Same as Base Cost per User
+- **VDI User Premium** — Incremental VDI platform cost per VDI user
 
 ### What export formats are available?
 - **JSON** — Machine-readable data interchange format

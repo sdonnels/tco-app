@@ -31,7 +31,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 
 ### Calculations
 - End-User Devices = Σ(device count × unit cost ÷ refresh years)
-- Support & Ops = ticket labor + deployment labor
+- Support & Ops = ticket labor + deployment labor (deploy labor uses per-device-type refresh cycles)
 - Licensing = users × cost/user × coverage %
 - Management & Security = endpoints × cost/endpoint
 - VDI/DaaS = VDI users × platform cost (VDI user counts entered directly in EUC Pillars DaaS/VDI sub-pillars)
@@ -39,7 +39,8 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 
 ### Summary Metrics
 - Total Annual Baseline, Cost per Endpoint, Cost per User
-- VDI Cost per VDI User, Non-VDI Cost per User, VDI User Premium
+- Base Cost per User, VDI Platform Cost per VDI User, Fully Loaded VDI Cost per User
+- Non-VDI Cost per User (= Base Cost per User), VDI User Premium (= VDI Platform Cost per VDI User)
 
 ## User Preferences
 

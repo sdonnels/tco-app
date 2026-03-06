@@ -800,15 +800,17 @@ export default function TcoBaseline() {
       (desktops * assumptions.deviceUnitCost.desktop / assumptions.deviceRefreshYears.desktop) +
       (thinClients * assumptions.deviceUnitCost.thinClient / assumptions.deviceRefreshYears.thinClient);
 
-    const avgRefreshYears = endpoints > 0
-      ? (laptops * assumptions.deviceRefreshYears.laptop + 
-         desktops * assumptions.deviceRefreshYears.desktop + 
-         thinClients * assumptions.deviceRefreshYears.thinClient) / endpoints
-      : assumptions.deviceRefreshYears.laptop;
+    const ticketLabor = endpoints * assumptions.supportOps.ticketsPerEndpointPerYear * assumptions.supportOps.avgTicketHandlingHours * assumptions.supportOps.blendedLaborRateHourly;
 
-    const derivedSupportOps =
-      (endpoints * assumptions.supportOps.ticketsPerEndpointPerYear * assumptions.supportOps.avgTicketHandlingHours * assumptions.supportOps.blendedLaborRateHourly) +
-      ((endpoints / avgRefreshYears) * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly);
+    const deployLaborLaptops = assumptions.deviceRefreshYears.laptop > 0
+      ? (laptops * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly / assumptions.deviceRefreshYears.laptop) : 0;
+    const deployLaborDesktops = assumptions.deviceRefreshYears.desktop > 0
+      ? (desktops * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly / assumptions.deviceRefreshYears.desktop) : 0;
+    const deployLaborThinClients = assumptions.deviceRefreshYears.thinClient > 0
+      ? (thinClients * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly / assumptions.deviceRefreshYears.thinClient) : 0;
+    const deployLabor = deployLaborLaptops + deployLaborDesktops + deployLaborThinClients;
+
+    const derivedSupportOps = ticketLabor + deployLabor;
 
     const derivedLicensing = userCount * assumptions.licensing.avgCostPerUserPerYear * assumptions.licensing.coveragePct;
 
@@ -947,8 +949,13 @@ export default function TcoBaseline() {
     const totalAnnualTco = endUserDevicesValue + supportOpsValue + licensingValue + mgmtSecurityValue + vdiDaasValue + overheadValue + mspSpend;
     const costPerEndpoint = endpoints > 0 ? totalAnnualTco / endpoints : 0;
     const costPerUser = userCount > 0 ? totalAnnualTco / userCount : 0;
-    const vdiCostPerVdiUser = vdiUserCount > 0 ? vdiDaasValue / vdiUserCount : 0;
-    const nonVdiCostPerUser = userCount > 0 ? (totalAnnualTco - vdiDaasValue) / userCount : 0;
+    const baseCosts = totalAnnualTco - vdiDaasValue;
+    const baseCostPerUser = userCount > 0 ? baseCosts / userCount : 0;
+    const vdiPlatformCostPerUser = vdiUserCount > 0 ? vdiDaasValue / vdiUserCount : 0;
+    const fullyLoadedVdiCostPerUser = vdiUserCount > 0 ? baseCostPerUser + vdiPlatformCostPerUser : 0;
+    const nonVdiCostPerUser = baseCostPerUser;
+    const nonVdiUserCount = userCount - vdiUserCount;
+    const vdiUserPremium = vdiPlatformCostPerUser;
 
     const assumedLines = categoryLines.filter((l) => l.isAssumed);
 
@@ -987,8 +994,12 @@ export default function TcoBaseline() {
       totalAnnualTco,
       costPerEndpoint,
       costPerUser,
-      vdiCostPerVdiUser,
+      baseCostPerUser,
+      vdiPlatformCostPerUser,
+      fullyLoadedVdiCostPerUser,
       nonVdiCostPerUser,
+      nonVdiUserCount,
+      vdiUserPremium,
       assumedLines,
       readiness,
       readinessScore,
@@ -1188,8 +1199,11 @@ export default function TcoBaseline() {
     lines.push("└" + "─".repeat(68) + "┘");
     lines.push(`  Cost per Endpoint:      ${derived.endpoints > 0 ? fmtMoney(derived.costPerEndpoint) : "N/A"}`);
     lines.push(`  Cost per User:          ${derived.userCount > 0 ? fmtMoney(derived.costPerUser) : "N/A"}`);
-    lines.push(`  VDI Cost per VDI User:  ${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "N/A"}`);
-    lines.push(`  Non-VDI Cost per User:  ${derived.userCount > 0 ? fmtMoney(derived.nonVdiCostPerUser) : "N/A"}`);
+    lines.push(`  Base Cost per User:             ${derived.userCount > 0 ? fmtMoney(derived.baseCostPerUser) : "N/A"}`);
+    lines.push(`  VDI Platform Cost per VDI User: ${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiPlatformCostPerUser) : "N/A"}`);
+    lines.push(`  Fully Loaded VDI Cost per User: ${derived.vdiUserCount > 0 ? fmtMoney(derived.fullyLoadedVdiCostPerUser) : "N/A"}`);
+    lines.push(`  Non-VDI Cost per User:          ${derived.userCount > 0 ? fmtMoney(derived.nonVdiCostPerUser) : "N/A"}`);
+    lines.push(`  VDI User Premium:               ${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiUserPremium) : "N/A"}`);
     lines.push("");
 
     lines.push("┌" + "─".repeat(68) + "┐");
@@ -1401,8 +1415,11 @@ export default function TcoBaseline() {
     rows.push(["Total Annual Baseline", String(derived.totalAnnualTco)]);
     rows.push(["Cost per Endpoint", derived.endpoints > 0 ? String(derived.costPerEndpoint) : "N/A"]);
     rows.push(["Cost per User", derived.userCount > 0 ? String(derived.costPerUser) : "N/A"]);
-    rows.push(["VDI Cost per VDI User", derived.vdiUserCount > 0 ? String(derived.vdiCostPerVdiUser) : "N/A"]);
-    rows.push(["Non-VDI Cost per User", derived.userCount > 0 ? String(derived.nonVdiCostPerUser) : "N/A"]);
+    rows.push(["Base Cost per User", derived.userCount > 0 ? String(Math.round(derived.baseCostPerUser)) : "N/A"]);
+    rows.push(["VDI Platform Cost per VDI User", derived.vdiUserCount > 0 ? String(Math.round(derived.vdiPlatformCostPerUser)) : "N/A"]);
+    rows.push(["Fully Loaded VDI Cost per User", derived.vdiUserCount > 0 ? String(Math.round(derived.fullyLoadedVdiCostPerUser)) : "N/A"]);
+    rows.push(["Non-VDI Cost per User", derived.userCount > 0 ? String(Math.round(derived.nonVdiCostPerUser)) : "N/A"]);
+    rows.push(["VDI User Premium", derived.vdiUserCount > 0 ? String(Math.round(derived.vdiUserPremium)) : "N/A"]);
     rows.push([]);
     
     rows.push(["ASSUMPTIONS"]);
@@ -1670,14 +1687,26 @@ export default function TcoBaseline() {
       <div class="metric-value">${derived.userCount > 0 ? fmtMoney(derived.costPerUser) : "N/A"}</div>
       <div class="metric-label">Cost per User</div>
     </div>
+    <div class="metric-card">
+      <div class="metric-value">${derived.userCount > 0 ? fmtMoney(derived.baseCostPerUser) : "N/A"}</div>
+      <div class="metric-label">Base Cost per User</div>
+    </div>
     ${derived.vdiPresent ? `
     <div class="metric-card">
-      <div class="metric-value">${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "N/A"}</div>
-      <div class="metric-label">VDI Cost per VDI User</div>
+      <div class="metric-value">${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiPlatformCostPerUser) : "N/A"}</div>
+      <div class="metric-label">VDI Platform Cost per VDI User</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">${derived.vdiUserCount > 0 ? fmtMoney(derived.fullyLoadedVdiCostPerUser) : "N/A"}</div>
+      <div class="metric-label">Fully Loaded VDI Cost per User</div>
     </div>
     <div class="metric-card">
       <div class="metric-value">${derived.userCount > 0 ? fmtMoney(derived.nonVdiCostPerUser) : "N/A"}</div>
       <div class="metric-label">Non-VDI Cost per User</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">${derived.vdiUserCount > 0 ? fmtMoney(derived.vdiUserPremium) : "N/A"}</div>
+      <div class="metric-label">VDI User Premium</div>
     </div>` : ""}
   </div>
 
@@ -1769,20 +1798,25 @@ export default function TcoBaseline() {
       </div>
     </div>
 
-    ${derived.vdiPresent && derived.userCount > 0 ? `
+    ${derived.vdiPresent && derived.vdiUserCount > 0 && derived.userCount > 0 ? `
     <div class="chart-card">
       <div class="chart-title">VDI vs Non-VDI User Cost</div>
       <div class="comparison-bars">
         <div class="comparison-bar">
           <div class="comparison-bar-value">${fmtMoney(derived.nonVdiCostPerUser)}</div>
-          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.nonVdiCostPerUser / Math.max(derived.nonVdiCostPerUser, derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser)) * 100)}px; background: #3b82f6;"></div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.nonVdiCostPerUser / Math.max(1, derived.nonVdiCostPerUser, derived.fullyLoadedVdiCostPerUser)) * 100)}px; background: #6b7280;"></div>
           <div class="comparison-bar-label">Non-VDI User</div>
         </div>
         <div class="comparison-bar">
-          <div class="comparison-bar-value">${fmtMoney(derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser)}</div>
-          <div class="comparison-bar-fill" style="height: ${Math.min(100, ((derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser) / Math.max(derived.nonVdiCostPerUser, derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser)) * 100)}px; background: #8b5cf6;"></div>
+          <div class="comparison-bar-value">${fmtMoney(derived.fullyLoadedVdiCostPerUser)}</div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.baseCostPerUser / Math.max(1, derived.nonVdiCostPerUser, derived.fullyLoadedVdiCostPerUser)) * 100)}px; background: #6b7280;"></div>
+          <div class="comparison-bar-fill" style="height: ${Math.min(100, (derived.vdiPlatformCostPerUser / Math.max(1, derived.nonVdiCostPerUser, derived.fullyLoadedVdiCostPerUser)) * 100)}px; background: #00B5E2;"></div>
           <div class="comparison-bar-label">VDI User</div>
         </div>
+      </div>
+      <div style="margin-top: 8px; font-size: 10px; display: flex; gap: 16px;">
+        <span><span style="display:inline-block;width:12px;height:12px;background:#6b7280;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>Base Costs (shared)</span>
+        <span><span style="display:inline-block;width:12px;height:12px;background:#00B5E2;border-radius:2px;vertical-align:middle;margin-right:4px;"></span>VDI Platform (incremental)</span>
       </div>
     </div>
     ` : ""}
@@ -3648,9 +3682,9 @@ export default function TcoBaseline() {
                         testId="kpi-sum-cpu"
                       />
                       <MiniKpi
-                        label="VDI cost per VDI user"
-                        value={derived.vdiUserCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "$0"}
-                        hint="VDI/DaaS spend ÷ VDI users"
+                        label="Fully loaded VDI cost per user"
+                        value={derived.vdiUserCount > 0 ? fmtMoney(derived.fullyLoadedVdiCostPerUser) : "$0"}
+                        hint="Base cost/user + VDI platform cost/user"
                         testId="kpi-sum-vdicpu"
                       />
                     </div>
@@ -3670,7 +3704,7 @@ export default function TcoBaseline() {
                         </div>
                         <div className="rounded-xl border bg-card px-3 py-2">
                           <div className="text-xs text-muted-foreground">VDI user premium</div>
-                          <div className="text-sm font-semibold">{derived.vdiUserCount > 0 && derived.userCount > 0 ? fmtMoney(derived.vdiCostPerVdiUser) : "N/A"}</div>
+                          <div className="text-sm font-semibold">{derived.vdiUserCount > 0 && derived.userCount > 0 ? fmtMoney(derived.vdiUserPremium) : "N/A"}</div>
                         </div>
                       </div>
                     </div>
@@ -3804,8 +3838,9 @@ export default function TcoBaseline() {
                       >
                         <VdiComparisonChart
                           data={{
-                            vdiCostPerUser: derived.nonVdiCostPerUser + derived.vdiCostPerVdiUser,
-                            nonVdiCostPerUser: derived.nonVdiCostPerUser,
+                            baseCostPerUser: derived.baseCostPerUser,
+                            vdiPlatformCostPerUser: derived.vdiPlatformCostPerUser,
+                            vdiUserCount: derived.vdiUserCount,
                           }}
                         />
                       </ChartCard>

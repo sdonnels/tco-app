@@ -126,7 +126,7 @@ Results dashboard showing:
 - Category-by-category cost breakdown with basis annotations
 - Total annual baseline
 - Per-unit metrics (cost per endpoint, cost per user)
-- VDI premium calculations (VDI Cost per VDI User, Non-VDI Cost per User, VDI User Premium)
+- VDI premium calculations (Fully Loaded VDI Cost per User, Non-VDI Cost per User, VDI User Premium)
 - Five interactive data visualizations (see [Visualizations](#visualizations) section)
 - Export buttons for all formats
 
@@ -415,9 +415,11 @@ Total Annual Baseline = End-User Devices + Support & Ops + Licensing
 |--------|-------------|
 | Cost per Endpoint | Total Annual Baseline ÷ Total Endpoints |
 | Cost per User | Total Annual Baseline ÷ User Count |
-| VDI Cost per VDI User | VDI/DaaS Annual ÷ VDI User Count |
-| Non-VDI Cost per User | (Total - VDI Costs) ÷ (Users - VDI Users) |
-| VDI User Premium | VDI Cost per VDI User - Non-VDI Cost per User |
+| Base Cost per User | (Total Annual TCO − VDI/DaaS Value) ÷ User Count |
+| VDI Platform Cost per VDI User | VDI/DaaS Value ÷ VDI User Count |
+| Fully Loaded VDI Cost per User | Base Cost per User + VDI Platform Cost per VDI User |
+| Non-VDI Cost per User | Base Cost per User (same value) |
+| VDI User Premium | VDI Platform Cost per VDI User (incremental cost) |
 
 ---
 

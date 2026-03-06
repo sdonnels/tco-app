@@ -361,15 +361,17 @@ function buildTraceCards(inputs: Inputs, assumptions: Assumptions, intakeFields:
     (desktops * assumptions.deviceUnitCost.desktop / assumptions.deviceRefreshYears.desktop) +
     (thinClients * assumptions.deviceUnitCost.thinClient / assumptions.deviceRefreshYears.thinClient);
 
-  const avgRefreshYears = endpoints > 0
-    ? (laptops * assumptions.deviceRefreshYears.laptop +
-       desktops * assumptions.deviceRefreshYears.desktop +
-       thinClients * assumptions.deviceRefreshYears.thinClient) / endpoints
-    : assumptions.deviceRefreshYears.laptop;
+  const deployLaborLaptops = assumptions.deviceRefreshYears.laptop > 0
+    ? (laptops * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly / assumptions.deviceRefreshYears.laptop) : 0;
+  const deployLaborDesktops = assumptions.deviceRefreshYears.desktop > 0
+    ? (desktops * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly / assumptions.deviceRefreshYears.desktop) : 0;
+  const deployLaborThinClients = assumptions.deviceRefreshYears.thinClient > 0
+    ? (thinClients * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly / assumptions.deviceRefreshYears.thinClient) : 0;
+  const deployLaborTotal = deployLaborLaptops + deployLaborDesktops + deployLaborThinClients;
 
   const derivedSupportOps =
     (endpoints * assumptions.supportOps.ticketsPerEndpointPerYear * assumptions.supportOps.avgTicketHandlingHours * assumptions.supportOps.blendedLaborRateHourly) +
-    ((endpoints / avgRefreshYears) * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly);
+    deployLaborTotal;
 
   const derivedLicensing = userCount * assumptions.licensing.avgCostPerUserPerYear * assumptions.licensing.coveragePct;
 
@@ -414,7 +416,8 @@ function buildTraceCards(inputs: Inputs, assumptions: Assumptions, intakeFields:
   });
 
   const ticketLabor = endpoints * assumptions.supportOps.ticketsPerEndpointPerYear * assumptions.supportOps.avgTicketHandlingHours * assumptions.supportOps.blendedLaborRateHourly;
-  const deployLabor = (endpoints / avgRefreshYears) * assumptions.supportOps.deploymentHoursPerDevice * assumptions.supportOps.blendedLaborRateHourly;
+  const dhr = assumptions.supportOps.deploymentHoursPerDevice;
+  const dlr = assumptions.supportOps.blendedLaborRateHourly;
   cards.push({
     id: "calc-support-ops",
     section: "Calculated Outputs / Results",
@@ -424,14 +427,15 @@ function buildTraceCards(inputs: Inputs, assumptions: Assumptions, intakeFields:
     source: isOverridden("supportOpsAnnual") ? "override" : "calculated",
     sourceDetail: isOverridden("supportOpsAnnual")
       ? "Manual override entered in Platform Cost Rollups"
-      : "Calculated from endpoints × ticket volume × labor rates + deployment labor",
-    formula: "Support & Ops = (Endpoints × Tickets/Yr × Handling Hours × Labor Rate) + (Annual Deployments × Deploy Hours × Labor Rate)",
-    formulaWithValues: `= (${fmtNumber(endpoints)} × ${assumptions.supportOps.ticketsPerEndpointPerYear} × ${assumptions.supportOps.avgTicketHandlingHours}hr × $${assumptions.supportOps.blendedLaborRateHourly}/hr) + (${fmtNumber(Math.round(endpoints / avgRefreshYears))} deploys × ${assumptions.supportOps.deploymentHoursPerDevice}hr × $${assumptions.supportOps.blendedLaborRateHourly}/hr) = ${fmtMoney(derivedSupportOps)}`,
+      : "Calculated from endpoints × ticket volume × labor rates + per-device-type deployment labor",
+    formula: "Support & Ops = (Endpoints × Tickets/Yr × Handling Hours × Labor Rate) + (Laptops × DeployHrs × Rate / LaptopRefresh) + (Desktops × DeployHrs × Rate / DesktopRefresh) + (ThinClients × DeployHrs × Rate / ThinClientRefresh)",
+    formulaWithValues: `= (${fmtNumber(endpoints)} × ${assumptions.supportOps.ticketsPerEndpointPerYear} × ${assumptions.supportOps.avgTicketHandlingHours}hr × $${dlr}/hr) + (${fmtNumber(laptops)} × ${dhr}hr × $${dlr}/hr ÷ ${assumptions.deviceRefreshYears.laptop}yr) + (${fmtNumber(desktops)} × ${dhr}hr × $${dlr}/hr ÷ ${assumptions.deviceRefreshYears.desktop}yr) + (${fmtNumber(thinClients)} × ${dhr}hr × $${dlr}/hr ÷ ${assumptions.deviceRefreshYears.thinClient}yr) = ${fmtMoney(derivedSupportOps)}`,
     intermediateSteps: [
-      `Ticket labor: ${fmtNumber(endpoints)} × ${assumptions.supportOps.ticketsPerEndpointPerYear} × ${assumptions.supportOps.avgTicketHandlingHours}hr × $${assumptions.supportOps.blendedLaborRateHourly}/hr = ${fmtMoney(ticketLabor)}`,
-      `Annual deployments: ${fmtNumber(endpoints)} ÷ ${avgRefreshYears.toFixed(1)}yr avg refresh = ${fmtNumber(Math.round(endpoints / avgRefreshYears))}`,
-      `Deploy labor: ${fmtNumber(Math.round(endpoints / avgRefreshYears))} × ${assumptions.supportOps.deploymentHoursPerDevice}hr × $${assumptions.supportOps.blendedLaborRateHourly}/hr = ${fmtMoney(deployLabor)}`,
-      `Total: ${fmtMoney(ticketLabor)} + ${fmtMoney(deployLabor)} = ${fmtMoney(derivedSupportOps)}`,
+      `Ticket labor: ${fmtNumber(endpoints)} × ${assumptions.supportOps.ticketsPerEndpointPerYear} × ${assumptions.supportOps.avgTicketHandlingHours}hr × $${dlr}/hr = ${fmtMoney(ticketLabor)}`,
+      `Deploy labor (laptops): ${fmtNumber(laptops)} × ${dhr}hr × $${dlr}/hr ÷ ${assumptions.deviceRefreshYears.laptop}yr = ${fmtMoney(deployLaborLaptops)}`,
+      `Deploy labor (desktops): ${fmtNumber(desktops)} × ${dhr}hr × $${dlr}/hr ÷ ${assumptions.deviceRefreshYears.desktop}yr = ${fmtMoney(deployLaborDesktops)}`,
+      `Deploy labor (thin clients): ${fmtNumber(thinClients)} × ${dhr}hr × $${dlr}/hr ÷ ${assumptions.deviceRefreshYears.thinClient}yr = ${fmtMoney(deployLaborThinClients)}`,
+      `Total: ${fmtMoney(ticketLabor)} + ${fmtMoney(deployLaborTotal)} = ${fmtMoney(derivedSupportOps)}`,
     ],
     defaultValue: isOverridden("supportOpsAnnual") ? `Calculated value would be ${fmtMoney(derivedSupportOps)}` : undefined,
     defaultOverridden: isOverridden("supportOpsAnnual"),
@@ -571,17 +575,74 @@ function buildTraceCards(inputs: Inputs, assumptions: Assumptions, intakeFields:
     dependsOn: ["calc-total-tco", "env-user-count"],
   });
 
-  const vdiCostPerVdiUser = vdiDirectCount > 0 ? vdiDaasValue / vdiDirectCount : 0;
+  const baseCosts = totalAnnualTco - vdiDaasValue;
+  const baseCostPerUser = userCount > 0 ? baseCosts / userCount : 0;
+  const vdiPlatformCostPerUser = vdiDirectCount > 0 ? vdiDaasValue / vdiDirectCount : 0;
+  const fullyLoadedVdiCostPerUser = vdiDirectCount > 0 ? baseCostPerUser + vdiPlatformCostPerUser : 0;
+  const vdiUserPremium = vdiPlatformCostPerUser;
+
   cards.push({
-    id: "calc-vdi-cost-per-user",
+    id: "calc-base-cost-per-user",
     section: "Calculated Outputs / Results",
-    fieldName: "VDI Cost per VDI User",
-    currentValue: vdiDirectCount > 0 ? fmtMoney(vdiCostPerVdiUser) : "$0",
-    rawValue: vdiCostPerVdiUser,
+    fieldName: "Base Cost per User",
+    currentValue: userCount > 0 ? fmtMoney(baseCostPerUser) : "$0",
+    rawValue: baseCostPerUser,
+    source: "calculated",
+    sourceDetail: "(Total Annual TCO − VDI/DaaS Value) ÷ Total Users",
+    formula: "Base Cost per User = (Total Annual TCO − VDI/DaaS Value) / Total Users",
+    formulaWithValues: userCount > 0 ? `= (${fmtMoney(totalAnnualTco)} − ${fmtMoney(vdiDaasValue)}) ÷ ${fmtNumber(userCount)} = ${fmtMoney(baseCostPerUser)}` : "= $0 (no users)",
+    dependsOn: ["calc-total-tco", "calc-vdi-daas", "env-user-count"],
+  });
+
+  cards.push({
+    id: "calc-vdi-platform-cost-per-user",
+    section: "Calculated Outputs / Results",
+    fieldName: "VDI Platform Cost per VDI User",
+    currentValue: vdiDirectCount > 0 ? fmtMoney(vdiPlatformCostPerUser) : "$0",
+    rawValue: vdiPlatformCostPerUser,
     source: "calculated",
     sourceDetail: "VDI/DaaS annual cost ÷ VDI user count",
-    formula: "VDI Cost per VDI User = VDI/DaaS Annual ÷ VDI User Count",
-    formulaWithValues: vdiDirectCount > 0 ? `= ${fmtMoney(vdiDaasValue)} ÷ ${fmtNumber(vdiDirectCount)} = ${fmtMoney(vdiCostPerVdiUser)}` : "= $0 (no VDI users)",
+    formula: "VDI Platform Cost per VDI User = VDI/DaaS Annual ÷ VDI User Count",
+    formulaWithValues: vdiDirectCount > 0 ? `= ${fmtMoney(vdiDaasValue)} ÷ ${fmtNumber(vdiDirectCount)} = ${fmtMoney(vdiPlatformCostPerUser)}` : "= $0 (no VDI users)",
+    dependsOn: ["calc-vdi-daas", "env-vdi-daas-users"],
+  });
+
+  cards.push({
+    id: "calc-fully-loaded-vdi-cost-per-user",
+    section: "Calculated Outputs / Results",
+    fieldName: "Fully Loaded VDI Cost per User",
+    currentValue: vdiDirectCount > 0 ? fmtMoney(fullyLoadedVdiCostPerUser) : "N/A",
+    rawValue: fullyLoadedVdiCostPerUser,
+    source: "calculated",
+    sourceDetail: "Base Cost per User + VDI Platform Cost per VDI User",
+    formula: "Fully Loaded VDI Cost per User = Base Cost per User + (VDI/DaaS Value / VDI Users)",
+    formulaWithValues: vdiDirectCount > 0 ? `= ${fmtMoney(baseCostPerUser)} + (${fmtMoney(vdiDaasValue)} ÷ ${fmtNumber(vdiDirectCount)}) = ${fmtMoney(fullyLoadedVdiCostPerUser)}` : "= N/A (no VDI users)",
+    dependsOn: ["calc-base-cost-per-user", "calc-vdi-daas", "env-vdi-daas-users"],
+  });
+
+  cards.push({
+    id: "calc-non-vdi-cost-per-user",
+    section: "Calculated Outputs / Results",
+    fieldName: "Non-VDI Cost per User",
+    currentValue: userCount > 0 ? fmtMoney(baseCostPerUser) : "$0",
+    rawValue: baseCostPerUser,
+    source: "calculated",
+    sourceDetail: "Same as Base Cost per User — non-VDI users share all base costs equally",
+    formula: "Non-VDI Cost per User = Base Cost per User = (Total TCO − VDI/DaaS) / Total Users",
+    formulaWithValues: userCount > 0 ? `= (${fmtMoney(totalAnnualTco)} − ${fmtMoney(vdiDaasValue)}) ÷ ${fmtNumber(userCount)} = ${fmtMoney(baseCostPerUser)}` : "= $0 (no users)",
+    dependsOn: ["calc-base-cost-per-user"],
+  });
+
+  cards.push({
+    id: "calc-vdi-user-premium",
+    section: "Calculated Outputs / Results",
+    fieldName: "VDI User Premium",
+    currentValue: vdiDirectCount > 0 ? fmtMoney(vdiUserPremium) : "N/A",
+    rawValue: vdiUserPremium,
+    source: "calculated",
+    sourceDetail: "Incremental cost of providing virtual desktop to a user",
+    formula: "VDI User Premium = VDI/DaaS Value / VDI Users",
+    formulaWithValues: vdiDirectCount > 0 ? `= ${fmtMoney(vdiDaasValue)} ÷ ${fmtNumber(vdiDirectCount)} = ${fmtMoney(vdiUserPremium)}` : "= N/A (no VDI users)",
     dependsOn: ["calc-vdi-daas", "env-vdi-daas-users"],
   });
 

@@ -444,7 +444,9 @@ Override source: `categoryRollups.endUserDevicesAnnual`
 
 ```
 Ticket Labor = Endpoints x TicketsPerEndpoint x AvgTicketHandlingHours x LaborRate
-Deploy Labor = Endpoints x DeploymentHoursPerDevice x LaborRate / DeviceRefreshYears
+Deploy Labor = (Laptops x DeployHrs x Rate / LaptopRefreshYears)
+             + (Desktops x DeployHrs x Rate / DesktopRefreshYears)
+             + (ThinClients x DeployHrs x Rate / ThinClientRefreshYears)
 Total = Ticket Labor + Deploy Labor
 ```
 
@@ -499,9 +501,11 @@ Total Annual TCO = Sum of all 6 categories + MSP Spend
 |--------|---------|
 | Cost per Endpoint | Total Annual TCO / Total Endpoints |
 | Cost per User | Total Annual TCO / User Count |
-| VDI Cost per VDI User | VDI/DaaS Value / VDI User Count |
-| Non-VDI Cost per User | (Total Annual TCO - VDI/DaaS Value) / User Count |
-| VDI User Premium | VDI Cost per VDI User - Non-VDI Cost per User |
+| Base Cost per User | (Total Annual TCO − VDI/DaaS Value) / User Count |
+| VDI Platform Cost per VDI User | VDI/DaaS Value / VDI User Count |
+| Fully Loaded VDI Cost per User | Base Cost per User + VDI Platform Cost per VDI User |
+| Non-VDI Cost per User | Base Cost per User (same value — non-VDI users share base costs) |
+| VDI User Premium | VDI Platform Cost per VDI User (incremental cost of VDI) |
 
 ---
 
@@ -521,9 +525,9 @@ Shows percentage breakdown across the 6 cost categories plus MSP spend.
 
 Displays absolute dollar amounts for each cost category with color coding for input vs. assumed sources.
 
-### 4. VDI vs Non-VDI Comparison (Bar Chart)
+### 4. VDI vs Non-VDI Comparison (Stacked Bar Chart)
 
-Side-by-side comparison of VDI Cost per VDI User vs. Non-VDI Cost per User.
+Stacked bar chart comparing VDI and Non-VDI per-user costs. The VDI bar shows Base Costs (shared, gray) on bottom and VDI Platform costs (incremental, light blue #00B5E2) on top. The Non-VDI bar shows only Base Costs. Hidden when no VDI/DaaS users are reported.
 
 ### 5. Cost Source (Bar Chart)
 
@@ -939,6 +943,7 @@ All other data flows are client-side (localStorage, file downloads via Blob API)
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.6 | Mar 2026 | Fixed VDI per-user metrics: added Base Cost per User, renamed to Fully Loaded VDI Cost per User (base + platform), corrected Non-VDI denominator, VDI User Premium now always positive; Deploy Labor uses per-device-type refresh cycles instead of blended average; VDI vs Non-VDI chart converted to stacked bar with legend; updated CSV/PDF exports, Audit Trace formulas, and metric card labels |
 | 2.5 | Mar 2026 | Multi-vendor branded intake form: 3 entry slots per sub-pillar, ExcelJS-based export with native data validation dropdowns, sheet protection (column C unlocked), freeze panes, XenTegra branding, cover sheet quick guide; renamed "License SKU" to "License Type / SKU"; added "Notes" field per entry; new filename scheme `TCO_Intake_Form_[CustomerName]_[Project].xlsx`; updated import parser for slot-numbered labels with backward compatibility; removed Platform Cost Overrides from intake form |
 | 2.4 | Mar 2026 | Removed JSON exports (consolidated to CSV/XLSX); normalized Managed Services labels to "Tier 1 Support / Helpdesk" and "Tier 2+ Support / Engineering"; added CSV import support for Google Forms responses; dual-label intake parser with canonical field map; comprehensive documentation refresh |
 | 2.3 | Feb 2026 | Added Tools menu, intake form workflow (Excel export/import), Help and About dialogs, Tools tab with documentation downloads and Quick Start Guide, client logo upload, Download All (.zip), dark mode from system preference |
