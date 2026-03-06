@@ -422,8 +422,19 @@ export default function TcoBaseline() {
     return localStorage.getItem("tco-debug-mode") === "true";
   });
 
-  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [currentDraftId, _setCurrentDraftId] = useState<string | null>(() => {
+    return sessionStorage.getItem("tco_current_draft_id") ?? null;
+  });
+  const setCurrentDraftId = useCallback((id: string | null) => {
+    _setCurrentDraftId(id);
+    if (id) {
+      sessionStorage.setItem("tco_current_draft_id", id);
+    } else {
+      sessionStorage.removeItem("tco_current_draft_id");
+    }
+  }, []);
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
+  const hydrationDone = useRef(false);
 
   const [inputs, setInputs] = useState<Inputs>({
     project: {},
@@ -541,26 +552,54 @@ export default function TcoBaseline() {
     return { notes: [] };
   };
 
+  const hydrateFromDraft = useCallback((draftId: string) => {
+    const data = loadDraftData(draftId) as { inputs?: Partial<Inputs>; assumptions?: typeof assumptions; activeTab?: string } | null;
+    if (data?.inputs) {
+      setInputs((prev) => {
+        const saved = data.inputs!;
+        return {
+          ...prev,
+          ...saved,
+          vdiUserCounts: {
+            ...prev.vdiUserCounts,
+            ...(saved.vdiUserCounts ?? {}),
+          },
+          managedServices: {
+            ...prev.managedServices,
+            ...(saved.managedServices ?? {}),
+          },
+          categoryRollups: {
+            ...prev.categoryRollups,
+            ...(saved.categoryRollups ?? {}),
+          },
+          hexagridEntries: saved.hexagridEntries ?? [],
+          observations: migrateObservationsNotes(saved.observations),
+        };
+      });
+    }
+    if (data?.assumptions) setAssumptions(data.assumptions);
+    return data;
+  }, []);
+
   useEffect(() => {
     const migratedId = migrateLegacyDraft();
     if (migratedId) {
       setCurrentDraftId(migratedId);
-      const data = loadDraftData(migratedId) as { inputs?: Partial<Inputs>; assumptions?: typeof assumptions } | null;
-      if (data?.inputs) {
-        setInputs((prev) => ({
-          ...prev,
-          ...data.inputs,
-          hexagridEntries: data.inputs?.hexagridEntries ?? [],
-          observations: migrateObservationsNotes(data.inputs?.observations),
-        }));
+      hydrateFromDraft(migratedId);
+    } else if (currentDraftId) {
+      const idx = getDraftIndex();
+      if (idx.some((d) => d.id === currentDraftId)) {
+        hydrateFromDraft(currentDraftId);
+      } else {
+        setCurrentDraftId(null);
       }
-      if (data?.assumptions) setAssumptions(data.assumptions);
     }
+    hydrationDone.current = true;
     setDrafts(getDraftIndex());
   }, []);
 
   useEffect(() => {
-    if (!currentDraftId) return;
+    if (!currentDraftId || !hydrationDone.current) return;
     try {
       saveDraftData(
         currentDraftId,
@@ -2296,19 +2335,10 @@ export default function TcoBaseline() {
                 onStartTour={handleStartTour}
                 drafts={drafts}
                 onResumeDraft={(id) => {
-                  const data = loadDraftData(id) as { inputs?: Partial<Inputs>; assumptions?: typeof assumptions; activeTab?: string } | null;
-                  if (data?.inputs) {
-                    setInputs((prev) => ({
-                      ...prev,
-                      ...data.inputs,
-                      hexagridEntries: data.inputs?.hexagridEntries ?? [],
-                      observations: migrateObservationsNotes(data.inputs?.observations),
-                    }));
-                  }
-                  if (data?.assumptions) setAssumptions(data.assumptions);
+                  const data = hydrateFromDraft(id);
                   setCurrentDraftId(id);
                   const validTabs = ["inputs", "assumptions", "observations", "summary", "readme"] as const;
-                  const savedTab = data?.activeTab as typeof validTabs[number] | undefined;
+                  const savedTab = (data as any)?.activeTab as typeof validTabs[number] | undefined;
                   setActiveTab(savedTab && validTabs.includes(savedTab) ? savedTab : "inputs");
                 }}
                 onDeleteDraft={(id) => {
