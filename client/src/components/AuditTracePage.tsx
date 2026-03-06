@@ -109,6 +109,7 @@ type Assumptions = {
   mgmtSecurity: { costPerEndpointPerYear: number };
   vdi: { platformCostPerVdiUserPerYear: number };
   overhead: { pctOfTotal: number };
+  projection?: { annualEscalationRate: number };
 };
 
 const DEFAULT_ASSUMPTIONS: Assumptions = {
@@ -124,6 +125,7 @@ const DEFAULT_ASSUMPTIONS: Assumptions = {
   mgmtSecurity: { costPerEndpointPerYear: 200 },
   vdi: { platformCostPerVdiUserPerYear: 800 },
   overhead: { pctOfTotal: 0.07 },
+  projection: { annualEscalationRate: 0.04 },
 };
 
 type Source = "user" | "intake" | "default" | "calculated" | "override";
@@ -662,6 +664,7 @@ function buildTraceCards(inputs: Inputs, assumptions: Assumptions, intakeFields:
     { id: "assum-mgmt-per-ep", fieldName: "Mgmt & Security $/Endpoint/Year", current: assumptions.mgmtSecurity.costPerEndpointPerYear, defaultVal: DEFAULT_ASSUMPTIONS.mgmtSecurity.costPerEndpointPerYear, unit: "$" },
     { id: "assum-vdi-per-user", fieldName: "VDI Platform $/User/Year", current: assumptions.vdi.platformCostPerVdiUserPerYear, defaultVal: DEFAULT_ASSUMPTIONS.vdi.platformCostPerVdiUserPerYear, unit: "$" },
     { id: "assum-overhead-pct", fieldName: "Overhead % of Subtotal", current: assumptions.overhead.pctOfTotal, defaultVal: DEFAULT_ASSUMPTIONS.overhead.pctOfTotal, unit: "%" },
+    { id: "assum-escalation", fieldName: "Annual Escalation Rate", current: assumptions.projection?.annualEscalationRate ?? 0.04, defaultVal: DEFAULT_ASSUMPTIONS.projection!.annualEscalationRate, unit: "%" },
   ];
 
   for (const a of assumptionCards) {

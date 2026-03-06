@@ -9,6 +9,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from "recharts";
 
 const COLORS = {
@@ -318,6 +321,95 @@ export function WhereMoneyGoesChart({ data }: { data: CategoryData }) {
             wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
           />
         </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+type WaterfallData = {
+  endUserDevices: number;
+  supportOps: number;
+  licensing: number;
+  mgmtSecurity: number;
+  vdiDaas: number;
+  overhead: number;
+  msp: number;
+};
+
+export function CostWaterfallChart({ data }: { data: WaterfallData }) {
+  const categories = [
+    { name: "Devices", value: data.endUserDevices },
+    { name: "Support", value: data.supportOps },
+    { name: "Licensing", value: data.licensing },
+    { name: "Mgmt/Sec", value: data.mgmtSecurity },
+    { name: "VDI/DaaS", value: data.vdiDaas },
+    { name: "Overhead", value: data.overhead },
+    { name: "MSP", value: data.msp },
+  ].filter(c => c.value > 0);
+
+  const total = categories.reduce((s, c) => s + c.value, 0);
+  if (total === 0) {
+    return (
+      <div className="flex items-center justify-center h-[320px] text-muted-foreground text-sm" data-testid="chart-waterfall">
+        No cost data available
+      </div>
+    );
+  }
+
+  let running = 0;
+  const chartData = categories.map(c => {
+    const item = { name: c.name, base: running, increment: c.value, total: 0, isTotal: false };
+    running += c.value;
+    return item;
+  });
+  chartData.push({ name: "Total", base: 0, increment: 0, total, isTotal: true });
+
+  return (
+    <div className="w-full" data-testid="chart-waterfall">
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
+          <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+          <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} width={75} />
+          <Tooltip
+            formatter={(value: number, name: string) => {
+              if (name === "total") return [fmtMoney(value), "Total TCO"];
+              if (name === "increment") return [fmtMoney(value), "Cost"];
+              return [null, null];
+            }}
+            itemStyle={{ display: "flex" }}
+          />
+          <Bar dataKey="base" stackId="waterfall" fill="transparent" />
+          <Bar dataKey="increment" stackId="waterfall" fill="#1e3a5f" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="total" fill="#00B5E2" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+type ProjectionChartData = {
+  year1: number;
+  year2: number;
+  year3: number;
+};
+
+export function ProjectionLineChart({ data }: { data: ProjectionChartData }) {
+  const chartData = [
+    { name: "Year 1", value: data.year1 },
+    { name: "Year 2", value: data.year2 },
+    { name: "Year 3", value: data.year3 },
+  ];
+
+  return (
+    <div className="w-full" data-testid="chart-projection">
+      <ResponsiveContainer width="100%" height={200}>
+        <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+          <YAxis tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`} width={75} />
+          <Tooltip formatter={(value: number) => [fmtMoney(value), "Total TCO"]} />
+          <Line type="monotone" dataKey="value" stroke="#1e3a5f" strokeWidth={2} dot={{ fill: "#00B5E2", r: 5 }} />
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

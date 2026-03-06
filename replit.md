@@ -20,7 +20,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 - **EUC Pillars & Platforms**: 7 pillars with cascading Vendor → Platform → Version dropdowns, scoring flags (Critical Risk, Aging/Risk, Legacy), "Other" free-text with SWOT override for Secure Enterprise Browser, license count and license SKU per entry, VDI/DaaS user count inputs on DaaS and VDI sub-pillars. Sub-pillars: Endpoint Hardware & OS (PC/AI/Mobile Hardware, Endpoint OS), Access (VPN, Secure Enterprise Browser), Virtual Desktops & Applications (DaaS Cloud PC/Hosted Desktop, VDI On-Premises), Device/OS/User Management (UEM, DEX), Security (Endpoint Security, IAM, SASE), App Management (App Layering, App Readiness, Apps Config), Collaboration/AI/Applications (Workspace AI, Unified Comms & Collab)
 - **EUC Pillars - Platform Cost Rollups (Optional Overrides)**: Override calculated cost categories with known annual spend
 
-### Assumptions (15 values matching Excel)
+### Assumptions (16 values matching Excel + projection)
 - Device Refresh Years: Laptop=3, Desktop=3, Thin Client=5
 - Device Unit Costs: Laptop=$1200, Desktop=$1100, Thin Client=$600
 - Support Ops: Ticket Time=0.5hrs, Deploy Time=1.5hrs, Labor Rate=$50/hr, Tickets/Endpoint=2
@@ -28,6 +28,7 @@ The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workb
 - Management & Security: $200/endpoint/year
 - VDI Platform: $800/VDI user/year
 - Overhead: 7% of subtotal
+- Annual Escalation Rate: 4% (for 3-year projection)
 
 ### Calculations
 - End-User Devices = Σ(device count × unit cost ÷ refresh years)
@@ -118,13 +119,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Documentation
 
-Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.4) and `DOCUMENTATION.md` (root) which includes:
+Complete tool documentation is available at `docs/TCO_BASELINE_TOOL_DOCUMENTATION.md` (v2.7) and `DOCUMENTATION.md` (root) which includes:
 - Full feature description and tool overview
 - EUC Pillars & Platforms framework (7 pillars, 17 sub-pillars, 60+ vendors)
-- All 15 assumptions with industry-sourced justifications
+- All 16 assumptions with industry-sourced justifications (including Annual Escalation Rate)
 - Calculation formulas and derived metrics (Override > EUC Pillar costs > Assumptions priority chain)
 - Five current-state visualizations (Endpoint Mix, Where Money Goes, Cost by Category, VDI Comparison, Cost Source)
 - Export format specifications (CSV, PDF, Audit Trail, Justifications, Download All zip)
+- Report Builder documentation (15-section client deliverable, PDF/Excel output)
 - Tools menu documentation (Intake Form, Import, Help, About)
 - Onboarding tour and readiness tracker details
 - Dark mode toggle documentation

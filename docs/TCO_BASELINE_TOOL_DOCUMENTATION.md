@@ -116,7 +116,7 @@ The primary data collection interface with sections for:
 - Observations & Notes
 
 ### 3. Assumptions Tab
-View and customize all 15 default assumption values with:
+View and customize all 16 default assumption values with:
 - Industry-sourced default values
 - Override capability for any value
 - Export Justifications button
@@ -911,7 +911,7 @@ The readiness tracker provides at-a-glance visibility into assessment completene
 
 The tool precisely mirrors the structure and calculations of `TCO_Baseline_Workbook_v2_0_FROZEN.xlsx`:
 
-- Same 15 assumptions with identical default values
+- Same 16 assumptions with identical default values
 - Same calculation formulas for all categories
 - Same summary metrics and per-unit calculations
 - Same input structure and category organization

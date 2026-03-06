@@ -2,7 +2,7 @@
 
 ## Complete Reference Documentation
 
-**Version:** 2.4
+**Version:** 2.7
 **Last Updated:** March 2026
 **Purpose:** Vendor-neutral, current-state Total Cost of Ownership baseline for enterprise End User Computing (EUC) environments
 
@@ -18,13 +18,14 @@
 6. [Calculations & Derived Metrics](#calculations--derived-metrics)
 7. [Visualizations](#visualizations)
 8. [Export Options](#export-options)
-9. [Import Functions](#import-functions)
-10. [Tools Tab & Menu](#tools-tab--menu)
-11. [Debug Mode & Audit Trace](#debug-mode--audit-trace)
-12. [Draft Management](#draft-management)
-13. [Data Model](#data-model)
-14. [API Endpoints](#api-endpoints)
-15. [Technical Details](#technical-details)
+9. [Report Builder](#report-builder)
+10. [Import Functions](#import-functions)
+11. [Tools Tab & Menu](#tools-tab--menu)
+12. [Debug Mode & Audit Trace](#debug-mode--audit-trace)
+13. [Draft Management](#draft-management)
+14. [Data Model](#data-model)
+15. [API Endpoints](#api-endpoints)
+16. [Technical Details](#technical-details)
 
 ---
 
@@ -365,7 +366,7 @@ The EUC Pillars section organizes vendor/platform data across 7 pillars and 17 s
 
 ## Assumptions Reference
 
-15 values with industry-sourced defaults. All are overridable by the user on the Assumptions tab.
+16 values with industry-sourced defaults. All are overridable by the user on the Assumptions tab.
 
 ### Device Refresh Cycles (3 values)
 
@@ -416,6 +417,12 @@ The EUC Pillars section organizes vendor/platform data across 7 pillars and 17 s
 | Assumption | Default | Key | Source |
 |------------|---------|-----|--------|
 | Percentage of Subtotal | 7% | `overhead.pctOfTotal` | IT overhead benchmark |
+
+### Projection (1 value)
+
+| Assumption | Default | Key | Source |
+|------------|---------|-----|--------|
+| Annual Escalation Rate | 4% | `projection.annualEscalationRate` | IT cost escalation trends (Gartner/IDC) |
 
 ---
 
@@ -544,7 +551,7 @@ Five export formats plus a bundled download:
 **Format:** `.csv`
 **Filename:** `tco-baseline-{client-name}-{date}.csv`
 **Trigger:** Summary tab "CSV (spreadsheet)" button
-**Contents:** Project info, environment, cost categories with sources, summary metrics, all 15 assumptions, EUC Pillar vendor entries
+**Contents:** Project info, environment, cost categories with sources, summary metrics, all 16 assumptions, EUC Pillar vendor entries
 
 ### 2. PDF Export
 
@@ -564,7 +571,7 @@ Five export formats plus a bundled download:
 **Format:** `.txt`
 **Filename:** `tco-assumption-justifications-{date}.txt`
 **Trigger:** Assumptions tab "Export Justifications" button
-**Contents:** Industry-sourced rationales for each of the 15 default assumption values, citing Gartner, IDC, and vendor benchmarks.
+**Contents:** Industry-sourced rationales for each of the 16 default assumption values, citing Gartner, IDC, and vendor benchmarks.
 
 ### 5. Audit Trace (Excel)
 
@@ -578,6 +585,100 @@ Five export formats plus a bundled download:
 **Format:** `.zip`
 **Trigger:** Summary tab "Download All (.zip)" button
 **Contents:** Archive containing CSV, Audit Trail, and Justifications exports.
+
+---
+
+## Report Builder
+
+The Report Builder generates polished, multi-section client deliverables in PDF and/or branded Excel format. It is accessed via the navy "Generate Client Report" button on the Summary tab.
+
+### Configuration Dialog
+
+The Report Builder dialog pre-fills from your current assessment and provides:
+
+- **Report Settings**: Client Name, Report Title (default: "EUC TCO Baseline Assessment"), Report Date, Prepared By, Include Client Logo toggle
+- **Section Selector**: 15 individually toggleable sections (all enabled by default)
+- **Output Format**: PDF, Excel, or Both
+
+### Sections (15 toggleable)
+
+| # | Section | Description |
+|---|---------|-------------|
+| 1 | Executive Summary | Auto-generated 4-6 sentence narrative covering total TCO, cost per user, top categories, and data confidence |
+| 2 | Environment Overview | User count, device counts, endpoint mix statistics |
+| 3 | EUC Vendor Landscape | Table of all configured platforms with vendors, versions, scoring flags, and license info |
+| 4 | Cost Breakdown | Category-by-category cost table with source indicators and percentage splits |
+| 5 | Cost Waterfall | Waterfall chart showing cumulative cost buildup from $0 to total TCO |
+| 6 | Per-User Economics | Cost per user, cost per endpoint, monthly equivalents |
+| 7 | VDI/DaaS Analysis | Base Cost per User, Fully Loaded VDI Cost, VDI User Premium (conditional on VDI users > 0) |
+| 8 | 3-Year Cost Projection | Year 1/2/3 projection using the Annual Escalation Rate assumption |
+| 9 | Data Confidence | Percentage of costs sourced from inputs vs assumptions, confidence tier (HIGH/MODERATE/PRELIMINARY), pillar heatmap |
+| 10 | Scoring & Risk Flags | All platforms flagged as Critical Risk, Aging/Risk, or Legacy |
+| 11 | Key Findings | 5-8 algorithmically generated findings based on data patterns |
+| 12 | Observations | Consultant's free-text notes from the Observations tab |
+| 13 | Recommended Next Steps | Conditional recommendations based on assessment results |
+| 14 | Methodology & Appendix | How every number was calculated, with assumption sources |
+| 15 | Glossary | EUC terminology explained for non-technical readers |
+
+### Auto-Generated Executive Summary
+
+The executive summary uses rule-based generation:
+- Sentence 1: Total annual TCO baseline with client name
+- Sentence 2: Cost per user and cost per endpoint
+- Sentence 3: Top two cost categories by percentage
+- Sentence 4: VDI analysis (if VDI users present) or endpoint composition
+- Sentence 5: Data confidence level
+- Sentence 6: Call to action for deeper assessment
+
+### 3-Year Projection
+
+Uses the Annual Escalation Rate assumption (default 4%):
+- Year 1: Current TCO baseline
+- Year 2: Year 1 × (1 + escalation rate)
+- Year 3: Year 1 × (1 + escalation rate)²
+
+Projection table includes per-category breakdown for all three years.
+
+### Data Confidence
+
+Confidence is calculated as the percentage of total cost sourced from user-provided inputs vs derived from assumptions:
+- **HIGH** (>70%): Most costs are customer-provided
+- **MODERATE** (40-70%): Mix of inputs and assumptions
+- **PRELIMINARY** (<40%): Mostly assumption-driven
+
+Includes a pillar heatmap showing which sub-pillars have vendor data configured.
+
+### PDF Output
+
+**Format:** PDF via browser print dialog
+**Filename:** `TCO_Baseline_Report_[ClientName]_[Date].pdf`
+**Features:**
+- Cover page with client name, XenTegra branding, client logo (if uploaded)
+- Auto-generated Table of Contents with page anchors
+- All selected sections rendered with professional formatting
+- Methodology appendix (A.1-A.9) with formulas and substituted values
+- Page footer: "XenTegra | Confidential | Prepared for [Client]"
+- CSS @page rules for print-optimized layout
+- Internal cross-reference anchors between body sections and appendix
+
+### Excel Output
+
+**Format:** `.xlsx` (ExcelJS)
+**Filename:** `TCO_Baseline_Report_[ClientName]_[Date].xlsx`
+**Features:**
+- One tab per selected section with branded tab colors (navy/light blue)
+- Cover Sheet with XenTegra styling
+- Formatted data tables with metric summaries per section
+- Brand colors: navy (#1e3a5f) headers, light blue (#00B5E2) accents
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `client/src/components/ReportBuilderDialog.tsx` | Configuration dialog UI |
+| `client/src/lib/report-data.ts` | Data computation engine (executive summary, projections, confidence, findings) |
+| `client/src/lib/report-pdf.ts` | HTML-to-print PDF generator |
+| `client/src/lib/report-excel.ts` | ExcelJS branded workbook generator |
 
 ---
 
@@ -943,6 +1044,7 @@ All other data flows are client-side (localStorage, file downloads via Blob API)
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.7 | Mar 2026 | Report Builder: configurable multi-section client deliverable generator (PDF/Excel); 15 toggleable sections including executive summary, cost waterfall, 3-year projection, data confidence analysis, scoring flags, key findings, recommended next steps, methodology appendix, and glossary; new Annual Escalation Rate assumption (16th); auto-generated narrative engine; branded Excel workbook output via ExcelJS |
 | 2.6 | Mar 2026 | Fixed VDI per-user metrics: added Base Cost per User, renamed to Fully Loaded VDI Cost per User (base + platform), corrected Non-VDI denominator, VDI User Premium now always positive; Deploy Labor uses per-device-type refresh cycles instead of blended average; VDI vs Non-VDI chart converted to stacked bar with legend; updated CSV/PDF exports, Audit Trace formulas, and metric card labels |
 | 2.5 | Mar 2026 | Multi-vendor branded intake form: 3 entry slots per sub-pillar, ExcelJS-based export with native data validation dropdowns, sheet protection (column C unlocked), freeze panes, XenTegra branding, cover sheet quick guide; renamed "License SKU" to "License Type / SKU"; added "Notes" field per entry; new filename scheme `TCO_Intake_Form_[CustomerName]_[Project].xlsx`; updated import parser for slot-numbered labels with backward compatibility; removed Platform Cost Overrides from intake form |
 | 2.4 | Mar 2026 | Removed JSON exports (consolidated to CSV/XLSX); normalized Managed Services labels to "Tier 1 Support / Helpdesk" and "Tier 2+ Support / Engineering"; added CSV import support for Google Forms responses; dual-label intake parser with canonical field map; comprehensive documentation refresh |

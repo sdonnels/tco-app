@@ -37,6 +37,7 @@ import {
   Sun,
   Moon,
   Bug,
+  TrendingUp,
 } from "lucide-react";
 import JSZip from "jszip";
 import { Card } from "@/components/ui/card";
@@ -70,6 +71,10 @@ import {
   ChartCard,
 } from "@/components/TcoCharts";
 import { HexagridSection, type HexagridEntry } from "@/components/HexagridSection";
+import { ReportBuilderDialog } from "@/components/ReportBuilderDialog";
+import type { ReportConfig, ReportData } from "@/lib/report-data";
+import { generateReportPdf } from "@/lib/report-pdf";
+import { generateReportExcel } from "@/lib/report-excel";
 import documentationMd from "@/../../docs/TCO_BASELINE_TOOL_DOCUMENTATION.md?raw";
 import faqMd from "@/../../docs/TCO_BASELINE_FAQ.md?raw";
 import {
@@ -195,6 +200,9 @@ type Assumptions = {
   overhead: {
     pctOfTotal: number;
   };
+  projection: {
+    annualEscalationRate: number;
+  };
 };
 
 type CalcLine = {
@@ -315,6 +323,10 @@ const ASSUMPTION_JUSTIFICATIONS: Record<string, { source: string; rationale: str
   "overhead.pctOfTotal": {
     source: "EUC TCO Analysis, Infrastructure Overhead",
     rationale: "7% overhead covers administrative costs, facilities allocation, and indirect IT costs not captured in direct categories."
+  },
+  "projection.annualEscalationRate": {
+    source: "EUC TCO Analysis, Market Trends",
+    rationale: "4% annual escalation reflects typical IT cost inflation including hardware, licensing, and labor increases. Adjustable per engagement."
   }
 };
 
@@ -504,6 +516,9 @@ export default function TcoBaseline() {
     overhead: {
       pctOfTotal: 0.07,
     },
+    projection: {
+      annualEscalationRate: 0.04,
+    },
   });
 
   const [restartDialogOpen, setRestartDialogOpen] = useState(false);
@@ -519,6 +534,7 @@ export default function TcoBaseline() {
   const [excelImportOpen, setExcelImportOpen] = useState(false);
   const [excelImportError, setExcelImportError] = useState<string | null>(null);
   const excelFileInputRef = useRef<HTMLInputElement>(null);
+  const [reportBuilderOpen, setReportBuilderOpen] = useState(false);
 
   const { toast } = useToast();
   const [intakeGuidanceOpen, setIntakeGuidanceOpen] = useState(() => {
@@ -577,7 +593,14 @@ export default function TcoBaseline() {
         };
       });
     }
-    if (data?.assumptions) setAssumptions(data.assumptions);
+    if (data?.assumptions) setAssumptions((prev) => ({
+      ...prev,
+      ...data.assumptions,
+      projection: {
+        ...prev.projection,
+        ...(data.assumptions?.projection ?? {}),
+      },
+    }));
     return data;
   }, []);
 
@@ -667,6 +690,7 @@ export default function TcoBaseline() {
       mgmtSecurity: { costPerEndpointPerYear: 200 },
       vdi: { platformCostPerVdiUserPerYear: 800 },
       overhead: { pctOfTotal: 0.07 },
+      projection: { annualEscalationRate: 0.04 },
     });
     if (currentDraftId) {
       deleteDraft(currentDraftId);
@@ -1155,6 +1179,9 @@ export default function TcoBaseline() {
     lines.push("  OVERHEAD:");
     lines.push(`    % of Subtotal:    ${(assumptions.overhead.pctOfTotal * 100).toFixed(0)}%`);
     lines.push("");
+    lines.push("  PROJECTION:");
+    lines.push(`    Annual Escalation: ${(assumptions.projection.annualEscalationRate * 100).toFixed(0)}%`);
+    lines.push("");
 
     lines.push("┌" + "─".repeat(68) + "┐");
     lines.push("│ CALCULATION WIRING — STEP-BY-STEP DERIVATIONS" + " ".repeat(21) + "│");
@@ -1336,6 +1363,7 @@ export default function TcoBaseline() {
     const vdiKeys = [
       { key: "vdi.platformCostPerVdiUserPerYear", label: "VDI Platform Cost/User/Year", value: `$${assumptions.vdi.platformCostPerVdiUserPerYear}` },
       { key: "overhead.pctOfTotal", label: "Overhead Percentage", value: `${(assumptions.overhead.pctOfTotal * 100).toFixed(0)}%` },
+      { key: "projection.annualEscalationRate", label: "Annual Escalation Rate", value: `${(assumptions.projection.annualEscalationRate * 100).toFixed(0)}%` },
     ];
 
     vdiKeys.forEach(({ key, label, value }) => {
@@ -1438,6 +1466,7 @@ export default function TcoBaseline() {
     rows.push(["Mgmt & Security/Endpoint", String(assumptions.mgmtSecurity.costPerEndpointPerYear)]);
     rows.push(["VDI Platform Cost/User", String(assumptions.vdi.platformCostPerVdiUserPerYear)]);
     rows.push(["Overhead %", String(assumptions.overhead.pctOfTotal * 100)]);
+    rows.push(["Annual Escalation Rate %", String(assumptions.projection.annualEscalationRate * 100)]);
     rows.push([]);
 
     rows.push(["EUC PILLARS & PLATFORMS", "Sub-Pillar", "Vendor", "Annual Cost", "Scoring Flag", "License Count", "License SKU", "Notes"]);
@@ -1886,6 +1915,65 @@ export default function TcoBaseline() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const handleGenerateReport = useCallback(async (config: ReportConfig) => {
+    const reportData: ReportData = {
+      config,
+      inputs: {
+        project: {
+          clientName: inputs.project.clientName ?? "",
+          assessmentDate: inputs.project.assessmentDate,
+          customerChampion: inputs.project.customerChampion,
+          xentegraEngineer: inputs.project.engineerName,
+        },
+        environment: {
+          userCount: nonNeg(inputs.environment.userCount) ?? 0,
+          laptopCount: nonNeg(inputs.environment.laptopCount) ?? 0,
+          desktopCount: nonNeg(inputs.environment.desktopCount) ?? 0,
+          thinClientCount: nonNeg(inputs.environment.thinClientCount) ?? 0,
+        },
+        managedServices: {
+          totalAnnualSpend: nonNeg(inputs.managedServices.totalAnnualSpend) ?? 0,
+          outsourcedServices: derived.outsourcedServices,
+          providers: [],
+        },
+        observations: inputs.observations.notes,
+      },
+      derived: {
+        endpoints: derived.endpoints,
+        totalAnnualTco: derived.totalAnnualTco,
+        costPerEndpoint: derived.costPerEndpoint,
+        costPerUser: derived.costPerUser,
+        baseCostPerUser: derived.baseCostPerUser,
+        vdiPlatformCostPerUser: derived.vdiPlatformCostPerUser,
+        fullyLoadedVdiCostPerUser: derived.fullyLoadedVdiCostPerUser,
+        nonVdiCostPerUser: derived.nonVdiCostPerUser,
+        vdiUserPremium: derived.vdiUserPremium,
+        vdiUserCount: derived.vdiUserCount,
+        categoryLines: derived.categoryLines,
+        managedServicesLines: derived.managedServicesLines,
+        endUserDevicesValue: derived.endUserDevicesValue,
+        supportOpsValue: derived.supportOpsValue,
+        licensingValue: derived.licensingValue,
+        mgmtSecurityValue: derived.mgmtSecurityValue,
+        vdiDaasValue: derived.vdiDaasValue,
+        overheadValue: derived.overheadValue,
+        mspSpend: derived.mspSpend,
+        costFromInputs: derived.costFromInputs,
+        costFromAssumptions: derived.costFromAssumptions,
+      },
+      assumptions,
+      hexagridEntries: inputs.hexagridEntries,
+      clientLogo: clientLogo || undefined,
+    };
+
+    if (config.outputFormat === "pdf" || config.outputFormat === "both") {
+      await generateReportPdf(reportData, imgToBase64, xentegraLogoBlack);
+    }
+    if (config.outputFormat === "excel" || config.outputFormat === "both") {
+      await generateReportExcel(reportData);
+    }
+  }, [inputs, derived, assumptions, clientLogo, imgToBase64]);
 
   const downloadDocumentation = () => {
     const blob = new Blob([documentationMd], { type: "text/markdown" });
@@ -3377,6 +3465,47 @@ export default function TcoBaseline() {
 
                 <Separator className="my-6" />
 
+                <div className="grid gap-6 md:grid-cols-2" data-testid="section-assump-projection">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <TrendingUp className="h-4 w-4 text-primary" />
+                      Projection
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-1">
+                      <div className="space-y-2">
+                        <Label htmlFor="a-escalation" data-testid="label-a-escalation">
+                          Annual Escalation Rate (%)
+                        </Label>
+                        <Input
+                          id="a-escalation"
+                          value={Math.round(assumptions.projection.annualEscalationRate * 100)}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (raw.trim() === "") {
+                              setAssumptions((s) => ({ ...s, projection: { ...s.projection, annualEscalationRate: 0.04 } }));
+                              return;
+                            }
+                            const next = Number(raw);
+                            if (!Number.isFinite(next)) return;
+                            setAssumptions((s) => ({
+                              ...s,
+                              projection: { ...s.projection, annualEscalationRate: Math.max(0, next) / 100 },
+                            }));
+                          }}
+                          type="text"
+                          inputMode="numeric"
+                          data-testid="input-a-escalation"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 text-xs text-muted-foreground" data-testid="text-assump-projection-hint">
+                      Used for 3-Year Projection in the Client Report. Default is 4%.
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="my-6" />
+
                 <InlineInfo
                   title="How this works"
                   body="Input present → use input. Input missing → use assumption. Input always overrides assumption."
@@ -3864,6 +3993,14 @@ export default function TcoBaseline() {
                     <div className="rounded-2xl border bg-card/60 p-4">
                       <div className="text-sm font-semibold mb-3">Export Options</div>
                       <div className="grid gap-2">
+                        <Button
+                          className="w-full gap-2 justify-start bg-[#1e3a5f] hover:bg-[#162d4a] text-white"
+                          onClick={() => setReportBuilderOpen(true)}
+                          data-testid="button-generate-report"
+                        >
+                          <FileText className="h-4 w-4" /> Generate Client Report
+                        </Button>
+                        <Separator className="my-1" />
                         <Button
                           variant="outline"
                           className="w-full gap-2 justify-start"
@@ -4658,6 +4795,15 @@ export default function TcoBaseline() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ReportBuilderDialog
+        open={reportBuilderOpen}
+        onOpenChange={setReportBuilderOpen}
+        defaultClientName={inputs.project.clientName ?? ""}
+        defaultEngineer={inputs.project.engineerName ?? ""}
+        hasClientLogo={!!clientLogo}
+        onGenerate={handleGenerateReport}
+      />
     </div>
   );
 }

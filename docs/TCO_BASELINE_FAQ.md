@@ -64,7 +64,7 @@ The readiness bar (visible in the tab header) shows how complete your assessment
 ## Assumptions
 
 ### What are assumptions?
-Assumptions are industry-sourced default values used when you haven't provided a specific input. There are 15 assumptions covering device refresh cycles, unit costs, support operations, licensing, and overhead.
+Assumptions are industry-sourced default values used when you haven't provided a specific input. There are 16 assumptions covering device refresh cycles, unit costs, support operations, licensing, overhead, and annual escalation rate.
 
 ### Can I change the assumptions?
 Yes. Every assumption is fully editable in the Assumptions tab. Changed values are highlighted so you can track what's been modified.
